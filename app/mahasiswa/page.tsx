@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+
+const TODAY = new Date("2026-05-08");
+function daysLeft(dateStr: string) {
+  return Math.ceil((new Date(dateStr).getTime() - TODAY.getTime()) / 86400000);
+}
 import { Checkbox } from "@/components/ui/checkbox";
 
 function MiniCalendar() {
@@ -78,7 +83,13 @@ export default function MahasiswaDashboard() {
         {/* Card 2 */}
         <div className="bg-mhs-card border border-mhs-border rounded-xl p-5 relative overflow-hidden hover:-translate-y-[3px] transition-transform group">
           <div className="absolute -top-7 -right-7 w-20 h-20 rounded-full bg-mhs-rose opacity-10 group-hover:opacity-20 transition-opacity" />
-          <div className="w-9 h-9 rounded-lg bg-mhs-rose/15 text-mhs-rose flex items-center justify-center text-lg mb-3.5">🔥</div>
+          <div className="flex items-start justify-between mb-2">
+            <div className="w-9 h-9 rounded-lg bg-mhs-rose/15 text-mhs-rose flex items-center justify-center text-lg">🔥</div>
+            <svg width="36" height="36" viewBox="0 0 36 36" className="shrink-0 -rotate-90">
+              <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" strokeWidth="3" className="text-mhs-border" />
+              <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray="87.96 87.96" strokeDashoffset="61.57" strokeLinecap="round" className="text-mhs-rose" />
+            </svg>
+          </div>
           <div className="font-serif text-[32px] leading-none text-mhs-text">3</div>
           <div className="text-[12px] text-mhs-muted mt-1">Mendesak (≤3 hari)</div>
           <div className="text-[11px] mt-2.5 text-mhs-rose flex items-center gap-1">↑ 2 dari minggu lalu</div>
@@ -231,41 +242,33 @@ export default function MahasiswaDashboard() {
             <h3 className="text-[14px] font-semibold text-mhs-text mb-4 px-1">⏰ Deadline Mendatang</h3>
 
             <div className="space-y-3">
-              <div className="flex items-start gap-2.5 pb-3 border-b border-mhs-border/50">
-                <div className="w-10 text-center bg-mhs-rose/15 border border-mhs-rose/30 rounded-lg py-1 shrink-0">
-                  <div className="font-serif text-[18px] leading-none text-mhs-rose">08</div>
-                  <div className="text-[9px] text-mhs-muted uppercase tracking-wider">Apr</div>
-                </div>
-                <div className="flex-1 min-w-0 pt-0.5">
-                  <div className="text-[13px] font-medium text-mhs-text">Laporan Praktikum Sorting</div>
-                  <div className="text-[11px] text-mhs-muted mt-0.5">Pemrograman Lanjut • Individu</div>
-                </div>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-mhs-teal/15 text-mhs-teal">Dikerjakan</span>
-              </div>
-
-              <div className="flex items-start gap-2.5 pb-3 border-b border-mhs-border/50">
-                <div className="w-10 text-center bg-mhs-rose/15 border border-mhs-rose/30 rounded-lg py-1 shrink-0">
-                  <div className="font-serif text-[18px] leading-none text-mhs-rose">09</div>
-                  <div className="text-[9px] text-mhs-muted uppercase tracking-wider">Apr</div>
-                </div>
-                <div className="flex-1 min-w-0 pt-0.5">
-                  <div className="text-[13px] font-medium text-mhs-text">ERD Sistem Perpustakaan</div>
-                  <div className="text-[11px] text-mhs-muted mt-0.5">Basis Data • Kelompok</div>
-                </div>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-mhs-teal/15 text-mhs-teal">Dikerjakan</span>
-              </div>
-
-              <div className="flex items-start gap-2.5 pb-1">
-                <div className="w-10 text-center bg-mhs-border rounded-lg py-1 shrink-0">
-                  <div className="font-serif text-[18px] leading-none text-mhs-text">11</div>
-                  <div className="text-[9px] text-mhs-muted uppercase tracking-wider">Apr</div>
-                </div>
-                <div className="flex-1 min-w-0 pt-0.5">
-                  <div className="text-[13px] font-medium text-mhs-text">Resume SO Bab 4</div>
-                  <div className="text-[11px] text-mhs-muted mt-0.5">Sistem Operasi • Individu</div>
-                </div>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-mhs-muted/15 text-mhs-muted">Belum Mulai</span>
-              </div>
+              {[
+                { date: "2026-05-10", day: "10", mon: "Mei", title: "Laporan Praktikum Sorting", sub: "Pemrograman Lanjut • Individu", status: "Dikerjakan", statusCls: "bg-mhs-teal/15 text-mhs-teal" },
+                { date: "2026-05-12", day: "12", mon: "Mei", title: "ERD Sistem Perpustakaan", sub: "Basis Data • Kelompok", status: "Dikerjakan", statusCls: "bg-mhs-teal/15 text-mhs-teal" },
+                { date: "2026-05-15", day: "15", mon: "Mei", title: "Resume SO Bab 4", sub: "Sistem Operasi • Individu", status: "Belum Mulai", statusCls: "bg-mhs-muted/15 text-mhs-muted" },
+              ].map((item, idx) => {
+                const hl = daysLeft(item.date);
+                const urgent = hl <= 3;
+                return (
+                  <div key={idx} className={`flex items-start gap-2.5 ${idx < 2 ? "pb-3 border-b border-mhs-border/50" : "pb-1"}`}>
+                    <div className={`w-10 text-center rounded-lg py-1 shrink-0 ${urgent ? "bg-mhs-rose/15 border border-mhs-rose/30" : "bg-mhs-border"}`}>
+                      <div className={`font-serif text-[18px] leading-none ${urgent ? "text-mhs-rose" : "text-mhs-text"}`}>{item.day}</div>
+                      <div className="text-[9px] text-mhs-muted uppercase tracking-wider">{item.mon}</div>
+                    </div>
+                    <div className="flex-1 min-w-0 pt-0.5">
+                      <div className="text-[13px] font-medium text-mhs-text">{item.title}</div>
+                      <div className="text-[11px] text-mhs-muted mt-0.5">{item.sub}</div>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${urgent ? "bg-mhs-rose/15 text-mhs-rose" : "bg-mhs-amber/15 text-mhs-amber"}`}>
+                          H-{hl}
+                        </span>
+                        <Link href="/mahasiswa/tugas" className="text-[10px] text-mhs-teal hover:underline">→ Kerjakan</Link>
+                      </div>
+                    </div>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${item.statusCls}`}>{item.status}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

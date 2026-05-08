@@ -42,19 +42,19 @@ export default function StaffTULayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex bg-stu-bg text-stu-text font-sans">
       {sidebarOpen && (
-        <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 z-30 bg-black/40 min-[1400px]:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       <aside className={cn(
         "w-[248px] flex-shrink-0 bg-stu-surface border-r border-stu-border flex flex-col fixed inset-y-0 left-0 z-40 transition-transform duration-200",
-        sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        sidebarOpen ? "translate-x-0" : "-translate-x-full min-[1400px]:translate-x-0"
       )}>
         <div className="px-6 py-6 border-b border-stu-border flex items-center justify-between">
           <div>
             <div className="font-serif text-[20px] text-stu-accent leading-none">📂 AcadTrack</div>
             <div className="text-[10px] text-stu-muted tracking-[0.12em] uppercase mt-1">Portal Staff TU</div>
           </div>
-          <button className="lg:hidden text-stu-muted" onClick={() => setSidebarOpen(false)}>
+          <button className="min-[1400px]:hidden text-stu-muted" onClick={() => setSidebarOpen(false)}>
             <X size={18} />
           </button>
         </div>
@@ -115,9 +115,9 @@ export default function StaffTULayout({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <main className="lg:ml-[248px] flex-1 flex flex-col min-h-screen bg-stu-bg">
-        <header className="sticky top-0 z-10 bg-stu-bg/85 backdrop-blur-md border-b border-stu-border px-6 lg:px-8 py-3.5 flex items-center gap-3">
-          <button className="lg:hidden text-stu-muted mr-1" onClick={() => setSidebarOpen(true)}>
+      <main className="min-[1400px]:ml-[248px] flex-1 flex flex-col min-h-screen bg-stu-bg">
+        <header className="sticky top-0 z-10 bg-stu-bg/85 backdrop-blur-md border-b border-stu-border px-6 min-[1400px]:px-8 py-3.5 flex items-center gap-3">
+          <button className="min-[1400px]:hidden text-stu-muted mr-1" onClick={() => setSidebarOpen(true)}>
             <Menu size={20} />
           </button>
           <div className="font-serif text-xl flex-1 text-stu-text">
@@ -139,7 +139,7 @@ export default function StaffTULayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <div className="p-6 lg:p-8 animate-fadeIn">
+        <div className="p-6 min-[1400px]:p-8 animate-fadeIn">
           <SearchContext.Provider value={searchQ}>
             {children}
           </SearchContext.Provider>

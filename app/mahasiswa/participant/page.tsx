@@ -3,20 +3,6 @@
 import { useSearch } from "@/lib/search-context";
 import { PARTICIPANTS } from "@/lib/students-data";
 
-function maskEmail(email: string): string {
-  const [local, domain] = email.split("@");
-  const maskedLocal =
-    local.length <= 2
-      ? local
-      : local[0] + "*".repeat(local.length - 2) + local[local.length - 1];
-  const [domainName, ...rest] = domain.split(".");
-  const maskedDomain =
-    domainName.length <= 2
-      ? domainName
-      : domainName[0] + "*".repeat(domainName.length - 2) + domainName[domainName.length - 1];
-  return `${maskedLocal}@${maskedDomain}.${rest.join(".")}`;
-}
-
 export default function ParticipantPage() {
   const q = useSearch().toLowerCase();
   const participants = PARTICIPANTS.filter(
@@ -60,7 +46,7 @@ export default function ParticipantPage() {
               </div>
               <div className="col-span-2">
                 <div className="text-[11px] text-mhs-muted uppercase tracking-[0.08em] mb-0.5">Email</div>
-                <div className="text-[14px] text-mhs-text">{maskEmail(p.email)}</div>
+                <div className="text-[14px] text-mhs-text">{p.email}</div>
               </div>
             </div>
           ))}

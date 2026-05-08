@@ -8,7 +8,7 @@ import { useSearch } from "@/lib/search-context";
 
 const seedData = createSeedData().dosen;
 
-type Task = (typeof seedData.tasks)[0] & { note?: string; createdAt?: string; closed?: boolean; closedAt?: string };
+type Task = (typeof seedData.tasks)[0] & { note?: string; createdAt?: string; closed?: boolean; closedAt?: string; tolerance?: number };
 
 const MK_COLORS = [
   "bg-forest/10 text-forest",
@@ -43,7 +43,7 @@ const PROGRESS_BAR = [
 ];
 
 const COURSES = ["Analisis SI", "Keamanan Sistem", "SI Enterprise", "PPL", "Basis Data", "PPL Lanjut"];
-const EMPTY_FORM = { title: "", course: "", type: "individu", deadline: "", description: "" };
+const EMPTY_FORM = { title: "", course: "", type: "individu", deadline: "", description: "", tolerance: "0" };
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
@@ -69,6 +69,8 @@ export default function DosenTugasPage() {
   const [editTask, setEditTask]         = useState<Task | null>(null);
   const [editForm, setEditForm]         = useState(EMPTY_FORM);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [dupTask, setDupTask]           = useState<Task | null>(null);
+  const [dupForm, setDupForm]           = useState({ title: "", course: "", deadline: "" });
 
   useEffect(() => {
     const saved: Task[] = JSON.parse(localStorage.getItem("dosen_new_tasks") || "[]");
@@ -105,6 +107,7 @@ export default function DosenTugasPage() {
       priority: "sedang",
       progress: 0,
       note: createForm.description,
+      tolerance: parseInt(createForm.tolerance) || 0,
       createdAt: new Date().toISOString(),
       submissions: [],
       comments: [],
@@ -126,6 +129,7 @@ export default function DosenTugasPage() {
       type: task.type,
       deadline: task.deadline,
       description: task.note || "",
+      tolerance: String(task.tolerance ?? 0),
     });
   }
 
@@ -159,6 +163,36 @@ export default function DosenTugasPage() {
     const updated = allTasks.map(t => t.id === id ? { ...t, closed: false, status: "sedang dikerjakan", closedAt: undefined } : t);
     setAllTasks(updated);
     syncLocalStorage(updated);
+  }
+
+  function openDuplicate(task: Task) {
+    setDupTask(task);
+    setDupForm({ title: `Copy of ${task.title}`, course: task.course, deadline: "" });
+  }
+
+  function handleDuplicate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!dupTask || !dupForm.title || !dupForm.course || !dupForm.deadline) return;
+    const newTask: Task = {
+      ...dupTask,
+      id: `new-${Date.now()}`,
+      title: dupForm.title,
+      course: dupForm.course,
+      deadline: dupForm.deadline,
+      status: "belum mulai",
+      progress: 0,
+      closed: false,
+      closedAt: undefined,
+      createdAt: new Date().toISOString(),
+      submissions: [],
+      comments: [],
+    };
+    const updated = [newTask, ...allTasks];
+    setAllTasks(updated);
+    syncLocalStorage(updated);
+    setDupTask(null);
+    setCreateSaved(true);
+    setTimeout(() => setCreateSaved(false), 3000);
   }
 
   function handleGoToRekap(id: string) {
@@ -229,9 +263,15 @@ export default function DosenTugasPage() {
                     </select>
                   </div>
                 </div>
-                <div>
-                  <label className={modalLabelCls}>Deadline *</label>
-                  <input required type="date" value={createForm.deadline} onChange={e => setCreateForm(f => ({...f, deadline: e.target.value}))} className={modalInputCls} />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={modalLabelCls}>Deadline *</label>
+                    <input required type="date" value={createForm.deadline} onChange={e => setCreateForm(f => ({...f, deadline: e.target.value}))} className={modalInputCls} />
+                  </div>
+                  <div>
+                    <label className={modalLabelCls}>Toleransi Terlambat (jam)</label>
+                    <input type="number" min="0" max="72" value={createForm.tolerance} onChange={e => setCreateForm(f => ({...f, tolerance: e.target.value}))} className={modalInputCls} />
+                  </div>
                 </div>
                 <div>
                   <label className={modalLabelCls}>Deskripsi</label>
@@ -309,6 +349,45 @@ export default function DosenTugasPage() {
                 <button onClick={() => setConfirmDelete(null)} className="flex-1 border border-border text-muted hover:text-ink py-2 rounded-lg text-[13px] transition-colors">Batal</button>
                 <button onClick={() => handleDelete(confirmDelete)} className="flex-1 bg-rose text-white hover:opacity-90 py-2 rounded-lg text-[13px] font-semibold transition-colors">Hapus</button>
               </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* DUPLICATE MODAL */}
+      {dupTask && (
+        <>
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-40" onClick={() => setDupTask(null)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-paper rounded-2xl border border-border shadow-[0_8px_40px_rgba(0,0,0,0.18)] w-full max-w-md animate-fadeIn">
+              <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border">
+                <div>
+                  <h2 className="font-serif text-[17px] text-ink">Duplikat Tugas</h2>
+                  <div className="text-[11px] text-muted mt-0.5">Salin ke mata kuliah lain dengan deadline baru</div>
+                </div>
+                <button onClick={() => setDupTask(null)} className="text-muted hover:text-ink transition-colors"><X size={18} /></button>
+              </div>
+              <form onSubmit={handleDuplicate} className="px-6 py-5 space-y-4">
+                <div>
+                  <label className={modalLabelCls}>Judul Tugas Baru *</label>
+                  <input required value={dupForm.title} onChange={e => setDupForm(f => ({...f, title: e.target.value}))} className={modalInputCls} />
+                </div>
+                <div>
+                  <label className={modalLabelCls}>Mata Kuliah Target *</label>
+                  <select required value={dupForm.course} onChange={e => setDupForm(f => ({...f, course: e.target.value}))} className={modalInputCls}>
+                    <option value="">Pilih MK</option>
+                    {COURSES.map(c => <option key={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={modalLabelCls}>Deadline Baru *</label>
+                  <input required type="date" value={dupForm.deadline} onChange={e => setDupForm(f => ({...f, deadline: e.target.value}))} className={modalInputCls} />
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button type="button" onClick={() => setDupTask(null)} className="flex-1 border border-border text-muted hover:text-ink py-2 rounded-lg text-[13px] transition-colors">Batal</button>
+                  <button type="submit" className="flex-1 bg-forest text-white hover:bg-forest-2 py-2 rounded-lg text-[13px] font-semibold transition-colors">📋 Duplikat</button>
+                </div>
+              </form>
             </div>
           </div>
         </>
@@ -416,7 +495,12 @@ export default function DosenTugasPage() {
                 <tr key={task.id} className={`border-b border-border/50 last:border-0 hover:bg-forest/[0.03] transition-colors ${statusKey === "selesai" ? "opacity-60" : ""}`}>
                   <td className="py-3.5 px-4">
                     <div className="font-semibold text-ink">{task.title}</div>
-                    <div className="text-[11px] text-muted mt-0.5">Deadline {formatDate(task.deadline)}</div>
+                    <div className="text-[11px] text-muted mt-0.5 flex items-center gap-2">
+                      <span>Deadline {formatDate(task.deadline)}</span>
+                      {(task.tolerance ?? 0) > 0 && (
+                        <span className="text-[10px] bg-gold/10 text-gold px-1.5 py-0.5 rounded">+{task.tolerance}j toleransi</span>
+                      )}
+                    </div>
                   </td>
                   <td className="py-3.5 px-4">
                     <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${mkColor(task.course)}`}>{task.course}</span>
@@ -472,6 +556,12 @@ export default function DosenTugasPage() {
                         className="bg-paper text-rose border-[1.5px] border-rose/25 hover:bg-rose/5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all"
                       >
                         Hapus
+                      </button>
+                      <button
+                        onClick={() => openDuplicate(task)}
+                        className="bg-paper text-gold border-[1.5px] border-gold/30 hover:bg-gold/5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all whitespace-nowrap"
+                      >
+                        📋 Duplikat
                       </button>
                     </div>
                   </td>

@@ -17,7 +17,7 @@ export default function MahasiswaLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQ, setSearchQ] = useState("");
 
-  useEffect(() => { setSearchQ(""); setSidebarOpen(false); }, [pathname]);
+  useEffect(() => { setSearchQ(""); setSidebarOpen(false); setIsProfileOpen(false); }, [pathname]);
 
   useEffect(() => {
     setMounted(true);
@@ -34,19 +34,19 @@ export default function MahasiswaLayout({ children }: { children: ReactNode }) {
       {/* SIDEBAR */}
       {/* Mobile overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 z-30 bg-black/40 min-[1400px]:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       <aside className={cn(
         "w-[240px] flex-shrink-0 bg-mhs-surface border-r border-mhs-border flex flex-col fixed inset-y-0 left-0 z-40 py-7 transition-transform duration-200",
-        sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        sidebarOpen ? "translate-x-0" : "-translate-x-full min-[1400px]:translate-x-0"
       )}>
         <div className="px-6 pb-7 border-b border-mhs-border flex items-center justify-between">
           <div>
             <div className="font-serif text-[22px] text-mhs-amber leading-none">📚 AcadTrack</div>
             <div className="text-[10px] text-mhs-muted tracking-[0.12em] uppercase mt-1">SIM Tugas & Proyek Kuliah</div>
           </div>
-          <button className="lg:hidden text-mhs-muted" onClick={() => setSidebarOpen(false)}>
+          <button className="min-[1400px]:hidden text-mhs-muted" onClick={() => setSidebarOpen(false)}>
             <X size={18} />
           </button>
         </div>
@@ -73,7 +73,7 @@ export default function MahasiswaLayout({ children }: { children: ReactNode }) {
             pathname === "/mahasiswa/proyek" ? "bg-mhs-amber/10 text-mhs-amber" : "text-mhs-muted hover:bg-mhs-card hover:text-mhs-text"
           )}>
             {pathname === "/mahasiswa/proyek" && <div className="absolute left-0 top-1/2 -translate-y-1/2 h-[60%] w-[3px] bg-mhs-amber rounded-r-sm" />}
-            <span className="text-[16px] w-5 text-center">🗂</span> Proyek
+            <span className="text-[16px] w-5 text-center">🗂</span> Tugas Kelompok
           </Link>
           <Link href="/mahasiswa/kelompok" className={cn(
             "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13.5px] font-medium transition-all mb-0.5 relative group",
@@ -165,16 +165,16 @@ export default function MahasiswaLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="lg:ml-[240px] flex-1 flex flex-col min-h-screen bg-mhs-bg">
+      <main className="min-[1400px]:ml-[240px] flex-1 flex flex-col min-h-screen bg-mhs-bg">
         {/* TOPBAR */}
-        <header className="sticky top-0 z-10 bg-mhs-bg/85 backdrop-blur-md border-b border-mhs-border px-4 lg:px-8 py-3.5 flex items-center gap-3">
-          <button className="lg:hidden text-mhs-muted mr-1" onClick={() => setSidebarOpen(true)}>
+        <header className="sticky top-0 z-10 bg-mhs-bg/85 backdrop-blur-md border-b border-mhs-border px-4 min-[1400px]:px-8 py-3.5 flex items-center gap-3">
+          <button className="min-[1400px]:hidden text-mhs-muted mr-1" onClick={() => setSidebarOpen(true)}>
             <Menu size={20} />
           </button>
           <div className="font-serif text-xl flex-1 text-mhs-text">
             {pathname === "/mahasiswa" && <><span>Dashboard</span> <span className="text-mhs-amber">Semester Genap 2024/25</span></>}
             {pathname === "/mahasiswa/tugas" && <><span>Manajemen</span> <span className="text-mhs-amber">Tugas</span></>}
-            {pathname === "/mahasiswa/proyek" && <><span>Manajemen</span> <span className="text-mhs-amber">Proyek</span></>}
+            {pathname === "/mahasiswa/proyek" && <><span>Tugas</span> <span className="text-mhs-amber">Kelompok</span></>}
             {pathname === "/mahasiswa/kelompok" && <><span>Data</span> <span className="text-mhs-amber">Kelompok</span></>}
             {pathname === "/mahasiswa/kalender" && <><span>Kalender</span> <span className="text-mhs-amber">Deadline</span></>}
             {pathname === "/mahasiswa/laporan" && <><span>Laporan &amp;</span> <span className="text-mhs-amber">Statistik</span></>}
@@ -201,9 +201,6 @@ export default function MahasiswaLayout({ children }: { children: ReactNode }) {
             />
           </div>
           
-          <button className="bg-mhs-card text-mhs-muted border border-mhs-border hover:text-mhs-text hover:border-mhs-muted px-4 py-2 rounded-lg text-[13px] font-semibold transition-all">
-            📥 Impor RPS
-          </button>
         </header>
 
         {/* PAGE CONTENT */}

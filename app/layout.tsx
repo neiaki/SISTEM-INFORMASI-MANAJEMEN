@@ -3,9 +3,17 @@ import type { ReactNode } from "react";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata = {
-  title: "SIM Tugas | Sistem Manajemen Tugas & Proyek Kuliah",
+  title: "AcadTrack — Platform E-Learning Universitas Pamulang",
   description:
-    "Frontend prototype Sistem Manajemen Tugas & Proyek Kuliah berbasis PRD — Next.js, Tailwind CSS, dark premium UI.",
+    "Sistem manajemen pembelajaran digital terintegrasi untuk mahasiswa dan dosen Universitas Pamulang. Kelola tugas, jurnal, kuis, dan penilaian dalam satu platform.",
+  openGraph: {
+    title: "AcadTrack — Platform E-Learning Universitas Pamulang",
+    description:
+      "Sistem manajemen pembelajaran digital terintegrasi untuk mahasiswa dan dosen Universitas Pamulang.",
+    siteName: "AcadTrack",
+    locale: "id_ID",
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

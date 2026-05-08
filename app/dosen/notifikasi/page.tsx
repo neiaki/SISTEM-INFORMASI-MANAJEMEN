@@ -1,9 +1,21 @@
 "use client";
 
+import { useState } from "react";
+import { X } from "lucide-react";
 import { createSeedData } from "@/data/sim-data";
 import { useNotifStore } from "@/lib/notifStore";
 
 const data = createSeedData().dosen;
+
+const COURSES = ["Analisis SI", "Keamanan Sistem", "SI Enterprise", "PPL", "Interaksi Manusia & Komputer"];
+
+type Broadcast = {
+  key: string;
+  title: string;
+  message: string;
+  target: string;
+  time: string;
+};
 
 const KIND_CONFIG = {
   review:  { icon: "⚠️", bg: "bg-rose/10",    color: "text-rose",   label: "Review",      labelCls: "bg-rose/10 text-rose" },
@@ -13,46 +25,145 @@ const KIND_CONFIG = {
 };
 
 const STATIC_NOTIFS = [
-  { icon: "📥", bg: "bg-gold/10", color: "text-gold", label: "Pengumpulan", labelCls: "bg-gold/15 text-gold",
+  { icon: "📥", bg: "bg-gold/10", color: "text-gold", label: "Pengumpulan", labelCls: "bg-gold/15 text-gold", category: "sistem",
     title: "3 tugas baru dikumpulkan mahasiswa", message: "Laporan Praktikum Sorting · Pemrograman Lanjut", time: "Baru saja" },
-  { icon: "⏰", bg: "bg-rose/10", color: "text-rose", label: "Deadline", labelCls: "bg-rose/10 text-rose",
+  { icon: "⏰", bg: "bg-rose/10", color: "text-rose", label: "Deadline", labelCls: "bg-rose/10 text-rose", category: "sistem",
     title: 'Deadline "ERD Perpustakaan" besok', message: "18 mahasiswa belum mengumpulkan · Basis Data", time: "2 jam lalu" },
-  { icon: "✅", bg: "bg-forest/10", color: "text-forest", label: "Info", labelCls: "bg-forest/10 text-forest",
+  { icon: "✅", bg: "bg-forest/10", color: "text-forest", label: "Info", labelCls: "bg-forest/10 text-forest", category: "sistem",
     title: "Nilai Quiz Algoritma berhasil disimpan", message: "34/36 mahasiswa dinilai · Pemrograman Lanjut", time: "Kemarin" },
+];
+
+const TEMPLATES = [
+  { label: "⏰ Pengingat Deadline", title: "Pengingat Deadline Tugas", message: "Reminder: Tugas [nama] akan deadline dalam 2 hari. Segera kumpulkan sebelum batas waktu." },
+  { label: "✏️ Revisi Tugas",       title: "Mohon Lakukan Revisi",    message: "Mohon revisi tugas [nama] sesuai feedback yang diberikan. Hubungi dosen jika ada pertanyaan." },
+  { label: "📊 Info Nilai",         title: "Nilai Sudah Dipublikasi",  message: "Nilai tugas [nama] sudah dipublikasikan. Silakan cek di halaman rekap pengumpulan." },
 ];
 
 export default function DosenNotifikasiPage() {
   const { readIds, markRead, togglePref, getPrefs } = useNotifStore("dosen");
   const prefs = getPrefs(data.preferences);
 
-  const allNotifs = [
+  const [broadcasts, setBroadcasts]   = useState<Broadcast[]>([]);
+  const [activeTab, setActiveTab]     = useState("semua");
+  const [modalOpen, setModalOpen]     = useState(false);
+  const [form, setForm]               = useState({ title: "", message: "", target: "semua" });
+
+  const seedNotifs = [
     ...STATIC_NOTIFS.map((n, i) => ({ ...n, key: `dosen-notif-${i}` })),
     ...data.notifications.map((n, i) => {
       const cfg = KIND_CONFIG[n.kind as keyof typeof KIND_CONFIG] ?? KIND_CONFIG.info;
-      return { ...cfg, title: n.title, message: n.message, time: n.time, key: `dosen-notif-${STATIC_NOTIFS.length + i}` };
+      return { ...cfg, category: "sistem" as const, title: n.title, message: n.message, time: n.time, key: `dosen-notif-${STATIC_NOTIFS.length + i}` };
     }),
   ];
 
-  const unread = allNotifs.filter(n => !readIds.includes(n.key)).length;
+  const broadcastNotifs = broadcasts.map(b => ({
+    key: b.key,
+    icon: "📢",
+    bg: "bg-forest/10",
+    color: "text-forest",
+    label: "Broadcast",
+    labelCls: "bg-forest/15 text-forest",
+    category: "broadcast" as const,
+    title: b.title,
+    message: `${b.message}${b.target !== "semua" ? ` · ${b.target}` : " · Semua mahasiswa"}`,
+    time: b.time,
+  }));
+
+  const allNotifs = [...broadcastNotifs, ...seedNotifs];
+
+  const filtered = allNotifs.filter(n => {
+    if (activeTab === "belum-dibaca") return !readIds.includes(n.key);
+    if (activeTab === "broadcast")   return n.category === "broadcast";
+    if (activeTab === "sistem")      return n.category === "sistem";
+    return true;
+  });
+
+  const unread      = allNotifs.filter(n => !readIds.includes(n.key)).length;
+  const unreadBcast = broadcastNotifs.filter(n => !readIds.includes(n.key)).length;
+
+  function handleMarkAllRead() {
+    allNotifs.forEach(n => { if (!readIds.includes(n.key)) markRead(n.key); });
+  }
+
+  function handleSendBroadcast() {
+    if (!form.title.trim() || !form.message.trim()) return;
+    const now  = new Date();
+    const time = `${now.getHours().toString().padStart(2,"0")}:${now.getMinutes().toString().padStart(2,"0")}`;
+    const b: Broadcast = {
+      key: `broadcast-${Date.now()}`,
+      title: form.title,
+      message: form.message,
+      target: form.target,
+      time,
+    };
+    setBroadcasts(prev => [b, ...prev]);
+    setForm({ title: "", message: "", target: "semua" });
+    setModalOpen(false);
+  }
+
+  function applyTemplate(t: typeof TEMPLATES[0]) {
+    setForm(f => ({ ...f, title: t.title, message: t.message }));
+  }
+
+  const tabs = [
+    { id: "semua",        label: "Semua",        count: allNotifs.length },
+    { id: "belum-dibaca", label: "Belum Dibaca",  count: unread           },
+    { id: "broadcast",    label: "Broadcast",     count: broadcastNotifs.length },
+    { id: "sistem",       label: "Sistem",         count: seedNotifs.length    },
+  ];
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Header */}
       <div className="flex items-end justify-between">
         <div>
           <div className="text-[11px] text-muted uppercase tracking-[0.1em] mb-0.5">Modul</div>
           <div className="font-serif text-[24px] text-ink">Notifikasi</div>
         </div>
-        {unread > 0 && (
-          <span className="text-[12px] bg-rose/10 text-rose font-semibold px-3 py-1 rounded-full border border-rose/20">
-            {unread} belum dibaca
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {unread > 0 && (
+            <button onClick={handleMarkAllRead} className="text-[12px] text-forest hover:underline font-medium">
+              Tandai semua dibaca
+            </button>
+          )}
+          <button
+            onClick={() => setModalOpen(true)}
+            className="bg-forest text-white hover:bg-forest/90 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all flex items-center gap-1.5"
+          >
+            📢 Buat Pengumuman
+          </button>
+        </div>
       </div>
 
+      {/* Filter Tabs */}
+      <div className="flex gap-1 bg-cream border border-border rounded-xl p-1 max-w-fit">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12.5px] font-medium transition-all ${
+              activeTab === tab.id ? "bg-paper text-ink shadow-sm" : "text-muted hover:text-ink"
+            }`}
+          >
+            {tab.label}
+            {tab.count > 0 && (
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${
+                activeTab === tab.id ? "bg-forest/15 text-forest" : "bg-border text-muted"
+              }`}>
+                {tab.count}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Notif List */}
       <div className="bg-paper border-[1.5px] border-border rounded-[14px] shadow-[0_1px_6px_rgba(26,26,20,0.06)] max-w-2xl">
-        {allNotifs.map((notif, i) => {
+        {filtered.length === 0 ? (
+          <div className="py-12 text-center text-muted text-[13px]">Tidak ada notifikasi di kategori ini.</div>
+        ) : filtered.map((notif, i) => {
           const isRead = readIds.includes(notif.key);
-          const isLast = i === allNotifs.length - 1;
+          const isLast = i === filtered.length - 1;
           return (
             <div
               key={notif.key}
@@ -82,6 +193,7 @@ export default function DosenNotifikasiPage() {
         })}
       </div>
 
+      {/* Preferensi */}
       <div>
         <div className="text-[14px] font-semibold text-ink mb-3">⚙️ Preferensi Notifikasi</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
@@ -103,6 +215,88 @@ export default function DosenNotifikasiPage() {
           ))}
         </div>
       </div>
+
+      {/* Modal Broadcast */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setModalOpen(false)} />
+          <div className="relative bg-paper border border-border rounded-2xl shadow-2xl w-full max-w-lg animate-fadeIn">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-border">
+              <div>
+                <h2 className="font-serif text-[18px] text-ink">Buat Pengumuman</h2>
+                <div className="text-[12px] text-muted mt-0.5">Broadcast ke mahasiswa</div>
+              </div>
+              <button onClick={() => setModalOpen(false)} className="text-muted hover:text-ink transition-colors p-1">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-4">
+              {/* Templates */}
+              <div>
+                <div className="text-[11px] text-muted uppercase tracking-wider mb-2">Template Cepat</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {TEMPLATES.map(t => (
+                    <button
+                      key={t.label}
+                      onClick={() => applyTemplate(t)}
+                      className="text-[11.5px] font-medium px-2.5 py-1 rounded-lg bg-cream border border-border hover:border-forest hover:text-forest transition-all"
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-muted uppercase tracking-wider mb-1.5">Judul <span className="text-rose">*</span></label>
+                <input
+                  value={form.title}
+                  onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                  placeholder="Judul pengumuman…"
+                  className="w-full bg-cream border-[1.5px] border-border text-ink rounded-lg px-3 py-2 text-[13.5px] outline-none focus:border-forest transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-muted uppercase tracking-wider mb-1.5">Pesan <span className="text-rose">*</span></label>
+                <textarea
+                  value={form.message}
+                  onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+                  placeholder="Isi pesan pengumuman…"
+                  rows={3}
+                  className="w-full bg-cream border-[1.5px] border-border text-ink rounded-lg px-3 py-2 text-[13.5px] outline-none focus:border-forest transition-colors resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-muted uppercase tracking-wider mb-1.5">Target Penerima</label>
+                <select
+                  value={form.target}
+                  onChange={e => setForm(f => ({ ...f, target: e.target.value }))}
+                  className="w-full bg-cream border-[1.5px] border-border text-ink rounded-lg px-3 py-2 text-[13.5px] outline-none focus:border-forest transition-colors"
+                >
+                  <option value="semua">Semua Mahasiswa</option>
+                  {COURSES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-border flex gap-3">
+              <button onClick={() => setModalOpen(false)} className="flex-1 border border-border text-muted hover:text-ink py-2 rounded-lg text-[13px] font-semibold transition-all">
+                Batal
+              </button>
+              <button
+                onClick={handleSendBroadcast}
+                disabled={!form.title.trim() || !form.message.trim()}
+                className="flex-1 bg-forest text-white hover:bg-forest/90 disabled:opacity-40 disabled:cursor-not-allowed py-2 rounded-lg text-[13px] font-semibold transition-all"
+              >
+                📢 Kirim Pengumuman
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

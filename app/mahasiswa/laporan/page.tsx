@@ -38,6 +38,14 @@ const courseStats = courses.map((course, idx) => {
 
 const maxWeekly = Math.max(...data.report.weekly.map(w => w.done));
 
+const MATKUL_DATA = [
+  { name: "Analisis SI",    avg: 87, done: 10, total: 12, classAvg: 81, barColor: "bg-mhs-amber"  },
+  { name: "Keamanan Sistem",avg: 74, done: 8,  total: 12, classAvg: 71, barColor: "bg-mhs-rose"   },
+  { name: "SI Enterprise",  avg: 91, done: 11, total: 12, classAvg: 83, barColor: "bg-mhs-teal"   },
+  { name: "PPL",            avg: 82, done: 9,  total: 12, classAvg: 79, barColor: "bg-mhs-green"  },
+  { name: "IMK",            avg: 78, done: 8,  total: 11, classAvg: 75, barColor: "bg-mhs-purple" },
+];
+
 export default function LaporanPage() {
   const handleExportCSV = () => {
     const rows = data.tasks.map(t => ({
@@ -70,30 +78,26 @@ export default function LaporanPage() {
       </div>
 
       {/* STAT CARDS */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div className="bg-mhs-card border border-mhs-border rounded-xl p-5 relative overflow-hidden hover:-translate-y-[3px] transition-transform">
           <div className="absolute -top-7 -right-7 w-20 h-20 rounded-full bg-mhs-green opacity-10" />
           <div className="w-9 h-9 rounded-lg bg-mhs-green/15 text-mhs-green flex items-center justify-center text-lg mb-3.5">✅</div>
-          <div className="font-serif text-[32px] leading-none text-mhs-text">{totalDone}</div>
-          <div className="text-[12px] text-mhs-muted mt-1">Total Selesai</div>
+          <div className="font-serif text-[32px] leading-none text-mhs-text">{totalDone}<span className="text-[16px] text-mhs-muted ml-1">/ 59</span></div>
+          <div className="text-[12px] text-mhs-muted mt-1">Total Tugas Selesai</div>
         </div>
         <div className="bg-mhs-card border border-mhs-border rounded-xl p-5 relative overflow-hidden hover:-translate-y-[3px] transition-transform">
           <div className="absolute -top-7 -right-7 w-20 h-20 rounded-full bg-mhs-amber opacity-10" />
-          <div className="w-9 h-9 rounded-lg bg-mhs-amber/15 text-mhs-amber flex items-center justify-center text-lg mb-3.5">⏳</div>
-          <div className="font-serif text-[32px] leading-none text-mhs-text">{totalActive}</div>
-          <div className="text-[12px] text-mhs-muted mt-1">Masih Berjalan</div>
-        </div>
-        <div className="bg-mhs-card border border-mhs-border rounded-xl p-5 relative overflow-hidden hover:-translate-y-[3px] transition-transform">
-          <div className="absolute -top-7 -right-7 w-20 h-20 rounded-full bg-mhs-rose opacity-10" />
-          <div className="w-9 h-9 rounded-lg bg-mhs-rose/15 text-mhs-rose flex items-center justify-center text-lg mb-3.5">⚠️</div>
-          <div className="font-serif text-[32px] leading-none text-mhs-text">{totalLate}</div>
-          <div className="text-[12px] text-mhs-muted mt-1">Terlambat</div>
+          <div className="w-9 h-9 rounded-lg bg-mhs-amber/15 text-mhs-amber flex items-center justify-center text-lg mb-3.5">🏅</div>
+          <div className="font-serif text-[32px] leading-none text-mhs-text">82.4</div>
+          <div className="text-[12px] text-mhs-muted mt-1">Rata-rata Nilai</div>
+          <div className="text-[11px] mt-2 text-mhs-teal">+1.2 dari semester lalu</div>
         </div>
         <div className="bg-mhs-card border border-mhs-border rounded-xl p-5 relative overflow-hidden hover:-translate-y-[3px] transition-transform">
           <div className="absolute -top-7 -right-7 w-20 h-20 rounded-full bg-mhs-teal opacity-10" />
-          <div className="w-9 h-9 rounded-lg bg-mhs-teal/15 text-mhs-teal flex items-center justify-center text-lg mb-3.5">📈</div>
-          <div className="font-serif text-[32px] leading-none text-mhs-text">{avgProgress}%</div>
-          <div className="text-[12px] text-mhs-muted mt-1">Rata-rata Progres Proyek</div>
+          <div className="w-9 h-9 rounded-lg bg-mhs-teal/15 text-mhs-teal flex items-center justify-center text-lg mb-3.5">⏰</div>
+          <div className="font-serif text-[32px] leading-none text-mhs-text">91%</div>
+          <div className="text-[12px] text-mhs-muted mt-1">Tepat Waktu</div>
+          <div className="text-[11px] mt-2 text-mhs-muted">{totalLate} terlambat · {totalActive} berjalan</div>
         </div>
       </div>
 
@@ -197,6 +201,70 @@ export default function LaporanPage() {
                 </td>
               </tr>
             ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* GRAFIK PROGRES PER MATA KULIAH */}
+      <div className="bg-mhs-card border border-mhs-border rounded-[14px] p-5">
+        <h3 className="text-[14px] font-semibold text-mhs-text mb-5">📊 Grafik Nilai per Mata Kuliah</h3>
+        <div className="flex flex-col gap-4">
+          {MATKUL_DATA.map(mk => (
+            <div key={mk.name}>
+              <div className="flex items-center gap-3 mb-1">
+                <span className="text-[12px] font-medium text-mhs-text w-36 shrink-0">{mk.name}</span>
+                <div className="flex-1 h-5 bg-mhs-border/50 rounded-full overflow-hidden relative">
+                  <div
+                    className={`h-full ${mk.barColor} rounded-full transition-all duration-700`}
+                    style={{ width: `${mk.avg}%` }}
+                  />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-white mix-blend-screen">
+                    {mk.avg}
+                  </span>
+                </div>
+                <span className="text-[13px] font-mono font-semibold text-mhs-text w-8 text-right">{mk.avg}</span>
+              </div>
+              <div className="ml-[156px] text-[10px] text-mhs-muted">{mk.done}/{mk.total} tugas selesai</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* PERBANDINGAN DENGAN RATA-RATA KELAS */}
+      <div className="bg-mhs-card border border-mhs-border rounded-[14px] overflow-hidden">
+        <div className="px-5 py-4 border-b border-mhs-border">
+          <h3 className="text-[14px] font-semibold text-mhs-text">🏆 Perbandingan dengan Rata-rata Kelas</h3>
+        </div>
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="bg-mhs-surface/50">
+              {["Mata Kuliah", "Nilai Saya", "Rata-rata Kelas", "Selisih", "Status"].map(h => (
+                <th key={h} className="text-left py-2.5 px-5 text-[11px] font-semibold text-mhs-muted uppercase tracking-[0.06em] border-b border-mhs-border">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {MATKUL_DATA.map(mk => {
+              const selisih = mk.avg - mk.classAvg;
+              const diAtas = selisih >= 0;
+              return (
+                <tr key={mk.name} className="border-t border-mhs-border/50 hover:bg-mhs-hover transition-colors">
+                  <td className="py-3 px-5 font-medium text-mhs-text">{mk.name}</td>
+                  <td className="py-3 px-5 font-mono font-semibold text-mhs-text">{mk.avg}</td>
+                  <td className="py-3 px-5 font-mono text-mhs-muted">{mk.classAvg}</td>
+                  <td className="py-3 px-5">
+                    <span className={`font-mono font-semibold text-[13px] ${diAtas ? "text-mhs-teal" : "text-mhs-rose"}`}>
+                      {diAtas ? "+" : ""}{selisih}
+                    </span>
+                  </td>
+                  <td className="py-3 px-5">
+                    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${diAtas ? "bg-mhs-teal/10 text-mhs-teal" : "bg-mhs-rose/10 text-mhs-rose"}`}>
+                      {diAtas ? "Di Atas Rata-rata" : "Di Bawah Rata-rata"}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

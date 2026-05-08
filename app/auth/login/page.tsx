@@ -227,8 +227,6 @@ export default function LoginPage() {
                 >
                   <option value="mahasiswa" className="bg-[#1e293b]">Mahasiswa</option>
                   <option value="dosen" className="bg-[#1e293b]">Dosen</option>
-                  <option value="admin" className="bg-[#1e293b]">Admin Kampus</option>
-                  <option value="staff_tu" className="bg-[#1e293b]">Staff TU</option>
                 </select>
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#94a3b8]">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>

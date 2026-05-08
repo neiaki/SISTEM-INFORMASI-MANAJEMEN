@@ -166,6 +166,16 @@ export default function DosenRekapPage() {
     flash("File CSV berhasil diunduh!");
   }
 
+  const gradeValues = Object.values(grades).map(v => parseFloat(v)).filter(v => !isNaN(v));
+  const gradeBuckets = {
+    A: gradeValues.filter(v => v >= 85).length,
+    B: gradeValues.filter(v => v >= 70 && v < 85).length,
+    C: gradeValues.filter(v => v >= 55 && v < 70).length,
+    D: gradeValues.filter(v => v >= 40 && v < 55).length,
+    E: gradeValues.filter(v => v < 40).length,
+  } as const;
+  const maxBucket = Math.max(...Object.values(gradeBuckets), 1);
+
   const displayRows = topbarQ
     ? mockRows.filter(r => r.name.toLowerCase().includes(topbarQ.toLowerCase()) || r.nim.includes(topbarQ))
     : mockRows;
@@ -524,6 +534,44 @@ export default function DosenRekapPage() {
               <Bell size={14} /> Kirim Notifikasi ke Mahasiswa
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Distribusi Nilai */}
+      {task && (
+        <div className="bg-paper border-[1.5px] border-border rounded-[14px] shadow-[0_1px_6px_rgba(26,26,20,0.06)] p-5">
+          <div className="font-semibold text-ink text-[14px] mb-1">📊 Distribusi Nilai</div>
+          <div className="text-[12px] text-muted mb-4">
+            {gradeValues.length === 0
+              ? "Belum ada penilaian — isi nilai di tabel lalu simpan"
+              : `${gradeValues.length} mahasiswa dinilai · rata-rata ${(gradeValues.reduce((a, b) => a + b, 0) / gradeValues.length).toFixed(1)}`}
+          </div>
+          {gradeValues.length > 0 ? (
+            <div className="flex items-end gap-5 h-[130px]">
+              {(["A","B","C","D","E"] as const).map(grade => {
+                const count = gradeBuckets[grade];
+                const COLORS: Record<string, string> = { A: "bg-forest", B: "bg-teal", C: "bg-gold", D: "bg-rose/80", E: "bg-rose/50" };
+                const RANGE:  Record<string, string> = { A: "85–100", B: "70–84", C: "55–69", D: "40–54", E: "<40" };
+                return (
+                  <div key={grade} className="flex-1 flex flex-col items-center gap-1">
+                    <span className="text-[12px] font-mono text-ink-2 min-h-[18px]">{count > 0 ? count : ""}</span>
+                    <div className="w-full flex items-end justify-center h-[72px]">
+                      <div
+                        className={`w-full rounded-t-md transition-all duration-500 ${COLORS[grade]}`}
+                        style={{ height: `${count > 0 ? Math.max((count / maxBucket) * 72, 6) : 0}px` }}
+                      />
+                    </div>
+                    <span className="text-[14px] font-bold text-ink">{grade}</span>
+                    <span className="text-[10px] text-muted">{RANGE[grade]}</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="h-[100px] flex items-center justify-center border-[1.5px] border-dashed border-border rounded-xl text-muted text-[13px]">
+              Isi nilai di tabel lalu klik &quot;Simpan Semua Nilai&quot;
+            </div>
+          )}
         </div>
       )}
 

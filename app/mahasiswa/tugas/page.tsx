@@ -235,10 +235,11 @@ export default function TugasPage() {
 
   const filtered = tasks.filter(t => {
     const matchFilter =
-      filter === "semua"   ? true :
-      filter === "aktif"   ? effectiveStatus(t, storeData[t.id]) !== "selesai" :
-      filter === "selesai" ? effectiveStatus(t, storeData[t.id]) === "selesai" :
-      filter === "deadline" ? (() => { const d = Math.ceil((new Date(t.deadline).getTime() - Date.now()) / 86400000); return d >= 0 && d <= 7 && effectiveStatus(t, storeData[t.id]) !== "selesai"; })() : true;
+      filter === "semua"    ? true :
+      filter === "aktif"    ? effectiveStatus(t, storeData[t.id]) !== "selesai" :
+      filter === "selesai"  ? effectiveStatus(t, storeData[t.id]) === "selesai" :
+      filter === "deadline" ? (() => { const d = Math.ceil((new Date(t.deadline).getTime() - Date.now()) / 86400000); return d >= 0 && d <= 7 && effectiveStatus(t, storeData[t.id]) !== "selesai"; })() :
+      filter === "terlambat" ? (() => { return new Date(t.deadline).getTime() < Date.now() && effectiveStatus(t, storeData[t.id]) !== "selesai"; })() : true;
     const term = search || topbarQ;
     const matchSearch = term === "" || t.title.toLowerCase().includes(term.toLowerCase()) || t.course.toLowerCase().includes(term.toLowerCase());
     return matchFilter && matchSearch;
@@ -248,7 +249,8 @@ export default function TugasPage() {
     { id: "semua",   label: "Semua",   count: tasks.length },
     { id: "aktif",   label: "Aktif",   count: tasks.filter(t => effectiveStatus(t, storeData[t.id]) !== "selesai").length },
     { id: "selesai", label: "Selesai", count: tasks.filter(t => effectiveStatus(t, storeData[t.id]) === "selesai").length },
-    { id: "deadline", label: "Mepet",  count: tasks.filter(t => { const d = Math.ceil((new Date(t.deadline).getTime() - Date.now()) / 86400000); return d >= 0 && d <= 7 && effectiveStatus(t, storeData[t.id]) !== "selesai"; }).length },
+    { id: "deadline",  label: "Mendesak",  count: tasks.filter(t => { const d = Math.ceil((new Date(t.deadline).getTime() - Date.now()) / 86400000); return d >= 0 && d <= 7 && effectiveStatus(t, storeData[t.id]) !== "selesai"; }).length },
+    { id: "terlambat", label: "Terlambat", count: tasks.filter(t => new Date(t.deadline).getTime() < Date.now() && effectiveStatus(t, storeData[t.id]) !== "selesai").length },
   ];
 
   return (

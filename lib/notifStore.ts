@@ -62,6 +62,16 @@ export function useNotifStore(role: string) {
     [state.prefOverrides, role]
   );
 
+  const markAllRead = useCallback((prefix: string, total: number) => {
+    const ids = Array.from({ length: total }, (_, i) => `${prefix}-notif-${i}`);
+    setState(prev => {
+      const merged = Array.from(new Set([...prev.readIds, ...ids]));
+      const next = { ...prev, readIds: merged };
+      persist(next);
+      return next;
+    });
+  }, []);
+
   const unreadCount = useCallback(
     (prefix: string, total: number) =>
       Array.from({ length: total }, (_, i) => `${prefix}-notif-${i}`).filter(
@@ -70,7 +80,7 @@ export function useNotifStore(role: string) {
     [state.readIds]
   );
 
-  return { readIds: state.readIds, markRead, togglePref, getPrefs, unreadCount };
+  return { readIds: state.readIds, markRead, markAllRead, togglePref, getPrefs, unreadCount };
 }
 
 export function getUnreadCount(prefix: string, total: number): number {

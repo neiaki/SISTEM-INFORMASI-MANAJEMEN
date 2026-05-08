@@ -22,6 +22,10 @@ build
 # Vercel
 .vercel
 
+# Logs (catch-all)
+*.log
+logs/
+
 # Debug logs
 npm-debug.log*
 yarn-debug.log*
@@ -38,6 +42,16 @@ Thumbs.db
 .idea/
 *.swp
 *~
+
+# Testing
+coverage/
+test-results/
+playwright-report/
+.playwright/
+
+# Cache
+.turbo/
+.cache/
 
 # Local Claude Code settings
 .claude/settings.local.json

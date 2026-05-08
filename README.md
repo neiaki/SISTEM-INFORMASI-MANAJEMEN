@@ -1,19 +1,34 @@
-# SIM Tugas — Sistem Informasi Manajemen Tugas & Proyek Kuliah
+# AcadTrack — Sistem Informasi Manajemen Tugas & Proyek Kuliah
 
-Aplikasi web manajemen tugas dan proyek perkuliahan untuk mahasiswa, dosen, admin, dan staff TU — dibangun dengan Next.js 15 App Router + React 19 + Tailwind CSS v4.
+Platform web manajemen tugas dan proyek perkuliahan untuk mahasiswa, dosen, admin, dan staff TU — dibangun dengan Next.js 15 App Router + React 19 + Tailwind CSS v4.
+
+Landing page: `/` | Login: `/auth/login`
 
 ---
 
 ## Fitur Utama
 
+### Landing Page (`/`)
+- Hero section dengan animasi floating badge
+- Ekosistem section dengan count-up stats (mahasiswa, dosen, jurnal)
+- Fitur unggulan cards dengan hover icon animation
+- Testimoni section
+- FAQ accordion
+- Newsletter subscribe form
+- Sticky navbar dengan active section highlight & scroll progress bar
+- Back-to-top button
+- Dark mode toggle
+- Mobile hamburger menu
+- Footer dengan modal info per link
+
 ### Mahasiswa
 | Modul | Deskripsi |
 |---|---|
 | **Dashboard** | Ringkasan tugas aktif, deadline mendekat, dan progres semester |
-| **Tugas** | Daftar tugas per mata kuliah dengan status, prioritas, dan filter deadline |
-| **Proyek** | Manajemen proyek kelompok beserta detail aktivitas dan deliverable |
-| **Kelompok** | Lihat anggota kelompok, peran, dan info ketua |
-| **Participant** | Manajemen peserta kelompok |
+| **Tugas** | Daftar tugas per mata kuliah dengan status, prioritas, filter deadline; submit file & komentar |
+| **Proyek** | Manajemen proyek kelompok dengan modal detail lengkap dan buat proyek baru |
+| **Kelompok** | Lihat anggota kelompok, kirim undangan, edit kapasitas (maks 10), kick anggota, terima/tolak undangan masuk |
+| **Participant** | Daftar seluruh peserta (24 mahasiswa) dari data terpusat |
 | **Kalender** | Tampilan kalender deadline tugas dan milestone proyek |
 | **Laporan** | Statistik progres personal per mata kuliah |
 | **Log Aktivitas** | Riwayat aktivitas tugas dan proyek |
@@ -22,12 +37,13 @@ Aplikasi web manajemen tugas dan proyek perkuliahan untuk mahasiswa, dosen, admi
 ### Dosen
 | Modul | Deskripsi |
 |---|---|
-| **Dashboard** | Overview kelas, tugas aktif, dan progres mahasiswa |
+| **Dashboard** | Overview kelas, tugas aktif, widget "Baru Dikumpulkan" live dari localStorage, progres chart |
 | **Mata Kuliah** | Daftar mata kuliah yang diampu; klik untuk lihat submission tracker per tugas |
-| **Tugas** | Buat, edit, dan kelola tugas; status otomatis berdasarkan waktu terbit dan aksi Tutup/Buka Kembali |
-| **Kelompok** | Buat kelompok manual atau acak otomatis; edit anggota dan ukuran kelompok |
-| **Mahasiswa** | Data mahasiswa per mata kuliah dengan tabel nilai dan status keaktifan |
-| **Rekap** | Laporan rekapitulasi nilai dan progres kelas |
+| **Tugas** | Buat, edit, hapus tugas; filter per mata kuliah & status (Semua/Aktif/Selesai); status otomatis |
+| **Kelompok** | Buat kelompok manual atau acak otomatis (RNG fair); edit anggota dan ukuran kelompok |
+| **Mahasiswa** | Data mahasiswa per mata kuliah dengan modal detail per kelas |
+| **Rekap** | Rekapitulasi pengumpulan & komentar; dismiss per item atau tutup semua; reset ke seed data |
+| **Proyek** | Manajemen proyek kelas |
 | **Laporan** | Statistik dan insight per mata kuliah |
 | **Log Aktivitas** | Riwayat aktivitas pengelolaan tugas |
 | **Notifikasi** | Kirim reminder ke mahasiswa |
@@ -48,6 +64,9 @@ Aplikasi web manajemen tugas dan proyek perkuliahan untuk mahasiswa, dosen, admi
 | **Laporan** | Laporan administratif dan rekap data |
 | **Notifikasi** | Notifikasi urusan tata usaha |
 
+### Bantuan (`/bantuan`, `/bantuan/panduan`)
+Pusat bantuan dengan penjelasan fitur per section dan panduan pengguna step-by-step untuk role Mahasiswa dan Dosen.
+
 ---
 
 ## Tech Stack
@@ -61,8 +80,9 @@ Aplikasi web manajemen tugas dan proyek perkuliahan untuk mahasiswa, dosen, admi
 | Language | TypeScript |
 | State | `useState` / `localStorage` (no backend) |
 | Icons | Lucide React |
+| Fonts | Clash Display (heading) + Poppins (body) |
 
-> Saat ini aplikasi berjalan sebagai **frontend-only prototype** — semua data bersifat mock. Tidak ada database atau API nyata.
+> Aplikasi berjalan sebagai **frontend-only prototype** — semua data bersifat mock (seed data + localStorage). Tidak ada database atau API nyata.
 
 ---
 
@@ -70,7 +90,10 @@ Aplikasi web manajemen tugas dan proyek perkuliahan untuk mahasiswa, dosen, admi
 
 ```
 app/
-├── auth/login/         # Halaman login (pilih role)
+├── page.tsx            # Landing page (AcadTrack)
+├── auth/
+│   └── login/          # Halaman login (pilih role) + admin login
+├── bantuan/            # Pusat bantuan & panduan pengguna
 ├── mahasiswa/          # Dashboard & modul mahasiswa
 │   ├── tugas/
 │   ├── proyek/
@@ -86,6 +109,7 @@ app/
 │   ├── kelompok/
 │   ├── mahasiswa/
 │   ├── rekap/
+│   ├── proyek/
 │   ├── laporan/
 │   ├── log/
 │   └── notifikasi/
@@ -100,21 +124,22 @@ app/
 
 components/
 ├── ui/                 # shadcn/ui primitives
-├── empty-state.tsx     # Komponen state kosong
-├── task-detail-panel   # Modal detail tugas mahasiswa
-└── theme-provider.tsx  # Dark/light mode provider
+├── empty-state.tsx
+├── task-detail-panel/
+└── theme-provider.tsx
 
 lib/
-├── taskStore.ts        # Store state tugas
+├── taskStore.ts        # Store state tugas + seed submissions & comments
 ├── kelompokStore.ts    # Store state kelompok
+├── proyekStore.ts      # Store state proyek
 ├── notifStore.ts       # Store state notifikasi
 ├── activityLog.ts      # Helper log aktivitas
 ├── exportUtils.ts      # Utilitas ekspor/download
 ├── search-context.tsx  # Context pencarian global
-└── students-data.ts    # Data mock mahasiswa
+└── students-data.ts    # Data mock 24 mahasiswa (shared)
 
 data/
-└── sim-data.ts         # Semua mock data dan konstanta
+└── sim-data.ts         # Semua mock data dan konstanta konfigurasi
 ```
 
 ---
@@ -122,13 +147,8 @@ data/
 ## Menjalankan Proyek
 
 ```bash
-# Install dependencies
 npm install
-
-# Development server (http://localhost:3000)
-npm run dev
-
-# Production build
+npm run dev      # http://localhost:3000
 npm run build
 npm start
 ```
@@ -139,14 +159,14 @@ npm start
 
 Login di `/auth/login` — pilih role untuk masuk ke dashboard yang sesuai:
 
-| Role | Tema | Akses |
+| Role | Tema Warna | Akses |
 |---|---|---|
-| **Mahasiswa** | Amber/Teal | Tugas, proyek, dan aktivitas pribadi |
-| **Dosen** | Forest/Gold | Manajemen kelas, tugas, dan penilaian |
-| **Admin** | `adm-*` | Pantau seluruh sistem dan laporan agregat |
-| **Staff TU** | `stu-*` | Administrasi akademik dan laporan TU |
+| **Mahasiswa** | Amber / Teal | Tugas, proyek, dan aktivitas pribadi |
+| **Dosen** | Forest / Gold on Cream | Manajemen kelas, tugas, kelompok, dan penilaian |
+| **Admin** | `adm-*` vars | Pantau seluruh sistem dan laporan agregat |
+| **Staff TU** | `stu-*` vars | Administrasi akademik dan laporan TU |
 
-Tidak ada autentikasi nyata; semua state bersifat lokal.
+Tidak ada autentikasi nyata; semua state bersifat lokal (`localStorage`).
 
 ---
 
@@ -157,4 +177,5 @@ Tidak ada autentikasi nyata; semua state bersifat lokal.
 - [ ] Integrasi SIAKAD untuk impor data mahasiswa & mata kuliah
 - [ ] Notifikasi email dan Telegram bot
 - [ ] Integrasi LMS kampus
+- [ ] Export rekap ke PDF / Excel
 - [ ] Mobile-responsive layout yang dioptimalkan

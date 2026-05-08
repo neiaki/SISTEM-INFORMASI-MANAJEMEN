@@ -211,8 +211,38 @@ export function getInitials(name: string) {
 }
 
 // Untuk tab mahasiswa/participant — format NIM asli
-export const PARTICIPANTS = STUDENTS.map(s => ({
-  nim: s.nim,
-  nama: s.nama,
-  email: s.email,
-}));
+export const PARTICIPANTS: { nim: string; nama: string; email: string }[] = [
+  { nim: "231011450403", nama: "ANDRA RAFI IRGI",                  email: "andrarafirgi2@gmail.com"           },
+  { nim: "231011400651", nama: "BAGUS ICHA SAPUTRA",               email: "bagusichasp0@gmail.com"            },
+  { nim: "231011450408", nama: "DESTRAN ZAKIAN",                   email: "destranzkian4@gmail.com"           },
+  { nim: "231011450720", nama: "DIMAS",                            email: "dimasputra95@gmail.com"            },
+  { nim: "231011450234", nama: "EGA PRASETYO",                     email: "egaprstyo2@gmail.com"              },
+  { nim: "231011450136", nama: "FAHRIZ RIFKY PRATAMA",             email: "fahrizrifkyprt6@gmail.com"         },
+  { nim: "231011450577", nama: "FAIZ NOVAL",                       email: "faiznrnovall@gmail.com"            },
+  { nim: "231011450137", nama: "FANESHA RAHAYU",                   email: "neshafansha@gmail.com"             },
+  { nim: "231011450284", nama: "FEBIYANTO RIZKI QURBANDI",         email: "febiyanto2@proton.me"              },
+  { nim: "211011400695", nama: "HISA ARADEA",                      email: "hisaaradea@gmail.com"              },
+  { nim: "231011401516", nama: "KRISTIANUS BUTU",                  email: "kristianusbutu@gmail.com"          },
+  { nim: "231011400859", nama: "MALVIN RIZKI FADILAH",             email: "malvinrizkifadilah@gmail.com"      },
+  { nim: "231011450351", nama: "MAWAR ISKANDAR",                   email: "mawariskandar3@gmail.com"          },
+  { nim: "221011400826", nama: "MOCHAMMAD RAFLI SUFIYAN ANANDA",   email: "mochrafi@gmail.com"                },
+  { nim: "231011450131", nama: "MOHAMAD HILMI SABITUL AZMI",       email: "hilmisabitul@gmail.com"            },
+  { nim: "231011400378", nama: "MUHAMAD ALVITO SIDDIQ",            email: "siddiqalvito2@gmail.com"           },
+  { nim: "231011450416", nama: "MUHAMAD ANUGRAH FAHRI",            email: "muhamadanugrahfahri2@gmail.com"    },
+  { nim: "231011450692", nama: "MUHAMAD ZIDAN JULIANSYAH",         email: "zidanjuliansyah1@gmail.com"        },
+  { nim: "231011450646", nama: "MUHAMMAD ARDIANSYAH",              email: "ardiansyahmuhd2@gmail.com"         },
+  { nim: "231011450474", nama: "MUHAMMAD AULIAN MURAD NASUTION",   email: "aulianmuradnasution4@gmail.com"    },
+  { nim: "231011450449", nama: "MUHAMMAD FAZLI REZA",              email: "muhfazlireza@gmail.com"            },
+  { nim: "231011450540", nama: "MUHAMMAD HAECKAL FADHILAH",        email: "haeckalfadhilah4@gmail.com"        },
+  { nim: "231011450649", nama: "MUHAMMAD ILYASA ALIYAH",           email: "kilyasaaliyah3@gmail.com"          },
+  { nim: "231011450347", nama: "MUHAMMAD RAFIQ NOER AL MUNAWAR",   email: "frafiqnoermunawar1@gmail.com"      },
+  { nim: "231011450142", nama: "NURUL DWI WAHYUNI",                email: "nuruldwiwahyuni8@gmail.com"        },
+  { nim: "231011450534", nama: "RAFI AL GHIFARI MUJIANTO",         email: "alghifarimujianto3@gmail.com"      },
+  { nim: "231011450270", nama: "RAIHAN DAFA REGEN SETIAWAN",       email: "nraihannregensetia6@gmail.com"     },
+  { nim: "231011450161", nama: "RICHARD ZILDJIAN",                 email: "zildjianrichard3@gmail.com"        },
+  { nim: "231011450138", nama: "RICHET SOEDRAJAT PUTRA",           email: "richetsoedrajatptra@gmail.com"     },
+  { nim: "231011450132", nama: "SITI AJAMIA WOKAS",                email: "ajamiawokassiti4@gmail.com"        },
+  { nim: "231011450256", nama: "STEVEN EKAPUTRA",                  email: "stevenekaputra5@gmail.com"         },
+  { nim: "231011400943", nama: "TEGUH LESMANA PUTRA",              email: "teguhlesmanaptra3@gmail.com"       },
+  { nim: "231011450655", nama: "WISNU AMR FAATHIR",                email: "wisnuamrfaathir3@gmail.com"        },
+];

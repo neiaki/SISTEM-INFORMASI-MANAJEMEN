@@ -4,7 +4,7 @@ import { useState, useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { User, LogOut, X, CheckCircle } from "lucide-react";
+import { User, LogOut, Menu, X, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SearchContext } from "@/lib/search-context";
 
@@ -14,9 +14,10 @@ export default function DosenLayout({ children }: { children: ReactNode }) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQ, setSearchQ] = useState("");
-  useEffect(() => { setSearchQ(""); }, [pathname]);
+  useEffect(() => { setSearchQ(""); setSidebarOpen(false); }, [pathname]);
   const [modalSaved, setModalSaved] = useState(false);
   const [form, setForm] = useState({ title: "", course: "", type: "individu", deadline: "", description: "" });
 
@@ -57,11 +58,24 @@ export default function DosenLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen flex bg-cream text-ink font-sans">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-30 bg-black/40 min-[1400px]:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
       {/* SIDEBAR */}
-      <aside className="w-[248px] flex-shrink-0 bg-paper border-r border-border flex flex-col fixed inset-y-0 left-0 z-20 shadow-[2px_0_16px_rgba(26,26,20,0.08)]">
-        <div className="px-6 py-6 border-b border-border">
-          <div className="font-serif text-[20px] text-forest leading-none">📚 AcadTrack</div>
-          <div className="text-[10px] text-muted tracking-[0.12em] uppercase mt-1">Portal Dosen</div>
+      <aside className={cn(
+        "w-[248px] flex-shrink-0 bg-paper border-r border-border flex flex-col fixed inset-y-0 left-0 z-40 shadow-[2px_0_16px_rgba(26,26,20,0.08)] transition-transform duration-200",
+        sidebarOpen ? "translate-x-0" : "-translate-x-full min-[1400px]:translate-x-0"
+      )}>
+        <div className="px-6 py-6 border-b border-border flex items-center justify-between">
+          <div>
+            <div className="font-serif text-[20px] text-forest leading-none">📚 AcadTrack</div>
+            <div className="text-[10px] text-muted tracking-[0.12em] uppercase mt-1">Portal Dosen</div>
+          </div>
+          <button className="min-[1400px]:hidden text-muted" onClick={() => setSidebarOpen(false)}>
+            <X size={18} />
+          </button>
         </div>
 
         <nav className="flex-1 py-4 px-3 overflow-y-auto">
@@ -101,6 +115,13 @@ export default function DosenLayout({ children }: { children: ReactNode }) {
           )}>
             {pathname === "/dosen/kelompok" && <div className="absolute left-0 top-1/5 h-[60%] w-[3px] bg-forest rounded-r-sm" />}
             <span className="text-[16px] w-5 text-center">👥</span> Kelompok
+          </Link>
+          <Link href="/dosen/proyek" className={cn(
+            "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] font-medium transition-all mb-0.5 relative",
+            pathname === "/dosen/proyek" ? "bg-forest/10 text-forest font-semibold" : "text-muted hover:bg-cream hover:text-ink"
+          )}>
+            {pathname === "/dosen/proyek" && <div className="absolute left-0 top-1/5 h-[60%] w-[3px] bg-forest rounded-r-sm" />}
+            <span className="text-[16px] w-5 text-center">🗂</span> Tugas Kelompok
           </Link>
 
           <div className="text-[10px] text-muted tracking-[0.1em] uppercase px-2.5 mt-3.5 mb-1.5">Akademik</div>
@@ -178,9 +199,12 @@ export default function DosenLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="ml-[248px] flex-1 flex flex-col min-h-screen">
+      <main className="min-[1400px]:ml-[248px] flex-1 flex flex-col min-h-screen">
         {/* TOPBAR */}
-        <header className="sticky top-0 z-10 bg-cream/95 backdrop-blur-md border-b-[1.5px] border-border px-8 py-3.5 flex items-center gap-3">
+        <header className="sticky top-0 z-10 bg-cream/95 backdrop-blur-md border-b-[1.5px] border-border px-4 min-[1400px]:px-8 py-3.5 flex items-center gap-3">
+          <button className="min-[1400px]:hidden text-muted mr-1" onClick={() => setSidebarOpen(true)}>
+            <Menu size={20} />
+          </button>
           <div className="font-serif text-[18px] flex-1 text-ink">
             {pathname === "/dosen" && <><span>Dashboard</span> <span className="text-forest">Semester Genap 2024/25</span></>}
             {pathname === "/dosen/tugas" && <><span>Manajemen</span> <span className="text-forest">Tugas</span></>}
@@ -191,6 +215,7 @@ export default function DosenLayout({ children }: { children: ReactNode }) {
             {pathname === "/dosen/notifikasi" && <><span>Notifikasi</span> <span className="text-forest">Dosen</span></>}
             {pathname === "/dosen/log" && <><span>Log</span> <span className="text-forest">Aktivitas</span></>}
             {pathname === "/dosen/kelompok" && <><span>Manajemen</span> <span className="text-forest">Kelompok</span></>}
+            {pathname === "/dosen/proyek" && <><span>Tugas</span> <span className="text-forest">Kelompok</span></>}
             {pathname === "/dosen/profil" && <><span>Data</span> <span className="text-forest">Pribadi</span></>}
           </div>
           
