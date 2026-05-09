@@ -64,8 +64,15 @@ Landing page: `/` | Login: `/auth/login`
 | **Laporan** | Laporan administratif dan rekap data |
 | **Notifikasi** | Notifikasi urusan tata usaha |
 
-### Bantuan (`/bantuan`, `/bantuan/panduan`)
-Pusat bantuan dengan penjelasan fitur per section dan panduan pengguna step-by-step untuk role Mahasiswa dan Dosen.
+### Akses Publik & Bantuan
+| Rute | Deskripsi |
+|---|---|
+| `/features` | Halaman interaktif untuk mengeksplorasi seluruh fitur unggulan AcadTrack. |
+| `/demo` | Portal simulasi (Demo Publik) interaktif tanpa perlu login. |
+| `/bantuan` | Pusat informasi pendukung seperti FAQ, Video Tutorial, dan Blog. |
+| `/panduan` | Dokumentasi panduan pengguna step-by-step untuk Mahasiswa dan Dosen. |
+| `/panduan/admin` | Dokumentasi panduan khusus untuk Admin dan Staff TU. |
+| `/legal` | Syarat dan Ketentuan, serta Kebijakan Privasi platform. |
 
 ---
 
@@ -93,7 +100,12 @@ app/
 ├── page.tsx            # Landing page (AcadTrack)
 ├── auth/
 │   └── login/          # Halaman login (pilih role) + admin login
-├── bantuan/            # Pusat bantuan & panduan pengguna
+├── features/           # Halaman eksplorasi fitur interaktif
+├── demo/               # Portal simulasi demo publik
+├── bantuan/            # Pusat bantuan (FAQ, Video, dll)
+├── panduan/            # Dokumentasi panduan pengguna
+│   └── admin/          # Panduan khusus Admin & Staff TU
+├── legal/              # Halaman Syarat dan Ketentuan & Privasi
 ├── mahasiswa/          # Dashboard & modul mahasiswa
 │   ├── tugas/
 │   ├── proyek/
