@@ -5,8 +5,8 @@ import { Camera, Mail, Phone, MapPin, BookOpen, Calendar, Shield, Bell, Edit3, S
 import { cn } from "@/lib/utils";
 
 const PROFILE = {
-  name: "Eki Kurniawan",
-  nim: "2022001234",
+  name: "Febiyanto Rizki Qurbandi",
+  nim: "231011450284",
   email: "eki.kurniawan@student.univ.ac.id",
   phone: "081234567890",
   address: "Jl. Merdeka No. 12, Bandung, Jawa Barat",

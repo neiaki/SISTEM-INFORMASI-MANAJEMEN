@@ -165,8 +165,8 @@ export default function MahasiswaLayout({ children }: { children: ReactNode }) {
               EK
             </div>
             <div className="min-w-0">
-              <div className="text-[13px] font-semibold truncate text-mhs-text">Eki Kurniawan</div>
-              <div className="text-[11px] text-mhs-muted">NIM 2022001234</div>
+              <div className="text-[13px] font-semibold truncate text-mhs-text">Febiyanto Rizki Qurbandi</div>
+              <div className="text-[11px] text-mhs-muted">NIM 231011450284</div>
             </div>
           </div>
         </div>

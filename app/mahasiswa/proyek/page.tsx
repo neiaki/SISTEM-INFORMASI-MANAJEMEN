@@ -113,7 +113,7 @@ function TugasDetailModal({ tugas, kelompokList, onClose, onRefresh }: {
     addProjSubmission(tugas.id, {
       fileName: selectedFile.name,
       fileSize: `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`,
-      submittedBy: "Eki Kurniawan",
+      submittedBy: "Febiyanto Rizki Qurbandi",
       note: submitNote,
       type: "file",
     });
@@ -131,7 +131,7 @@ function TugasDetailModal({ tugas, kelompokList, onClose, onRefresh }: {
     addProjSubmission(tugas.id, {
       fileName: url.length > 50 ? url.slice(0, 50) + "…" : url,
       fileSize: "—",
-      submittedBy: "Eki Kurniawan",
+      submittedBy: "Febiyanto Rizki Qurbandi",
       note: linkNote,
       type: "link",
       url,
@@ -145,7 +145,7 @@ function TugasDetailModal({ tugas, kelompokList, onClose, onRefresh }: {
   function handleSendComment() {
     const text = commentText.trim();
     if (!text) return;
-    addProjComment(tugas.id, { author: "Eki Kurniawan", role: "mahasiswa", text });
+    addProjComment(tugas.id, { author: "Febiyanto Rizki Qurbandi", role: "mahasiswa", text });
     onRefresh();
     setCommentText("");
   }

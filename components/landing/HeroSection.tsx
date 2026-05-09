@@ -96,7 +96,7 @@ export function HeroSection({ heroParallax }: HeroSectionProps) {
                     Selamat pagi,
                   </div>
                   <div className="font-bold text-[13px] text-[#0f172a] dark:text-white">
-                    Eki Kurniawan
+                    Febiyanto Rizki Qurbandi
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

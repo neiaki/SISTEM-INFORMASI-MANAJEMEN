@@ -18,10 +18,10 @@ const SEED: Kelompok[] = [
     name: "Kelompok Alfa",
     course: "Analisis SI",
     maxSize: 5,
-    createdBy: "231011400712",
+    createdBy: "231011450284",
     mode: "mahasiswa",
     members: [
-      { nim: "231011400712", nama: "EKI KURNIAWAN",          role: "Leader",  joinedAt: "2026-04-01" },
+      { nim: "231011450284", nama: "FEBIYANTO RIZKI QURBANDI",          role: "Leader",  joinedAt: "2026-04-01" },
       { nim: "231011450403", nama: "ANDRA RAFI IRGI",        role: "Anggota", joinedAt: "2026-04-01" },
       { nim: "231011400651", nama: "BAGUS ICHA SAPUTRA",     role: "Anggota", joinedAt: "2026-04-02" },
       { nim: "231011450136", nama: "FAHRIZ RIFKY PRATAMA",   role: "Anggota", joinedAt: "2026-04-02" },

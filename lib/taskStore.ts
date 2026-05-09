@@ -114,7 +114,7 @@ export function getAllTaskData(): TaskStore {
 
 const SEED_COMMENTS: Array<{ taskId: string; taskTitle: string; taskCourse: string; comment: Comment }> = [
   { taskId: "dsn-1", taskTitle: "Studi Kasus BPMN", taskCourse: "Analisis SI",
-    comment: { id: "seed-c1", author: "Eki Kurniawan", role: "mahasiswa", text: "Pak, apakah diagram swimlane perlu disertakan juga?", time: "21 Apr 2026, 09.15" } },
+    comment: { id: "seed-c1", author: "Febiyanto Rizki Qurbandi", role: "mahasiswa", text: "Pak, apakah diagram swimlane perlu disertakan juga?", time: "21 Apr 2026, 09.15" } },
   { taskId: "dsn-1", taskTitle: "Studi Kasus BPMN", taskCourse: "Analisis SI",
     comment: { id: "seed-c2", author: "Maya Sari", role: "mahasiswa", text: "Saya sudah upload, tapi file saya tidak muncul di list. Mohon dicek pak 🙏", time: "21 Apr 2026, 11.42" } },
   { taskId: "dsn-2", taskTitle: "Sprint Board UI Responsif", taskCourse: "Interaksi Manusia & Komputer",

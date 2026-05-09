@@ -8,7 +8,7 @@ import { useInView } from "@/lib/use-in-view";
 const testimonials = [
   {
     initials: "EK",
-    name: "Eki Kurniawan",
+    name: "Febiyanto Rizki Qurbandi",
     role: "Mahasiswa — Teknik Informatika, Semester 5",
     stars: 5,
     text: "Deadline UTS Pemrograman Web tinggal 2 jam. Saya langsung buka AcadTrack, upload file ZIP-nya, tulis komentar singkat — selesai dalam 3 menit. Tidak perlu email dosen atau cari grup WA kelas.",

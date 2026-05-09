@@ -48,7 +48,7 @@ const SEED: TugasKelompok[] = [
     createdBy: "dosen",
     status: "dikumpulkan",
     submissions: [
-      { id: "s-1", fileName: "Laporan_Analisis_Kelompok_Alfa.pdf", fileSize: "2.14 MB", submittedBy: "Eki Kurniawan", note: "Sudah lengkap dengan diagram use case", submittedAt: "8 Mei, 09:45", type: "file" },
+      { id: "s-1", fileName: "Laporan_Analisis_Kelompok_Alfa.pdf", fileSize: "2.14 MB", submittedBy: "Febiyanto Rizki Qurbandi", note: "Sudah lengkap dengan diagram use case", submittedAt: "8 Mei, 09:45", type: "file" },
     ],
     comments: [
       { id: "c-1", author: "Dr. Budi Santoso", role: "dosen", text: "Tolong tambahkan activity diagram pada bagian analisis proses bisnis.", time: "08:30" },
@@ -101,7 +101,7 @@ const SEED: TugasKelompok[] = [
     status: "selesai",
     submissions: [
       { id: "s-3", fileName: "Makalah_Keamanan_Jaringan_Final.docx", fileSize: "1.92 MB", submittedBy: "Muhammad Ardiansyah", note: "Revisi sudah selesai", submittedAt: "29 Apr, 21:10", type: "file" },
-      { id: "s-4", fileName: "https://drive.google.com/file/sample", fileSize: "—", submittedBy: "Eki Kurniawan", note: "Link referensi tambahan", submittedAt: "29 Apr, 21:30", type: "link", url: "https://drive.google.com/file/sample" },
+      { id: "s-4", fileName: "https://drive.google.com/file/sample", fileSize: "—", submittedBy: "Febiyanto Rizki Qurbandi", note: "Link referensi tambahan", submittedAt: "29 Apr, 21:30", type: "link", url: "https://drive.google.com/file/sample" },
     ],
     comments: [
       { id: "c-4", author: "Dr. Budi Santoso", role: "dosen", text: "Bagus! Pembahasan sudah komprehensif. Nilai diberikan.", time: "10:00" },

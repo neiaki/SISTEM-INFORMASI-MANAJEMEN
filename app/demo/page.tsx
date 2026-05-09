@@ -292,7 +292,7 @@ export default function DemoPage() {
                     </div>
                     <div className="space-y-2.5">
                       {(recentSubs.length > 0 ? recentSubs : [
-                        { id: "1", submittedBy: "Eki Kurniawan",  taskTitle: "Laporan Sorting",  submittedAtMs: Date.now() - 1800000, taskCourse: "" },
+                        { id: "1", submittedBy: "Febiyanto Rizki Qurbandi",  taskTitle: "Laporan Sorting",  submittedAtMs: Date.now() - 1800000, taskCourse: "" },
                         { id: "2", submittedBy: "Andra Rafi Irgi", taskTitle: "ERD Perpustakaan", submittedAtMs: Date.now() - 7200000, taskCourse: "" },
                         { id: "3", submittedBy: "Bagus Icha",     taskTitle: "Resume SO Bab 4", submittedAtMs: Date.now() - 86400000, taskCourse: "" },
                       ] as RecentSub[]).slice(0, 3).map((sub, i, arr) => (
@@ -407,7 +407,7 @@ export default function DemoPage() {
                   </thead>
                   <tbody>
                     {[
-                      { nim: "231011400712", nama: "Eki Kurniawan",       status: true,  time: "08 Apr, 09:41", file: "laporan_eki.pdf",  kom: 1 },
+                      { nim: "231011450284", nama: "Febiyanto Rizki Qurbandi",       status: true,  time: "08 Apr, 09:41", file: "laporan_eki.pdf",  kom: 1 },
                       { nim: "231011450403", nama: "Andra Rafi Irgi",     status: true,  time: "08 Apr, 10:15", file: "tugas_andra.docx", kom: 0 },
                       { nim: "231011400651", nama: "Bagus Icha Saputra",  status: true,  time: "08 Apr, 11:02", file: "bagus_lap.pdf",    kom: 2 },
                       { nim: "231011450136", nama: "Fahriz Rifky",        status: false, time: "—",            file: "—",               kom: 0 },

@@ -74,10 +74,10 @@ const COURSES: Course[] = [
           { nim: "231011450403", nama: "ANDRA RAFI IRGI",    submittedAt: "10 Apr 2026, 23.55 WIB", fileName: "tugas1-andra.pdf" },
           { nim: "231011400651", nama: "BAGUS ICHA SAPUTRA", submittedAt: "09 Apr 2026, 22.10 WIB", fileName: "oop-bagus.zip",        nilai: 92 },
           { nim: "231011450408", nama: "DESTRAN ZAKIAN",     submittedAt: "10 Apr 2026, 11.00 WIB", fileName: "implementasi-oop.zip", nilai: 85 },
-          { nim: "231011400712", nama: "EKI KURNIAWAN",      submittedAt: "08 Apr 2026, 16.45 WIB", fileName: "oop-eki.pdf",          nilai: 95,
+          { nim: "231011450284", nama: "FEBIYANTO RIZKI QURBANDI",      submittedAt: "08 Apr 2026, 16.45 WIB", fileName: "oop-eki.pdf",          nilai: 95,
             comments: [
               { author: "Dr. Budi",     role: "dosen",     text: "Sangat baik! Polymorphism diimplementasikan dengan benar.", time: "09 Apr, 08.00" },
-              { author: "EKI KURNIAWAN", role: "mahasiswa", text: "Terima kasih pak, akan saya perbaiki bagian inheritance.", time: "09 Apr, 09.30" },
+              { author: "FEBIYANTO RIZKI QURBANDI", role: "mahasiswa", text: "Terima kasih pak, akan saya perbaiki bagian inheritance.", time: "09 Apr, 09.30" },
             ] },
           { nim: "231011450319", nama: "FAJAR NUGRAHA",      submittedAt: "10 Apr 2026, 09.30 WIB", fileName: "tugas-oop-fajar.zip",
             comments: [{ author: "Dr. Budi", role: "dosen", text: "Sudah dikumpul, tunggu review.", time: "11 Apr, 10.00" }] },
@@ -87,7 +87,7 @@ const COURSES: Course[] = [
       {
         id: "pl-2", title: "Design Pattern", deadline: "2026-04-28", type: "individu",
         submissions: [
-          { nim: "231011400712", nama: "EKI KURNIAWAN", submittedAt: "26 Apr 2026, 15.00 WIB", fileName: "design-pattern-eki.pdf", nilai: 90 },
+          { nim: "231011450284", nama: "FEBIYANTO RIZKI QURBANDI", submittedAt: "26 Apr 2026, 15.00 WIB", fileName: "design-pattern-eki.pdf", nilai: 90 },
           { nim: "231011450319", nama: "FAJAR NUGRAHA", submittedAt: "27 Apr 2026, 20.00 WIB", fileName: "dp-fajar.zip" },
         ],
       },
@@ -97,7 +97,7 @@ const COURSES: Course[] = [
       {
         id: "pl-6", title: "Mini Project Final", deadline: "2026-06-01", type: "kelompok",
         submissions: [
-          { nim: "231011400712", nama: "EKI KURNIAWAN", kelompok: "Kelompok Alfa", submittedAt: "01 Jun 2026, 10.00 WIB", fileName: "miniproject-alfa.zip" },
+          { nim: "231011450284", nama: "FEBIYANTO RIZKI QURBANDI", kelompok: "Kelompok Alfa", submittedAt: "01 Jun 2026, 10.00 WIB", fileName: "miniproject-alfa.zip" },
           { nim: "231011400651", nama: "BAGUS ICHA SAPUTRA", kelompok: "Kelompok Beta", submittedAt: "31 Mei 2026, 23.00 WIB", fileName: "miniproject-beta.zip" },
         ],
       },
@@ -107,7 +107,7 @@ const COURSES: Course[] = [
       { nim: "231011450403", nama: "ANDRA RAFI IRGI",    statuses: { "pl-1": "menunggu review", "pl-2": "belum mulai", "pl-3": "belum mulai", "pl-4": "belum mulai", "pl-5": "belum mulai", "pl-6": "belum mulai" } },
       { nim: "231011400651", nama: "BAGUS ICHA SAPUTRA", statuses: { "pl-1": "selesai", "pl-2": "sedang dikerjakan", "pl-3": "belum mulai", "pl-4": "belum mulai", "pl-5": "belum mulai", "pl-6": "sedang dikerjakan" } },
       { nim: "231011450408", nama: "DESTRAN ZAKIAN",     statuses: { "pl-1": "selesai", "pl-2": "belum mulai", "pl-3": "belum mulai", "pl-4": "belum mulai", "pl-5": "belum mulai", "pl-6": "belum mulai" } },
-      { nim: "231011400712", nama: "EKI KURNIAWAN",      statuses: { "pl-1": "selesai", "pl-2": "selesai", "pl-3": "sedang dikerjakan", "pl-4": "belum mulai", "pl-5": "belum mulai", "pl-6": "sedang dikerjakan" } },
+      { nim: "231011450284", nama: "FEBIYANTO RIZKI QURBANDI",      statuses: { "pl-1": "selesai", "pl-2": "selesai", "pl-3": "sedang dikerjakan", "pl-4": "belum mulai", "pl-5": "belum mulai", "pl-6": "sedang dikerjakan" } },
       { nim: "231011450319", nama: "FAJAR NUGRAHA",      statuses: { "pl-1": "selesai", "pl-2": "menunggu review", "pl-3": "belum mulai", "pl-4": "belum mulai", "pl-5": "belum mulai", "pl-6": "belum mulai" } },
       { nim: "231011400835", nama: "GILANG RAMADHAN",    statuses: { "pl-1": "selesai", "pl-2": "sedang dikerjakan", "pl-3": "belum mulai", "pl-4": "belum mulai", "pl-5": "belum mulai", "pl-6": "sedang dikerjakan" } },
       { nim: "221011400227", nama: "HENDRA SAPUTRA",     statuses: { "pl-1": "belum mulai", "pl-2": "belum mulai", "pl-3": "belum mulai", "pl-4": "belum mulai", "pl-5": "belum mulai", "pl-6": "belum mulai" } },
@@ -124,14 +124,14 @@ const COURSES: Course[] = [
         submissions: [
           { nim: "221011400114", nama: "ALDI AL KAHFI",      submittedAt: "14 Apr 2026, 20.00 WIB", fileName: "erd-aldi.pdf",   nilai: 78 },
           { nim: "231011450408", nama: "DESTRAN ZAKIAN",     submittedAt: "15 Apr 2026, 08.30 WIB", fileName: "erd-destran.pdf", nilai: 82 },
-          { nim: "231011400712", nama: "EKI KURNIAWAN",      submittedAt: "13 Apr 2026, 14.00 WIB", fileName: "erd-eki.pdf",    nilai: 91,
+          { nim: "231011450284", nama: "FEBIYANTO RIZKI QURBANDI",      submittedAt: "13 Apr 2026, 14.00 WIB", fileName: "erd-eki.pdf",    nilai: 91,
             comments: [{ author: "Dr. Sari", role: "dosen", text: "ERD sudah bagus, relasi many-to-many perlu cardinalitynya.", time: "14 Apr, 09.00" }] },
           { nim: "231011450319", nama: "FAJAR NUGRAHA",      submittedAt: "15 Apr 2026, 11.00 WIB", fileName: "erd-fajar.pdf" },
           { nim: "231011400835", nama: "GILANG RAMADHAN",    submittedAt: "14 Apr 2026, 18.45 WIB", fileName: "erd-gilang.pdf", nilai: 75 },
         ],
       },
       { id: "bd-2", title: "Normalisasi 3NF",    deadline: "2026-04-30", type: "individu", submissions: [
-        { nim: "231011400712", nama: "EKI KURNIAWAN", submittedAt: "28 Apr 2026, 13.00 WIB", fileName: "normalisasi-eki.pdf", nilai: 88 },
+        { nim: "231011450284", nama: "FEBIYANTO RIZKI QURBANDI", submittedAt: "28 Apr 2026, 13.00 WIB", fileName: "normalisasi-eki.pdf", nilai: 88 },
         { nim: "231011450408", nama: "DESTRAN ZAKIAN", submittedAt: "29 Apr 2026, 22.00 WIB", fileName: "3nf-destran.pdf" },
       ]},
       { id: "bd-3", title: "Query SQL Lanjutan", deadline: "2026-05-07", type: "individu", submissions: [] },
@@ -143,7 +143,7 @@ const COURSES: Course[] = [
       { nim: "231011450403", nama: "ANDRA RAFI IRGI",    statuses: { "bd-1": "sedang dikerjakan", "bd-2": "belum mulai", "bd-3": "belum mulai", "bd-4": "belum mulai", "bd-5": "belum mulai" } },
       { nim: "231011400651", nama: "BAGUS ICHA SAPUTRA", statuses: { "bd-1": "menunggu review", "bd-2": "belum mulai", "bd-3": "belum mulai", "bd-4": "belum mulai", "bd-5": "belum mulai" } },
       { nim: "231011450408", nama: "DESTRAN ZAKIAN",     statuses: { "bd-1": "selesai", "bd-2": "sedang dikerjakan", "bd-3": "belum mulai", "bd-4": "belum mulai", "bd-5": "belum mulai" } },
-      { nim: "231011400712", nama: "EKI KURNIAWAN",      statuses: { "bd-1": "selesai", "bd-2": "selesai", "bd-3": "sedang dikerjakan", "bd-4": "belum mulai", "bd-5": "belum mulai" } },
+      { nim: "231011450284", nama: "FEBIYANTO RIZKI QURBANDI",      statuses: { "bd-1": "selesai", "bd-2": "selesai", "bd-3": "sedang dikerjakan", "bd-4": "belum mulai", "bd-5": "belum mulai" } },
       { nim: "231011450319", nama: "FAJAR NUGRAHA",      statuses: { "bd-1": "selesai", "bd-2": "menunggu review", "bd-3": "belum mulai", "bd-4": "belum mulai", "bd-5": "belum mulai" } },
       { nim: "231011400835", nama: "GILANG RAMADHAN",    statuses: { "bd-1": "selesai", "bd-2": "sedang dikerjakan", "bd-3": "belum mulai", "bd-4": "belum mulai", "bd-5": "belum mulai" } },
       { nim: "221011400308", nama: "LUTHFI HAKIM",       statuses: { "bd-1": "belum mulai", "bd-2": "belum mulai", "bd-3": "belum mulai", "bd-4": "belum mulai", "bd-5": "belum mulai" } },
@@ -165,7 +165,7 @@ const COURSES: Course[] = [
     ],
     enrollment: [
       { nim: "231011450408", nama: "DESTRAN ZAKIAN",  statuses: { "rpl-1": "sedang dikerjakan", "rpl-2": "belum mulai", "rpl-3": "belum mulai", "rpl-4": "belum mulai" } },
-      { nim: "231011400712", nama: "EKI KURNIAWAN",   statuses: { "rpl-1": "belum mulai",        "rpl-2": "belum mulai", "rpl-3": "belum mulai", "rpl-4": "belum mulai" } },
+      { nim: "231011450284", nama: "FEBIYANTO RIZKI QURBANDI",   statuses: { "rpl-1": "belum mulai",        "rpl-2": "belum mulai", "rpl-3": "belum mulai", "rpl-4": "belum mulai" } },
       { nim: "231011450319", nama: "FAJAR NUGRAHA",   statuses: { "rpl-1": "sedang dikerjakan",  "rpl-2": "belum mulai", "rpl-3": "belum mulai", "rpl-4": "belum mulai" } },
       { nim: "231011400835", nama: "GILANG RAMADHAN", statuses: { "rpl-1": "selesai",            "rpl-2": "sedang dikerjakan", "rpl-3": "belum mulai", "rpl-4": "belum mulai" } },
       { nim: "221011400227", nama: "HENDRA SAPUTRA",  statuses: { "rpl-1": "belum mulai",        "rpl-2": "belum mulai", "rpl-3": "belum mulai", "rpl-4": "belum mulai" } },

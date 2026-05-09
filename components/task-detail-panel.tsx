@@ -50,7 +50,7 @@ export function TaskDetailPanel({
   onClose,
   onSubmitted,
   onCommented,
-  submittedBy = "Eki Kurniawan",
+  submittedBy = "Febiyanto Rizki Qurbandi",
 }: {
   task: MhsTask;
   localData: TaskEntry | undefined;

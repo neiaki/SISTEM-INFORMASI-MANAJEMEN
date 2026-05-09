@@ -43,7 +43,7 @@ type JoinRequest = {
   sentAt: string;
 };
 
-const ME = { nim: "231011400712", nama: "EKI KURNIAWAN" };
+const ME = { nim: "231011450284", nama: "FEBIYANTO RIZKI QURBANDI" };
 
 const COURSES = [
   "Analisis SI",
