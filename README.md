@@ -26,7 +26,7 @@ Landing page: `/` | Login: `/auth/login`
 |---|---|
 | **Dashboard** | Ringkasan tugas aktif, deadline mendekat, dan progres semester |
 | **Tugas** | Daftar tugas per mata kuliah dengan status, prioritas, filter deadline; submit file & komentar |
-| **Proyek** | Manajemen proyek kelompok dengan modal detail lengkap dan buat proyek baru |
+| **Proyek** | Tugas kelompok dengan workflow tracking (Aktif → Kumpul → Review → Selesai), sorting by deadline, tampilan nilai akhir, dan submit file/link |
 | **Kelompok** | Lihat anggota kelompok, kirim undangan, edit kapasitas (maks 10), kick anggota, terima/tolak undangan masuk |
 | **Participant** | Daftar seluruh peserta (24 mahasiswa) dari data terpusat |
 | **Kalender** | Tampilan kalender deadline tugas dan milestone proyek |
@@ -43,7 +43,7 @@ Landing page: `/` | Login: `/auth/login`
 | **Kelompok** | Buat kelompok manual atau acak otomatis (RNG fair); edit anggota dan ukuran kelompok |
 | **Mahasiswa** | Data mahasiswa per mata kuliah dengan modal detail per kelas |
 | **Rekap** | Rekapitulasi pengumpulan & komentar; dismiss per item atau tutup semua; reset ke seed data |
-| **Proyek** | Manajemen proyek kelas |
+| **Proyek** | Manajemen proyek kelas; review submission, beri revisi/nilai, workflow tracking |
 | **Laporan** | Statistik dan insight per mata kuliah |
 | **Log Aktivitas** | Riwayat aktivitas pengelolaan tugas |
 | **Notifikasi** | Kirim reminder ke mahasiswa |
@@ -131,7 +131,7 @@ components/
 lib/
 ├── taskStore.ts        # Store state tugas + seed submissions & comments
 ├── kelompokStore.ts    # Store state kelompok
-├── proyekStore.ts      # Store state proyek
+├── proyekStore.ts      # Store state proyek kelompok + workflow status
 ├── notifStore.ts       # Store state notifikasi
 ├── activityLog.ts      # Helper log aktivitas
 ├── exportUtils.ts      # Utilitas ekspor/download

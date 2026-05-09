@@ -33,7 +33,10 @@ export default function StaffTULayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQ, setSearchQ] = useState("");
 
-  useEffect(() => { setSearchQ(""); setSidebarOpen(false); }, [pathname]);
+  useEffect(() => {
+    setSearchQ(""); setSidebarOpen(false);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [pathname]);
   useEffect(() => { setMounted(true); }, []);
 
   const isDark = mounted && resolvedTheme === "dark";

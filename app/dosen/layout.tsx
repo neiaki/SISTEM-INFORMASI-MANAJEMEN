@@ -17,7 +17,11 @@ export default function DosenLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQ, setSearchQ] = useState("");
-  useEffect(() => { setSearchQ(""); setSidebarOpen(false); }, [pathname]);
+  const [rekapCount, setRekapCount] = useState(3);
+  useEffect(() => {
+    setSearchQ(""); setSidebarOpen(false);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [pathname]);
   const [modalSaved, setModalSaved] = useState(false);
   const [form, setForm] = useState({ title: "", course: "", type: "individu", deadline: "", description: "" });
 
@@ -48,6 +52,8 @@ export default function DosenLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
+    const newTasks = JSON.parse(typeof window !== "undefined" ? localStorage.getItem("dosen_new_tasks") || "[]" : "[]");
+    setRekapCount(Math.max(3, newTasks.length));
   }, []);
 
   const handleLogout = () => {
@@ -100,7 +106,7 @@ export default function DosenLayout({ children }: { children: ReactNode }) {
           )}>
             {pathname === "/dosen/rekap" && <div className="absolute left-0 top-1/5 h-[60%] w-[3px] bg-forest rounded-r-sm" />}
             <span className="text-[16px] w-5 text-center">📊</span> Rekap Pengumpulan
-            <span className="ml-auto bg-gold/15 text-gold text-[10px] font-bold py-[1px] px-1.5 rounded-full">3</span>
+            <span className="ml-auto bg-gold/15 text-gold text-[10px] font-bold py-[1px] px-1.5 rounded-full">{rekapCount}</span>
           </Link>
           <Link href="/dosen/mahasiswa" className={cn(
             "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] font-medium transition-all mb-0.5 relative",

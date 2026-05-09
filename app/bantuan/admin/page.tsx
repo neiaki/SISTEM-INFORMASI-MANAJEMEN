@@ -99,9 +99,9 @@ export default function BantuanAdminPage() {
     <div className="min-h-screen bg-[#f4f6f8] dark:bg-[#020817]">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-[#f4f6f8]/90 dark:bg-[#020817]/90 backdrop-blur-md border-b border-gray-200 dark:border-white/10 px-6 py-4 flex items-center gap-4">
-        <Link href="/bantuan" className="flex items-center gap-2 text-[#475569] dark:text-[#94a3b8] hover:text-[#0f172a] dark:hover:text-white transition-colors text-sm font-medium">
+        <Link href="/" className="flex items-center gap-2 text-[#475569] dark:text-[#94a3b8] hover:text-[#0f172a] dark:hover:text-white transition-colors text-sm font-medium">
           <ArrowLeft size={18} />
-          Pusat Bantuan
+          Beranda
         </Link>
         <div className="w-px h-5 bg-gray-200 dark:bg-white/10" />
         <span className="text-[13px] font-semibold text-[#0f172a] dark:text-white">Panduan Admin & Staff TU</span>

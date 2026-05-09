@@ -1,16 +1,28 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Globe, Eye, EyeOff, Mail, KeyRound, X, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ForgotStep = "input" | "otp" | "reset" | "success";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0f172a]" />}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loginMode, setLoginMode] = useState("nim");
-  const [role, setRole] = useState("mahasiswa");
+  const [role, setRole] = useState(() => {
+    const r = searchParams.get("role");
+    return r === "dosen" || r === "mahasiswa" || r === "admin" || r === "staff_tu" ? r : "mahasiswa";
+  });
   const [credential, setCredential] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

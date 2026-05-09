@@ -52,7 +52,7 @@ const SEED: TugasKelompok[] = [
     ],
     comments: [
       { id: "c-1", author: "Dr. Budi Santoso", role: "dosen", text: "Tolong tambahkan activity diagram pada bagian analisis proses bisnis.", time: "08:30" },
-      { id: "c-2", author: "Eki Kurniawan", role: "mahasiswa", text: "Baik Pak, akan kami tambahkan segera.", time: "08:55" },
+      { id: "c-2", author: "Andra Rafi Irgi", role: "mahasiswa", text: "Baik Pak, akan kami tambahkan segera.", time: "08:55" },
     ],
     createdAt: "2026-04-25",
   },
@@ -67,7 +67,7 @@ const SEED: TugasKelompok[] = [
     createdBy: "mahasiswa",
     status: "revisi",
     submissions: [
-      { id: "s-2", fileName: "prototype_v1.fig", fileSize: "5.80 MB", submittedBy: "Andra Rafi Irgi", note: "Versi pertama prototype", submittedAt: "5 Mei, 14:20", type: "file" },
+      { id: "s-2", fileName: "prototype_v1.fig", fileSize: "5.80 MB", submittedBy: "Fahriz Rifky Pratama", note: "Versi pertama prototype", submittedAt: "5 Mei, 14:20", type: "file" },
     ],
     comments: [
       { id: "c-3", author: "Dr. Budi Santoso", role: "dosen", text: "Desain sudah bagus tapi navigasi antar halaman masih membingungkan. Perbaiki juga kontras warna pada tombol CTA.", time: "16:00" },
@@ -100,7 +100,7 @@ const SEED: TugasKelompok[] = [
     createdBy: "dosen",
     status: "selesai",
     submissions: [
-      { id: "s-3", fileName: "Makalah_Keamanan_Jaringan_Final.docx", fileSize: "1.92 MB", submittedBy: "Bagus Icha Saputra", note: "Revisi sudah selesai", submittedAt: "29 Apr, 21:10", type: "file" },
+      { id: "s-3", fileName: "Makalah_Keamanan_Jaringan_Final.docx", fileSize: "1.92 MB", submittedBy: "Muhammad Ardiansyah", note: "Revisi sudah selesai", submittedAt: "29 Apr, 21:10", type: "file" },
       { id: "s-4", fileName: "https://drive.google.com/file/sample", fileSize: "—", submittedBy: "Eki Kurniawan", note: "Link referensi tambahan", submittedAt: "29 Apr, 21:30", type: "link", url: "https://drive.google.com/file/sample" },
     ],
     comments: [

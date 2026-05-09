@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, ChevronRight } from "lucide-react";
 import { useSearch } from "@/lib/search-context";
 import { STUDENTS, STATUS_MAP, AVG_CLS, BAR_CLS, getInitials, type Student } from "@/lib/students-data";
+import { EmptyState } from "@/components/empty-state";
 
 /* ── Per-course metadata ─────────────────────── */
 type CourseCard = {
@@ -111,6 +112,17 @@ function StudentDetailPanel({ student, onClose }: { student: Student; onClose: (
 /* ── Modal ───────────────────────────────────── */
 function CourseStudentModal({ card, onClose }: { card: CourseCard; onClose: () => void }) {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (selectedStudent) setSelectedStudent(null);
+      else onClose();
+    };
+    document.addEventListener("keydown", h);
+    return () => document.removeEventListener("keydown", h);
+  }, [selectedStudent, onClose]);
+
   const avgGrade   = (card.students.reduce((a, s) => a + s.avg, 0) / card.students.length).toFixed(1);
   const totalDone  = card.students.reduce((a, s) => a + s.done, 0);
   const totalTasks = card.students.reduce((a, s) => a + s.total, 0);
@@ -335,9 +347,12 @@ export default function DosenMahasiswaPage() {
       </div>
 
       {filteredCards.length === 0 && (
-        <div className="bg-paper border border-border rounded-[14px] p-12 text-center text-muted">
-          Tidak ada mata kuliah cocok dengan &quot;{topbarQ}&quot;.
-        </div>
+        <EmptyState
+          theme="dosen"
+          icon={showNeedAttention ? "⚠️" : "🔍"}
+          title={showNeedAttention ? "Tidak ada mahasiswa yang perlu perhatian" : "Tidak ada mata kuliah ditemukan"}
+          description={showNeedAttention ? "Semua mahasiswa memiliki progress yang baik." : `Tidak ada mata kuliah yang cocok dengan "${topbarQ}".`}
+        />
       )}
 
       {selected && (

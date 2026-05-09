@@ -26,14 +26,14 @@ const MEMBER_GRADIENTS = [
 ];
 
 /* ── Workflow Track ─────────────────────────── */
-function WorkflowTrack({ status }: { status: TugasKelompok["status"] }) {
+function WorkflowTrack({ status, nilaiAkhir }: { status: TugasKelompok["status"]; nilaiAkhir?: number }) {
   const steps = [
     { key: "aktif",       label: "Aktif",   icon: "⚡" },
     { key: "dikumpulkan", label: "Kumpul",  icon: "📤" },
     { key: "review",      label: "Review",  icon: "👁" },
     { key: "selesai",     label: "Selesai", icon: "✅" },
   ];
-  const order: Record<string, number> = { aktif: 0, dikumpulkan: 1, revisi: 2, selesai: 3 };
+  const order: Record<string, number> = { aktif: 0, dikumpulkan: 2, revisi: 2, selesai: 3 };
   const cur = order[status] ?? 0;
 
   return (
@@ -42,27 +42,34 @@ function WorkflowTrack({ status }: { status: TugasKelompok["status"] }) {
         const stepOrd = si;
         const isDone    = cur > stepOrd;
         const isActive  = (step.key === "aktif" && status === "aktif") ||
-                          (step.key === "dikumpulkan" && status === "dikumpulkan") ||
-                          (step.key === "review" && status === "revisi") ||
+                          (step.key === "dikumpulkan" && status === "aktif") ||
+                          (step.key === "review" && (status === "dikumpulkan" || status === "revisi")) ||
                           (step.key === "selesai" && status === "selesai");
         const isRevisi  = step.key === "review" && status === "revisi";
+        const isDikumpulkanWaiting = step.key === "review" && status === "dikumpulkan";
+        const isSelesaiActive = step.key === "selesai" && status === "selesai";
 
         return (
           <div key={step.key} className="flex items-center flex-1 min-w-0">
             <div className="flex flex-col items-center flex-1 min-w-0">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold border-2 transition-all ${
-                isDone   ? "bg-mhs-green border-mhs-green text-white" :
-                isRevisi ? "bg-mhs-rose border-mhs-rose text-white" :
-                isActive ? "bg-mhs-amber border-mhs-amber text-white shadow-[0_0_10px_rgba(251,191,36,0.4)]" :
+                isDone                 ? "bg-mhs-green border-mhs-green text-white" :
+                isRevisi               ? "bg-mhs-rose border-mhs-rose text-white" :
+                isDikumpulkanWaiting   ? "bg-mhs-purple border-mhs-purple text-white shadow-[0_0_10px_rgba(168,85,247,0.4)]" :
+                isSelesaiActive        ? "bg-mhs-green border-mhs-green text-white shadow-[0_0_10px_rgba(34,197,94,0.4)]" :
+                isActive               ? "bg-mhs-amber border-mhs-amber text-white shadow-[0_0_10px_rgba(251,191,36,0.4)]" :
                 "bg-mhs-card border-mhs-border text-mhs-muted"
               }`}>
-                {isDone ? "✓" : isRevisi ? "!" : step.icon}
+                {isDone ? "✓" : isRevisi ? "!" : isDikumpulkanWaiting ? "⏳" : isSelesaiActive ? "✓" : step.icon}
               </div>
               <div className={`text-[9px] mt-1 text-center font-medium ${
-                isDone ? "text-mhs-green" : isRevisi ? "text-mhs-rose" : isActive ? "text-mhs-amber" : "text-mhs-muted"
+                isDone ? "text-mhs-green" : isRevisi ? "text-mhs-rose" : isDikumpulkanWaiting ? "text-mhs-purple" : isSelesaiActive ? "text-mhs-green" : isActive ? "text-mhs-amber" : "text-mhs-muted"
               }`}>
-                {isRevisi ? "Revisi" : step.label}
+                {isRevisi ? "Revisi" : isDikumpulkanWaiting ? "Menunggu" : step.label}
               </div>
+              {isSelesaiActive && nilaiAkhir !== undefined && (
+                <div className="text-[10px] font-bold text-mhs-green mt-0.5">Nilai: {nilaiAkhir}</div>
+              )}
             </div>
             {si < steps.length - 1 && (
               <div className={`h-0.5 flex-1 -mt-4 mx-0.5 rounded-full ${isDone ? "bg-mhs-green" : "bg-mhs-border"}`} />
@@ -170,7 +177,7 @@ function TugasDetailModal({ tugas, kelompokList, onClose, onRefresh }: {
             </button>
           </div>
 
-          <WorkflowTrack status={tugas.status} />
+          <WorkflowTrack status={tugas.status} nilaiAkhir={tugas.nilaiAkhir} />
 
           {tugas.status === "revisi" && tugas.catatanRevisi && (
             <div className="mt-3 bg-mhs-rose/10 border border-mhs-rose/25 rounded-xl px-4 py-3">
@@ -577,7 +584,7 @@ export default function ProyekPage() {
     const matchQ = !q || t.title.toLowerCase().includes(q) || t.course.toLowerCase().includes(q) || t.groupName.toLowerCase().includes(q);
     const matchFilter = filterStatus === "semua" || t.status === filterStatus;
     return matchQ && matchFilter;
-  });
+  }).sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
 
   const counts = {
     aktif:       tugasList.filter(t => t.status === "aktif").length,
@@ -701,7 +708,7 @@ export default function ProyekPage() {
 
                 {/* Mini workflow */}
                 <div className="mt-3 pt-3 border-t border-mhs-border/50">
-                  <WorkflowTrack status={t.status} />
+                  <WorkflowTrack status={t.status} nilaiAkhir={t.nilaiAkhir} />
                 </div>
 
                 {t.status === "revisi" && t.catatanRevisi && (
@@ -713,7 +720,9 @@ export default function ProyekPage() {
                 <div className="mt-2.5 flex items-center gap-3 text-[11px] text-mhs-muted">
                   {t.submissions.length > 0 && <span>📎 {t.submissions.length} file</span>}
                   {t.comments.length > 0 && <span>💬 {t.comments.length} pesan</span>}
-                  {t.nilaiAkhir !== undefined && <span className="text-mhs-green font-semibold">★ {t.nilaiAkhir}</span>}
+                  {t.nilaiAkhir !== undefined && (
+                    <span className="bg-mhs-green/15 text-mhs-green font-bold px-2.5 py-0.5 rounded-md text-[12px]">★ Nilai: {t.nilaiAkhir}</span>
+                  )}
                   <span className="ml-auto opacity-50">Klik untuk detail →</span>
                 </div>
               </div>

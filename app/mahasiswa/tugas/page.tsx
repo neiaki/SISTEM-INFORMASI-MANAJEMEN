@@ -6,6 +6,8 @@ import { MessageSquare, Paperclip } from "lucide-react";
 import { createSeedData } from "@/data/sim-data";
 import { getAllTaskData, type TaskEntry } from "@/lib/taskStore";
 import { TaskDetailPanel, type MhsTask, mkColor, deadlineInfo, formatDate } from "@/components/task-detail-panel";
+import { EmptyState } from "@/components/empty-state";
+import { SkeletonCard } from "@/components/ui/skeleton";
 
 const allData = createSeedData().mahasiswa;
 
@@ -113,6 +115,14 @@ function KanbanBoard({ tasks, storeData, onOpen, filter }: { tasks: MhsTask[]; s
   const active   = tasks.filter(t => effectiveStatus(t, storeData[t.id]) !== "selesai").sort(sortFn);
   const selesai  = tasks.filter(t => effectiveStatus(t, storeData[t.id]) === "selesai").sort(sortFn);
 
+  if (active.length === 0 && selesai.length === 0) {
+    const desc =
+      filter === "selesai"  ? "Belum ada tugas yang diselesaikan." :
+      filter === "deadline" ? "Tidak ada tugas mendesak dalam 7 hari ke depan." :
+      "Tidak ada tugas yang cocok dengan filter ini.";
+    return <EmptyState icon="📭" title="Tidak ada tugas" description={desc} theme="mahasiswa" />;
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-3 gap-4">
@@ -147,6 +157,9 @@ function KanbanBoard({ tasks, storeData, onOpen, filter }: { tasks: MhsTask[]; s
 
 /* ── List View ───────────────────────────────── */
 function ListView({ tasks, storeData, onOpen }: { tasks: MhsTask[]; storeData: Record<string, TaskEntry>; onOpen: (t: MhsTask) => void }) {
+  if (tasks.length === 0) {
+    return <EmptyState icon="📭" title="Tidak ada tugas" description="Tidak ada tugas yang cocok dengan filter ini." theme="mahasiswa" />;
+  }
   return (
     <div className="bg-mhs-card border border-mhs-border rounded-[14px] overflow-hidden">
       <table className="w-full text-[13px] border-collapse">
@@ -221,12 +234,14 @@ export default function TugasPage() {
   const [search, setSearch]       = useState("");
   const [selectedTask, setSelectedTask] = useState<MhsTask | null>(null);
   const [storeData, setStoreData] = useState<Record<string, TaskEntry>>({});
+  const [loading, setLoading] = useState(true);
 
   const tasks = allData.tasks.filter(t => t.type === "individu");
 
   // Load from localStorage on mount
   useEffect(() => {
     setStoreData(getAllTaskData());
+    setLoading(false);
   }, []);
 
   function refreshStore() {
@@ -238,8 +253,7 @@ export default function TugasPage() {
       filter === "semua"    ? true :
       filter === "aktif"    ? effectiveStatus(t, storeData[t.id]) !== "selesai" :
       filter === "selesai"  ? effectiveStatus(t, storeData[t.id]) === "selesai" :
-      filter === "deadline" ? (() => { const d = Math.ceil((new Date(t.deadline).getTime() - Date.now()) / 86400000); return d >= 0 && d <= 7 && effectiveStatus(t, storeData[t.id]) !== "selesai"; })() :
-      filter === "terlambat" ? (() => { return new Date(t.deadline).getTime() < Date.now() && effectiveStatus(t, storeData[t.id]) !== "selesai"; })() : true;
+      filter === "deadline" ? (() => { const d = Math.ceil((new Date(t.deadline).getTime() - Date.now()) / 86400000); return d >= 0 && d <= 7 && effectiveStatus(t, storeData[t.id]) !== "selesai"; })() : true;
     const term = search || topbarQ;
     const matchSearch = term === "" || t.title.toLowerCase().includes(term.toLowerCase()) || t.course.toLowerCase().includes(term.toLowerCase());
     return matchFilter && matchSearch;
@@ -250,7 +264,6 @@ export default function TugasPage() {
     { id: "aktif",   label: "Aktif",   count: tasks.filter(t => effectiveStatus(t, storeData[t.id]) !== "selesai").length },
     { id: "selesai", label: "Selesai", count: tasks.filter(t => effectiveStatus(t, storeData[t.id]) === "selesai").length },
     { id: "deadline",  label: "Mendesak",  count: tasks.filter(t => { const d = Math.ceil((new Date(t.deadline).getTime() - Date.now()) / 86400000); return d >= 0 && d <= 7 && effectiveStatus(t, storeData[t.id]) !== "selesai"; }).length },
-    { id: "terlambat", label: "Terlambat", count: tasks.filter(t => new Date(t.deadline).getTime() < Date.now() && effectiveStatus(t, storeData[t.id]) !== "selesai").length },
   ];
 
   return (
@@ -317,7 +330,11 @@ export default function TugasPage() {
       </div>
 
       {/* BOARD / LIST */}
-      {view === "kanban" ? (
+      {loading ? (
+        <div className="grid grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+      ) : view === "kanban" ? (
         <KanbanBoard tasks={filtered} storeData={storeData} onOpen={setSelectedTask} filter={filter} />
       ) : (
         <ListView tasks={filtered} storeData={storeData} onOpen={setSelectedTask} />

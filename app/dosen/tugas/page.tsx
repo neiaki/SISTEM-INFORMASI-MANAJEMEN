@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { X, CheckCircle } from "lucide-react";
+import { X } from "lucide-react";
 import { createSeedData } from "@/data/sim-data";
 import { useSearch } from "@/lib/search-context";
+import { Toast, type ToastType } from "@/components/ui/toast";
 
 const seedData = createSeedData().dosen;
 
@@ -65,12 +66,24 @@ export default function DosenTugasPage() {
   const [allTasks, setAllTasks]   = useState<Task[]>(seedData.tasks);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createForm, setCreateForm]     = useState(EMPTY_FORM);
-  const [createSaved, setCreateSaved]   = useState(false);
   const [editTask, setEditTask]         = useState<Task | null>(null);
   const [editForm, setEditForm]         = useState(EMPTY_FORM);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [dupTask, setDupTask]           = useState<Task | null>(null);
   const [dupForm, setDupForm]           = useState({ title: "", course: "", deadline: "" });
+  const [toast, setToast]               = useState<{ message: string; type: ToastType } | null>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (dupTask) setDupTask(null);
+      else if (editTask) setEditTask(null);
+      else if (isCreateOpen) setIsCreateOpen(false);
+      else if (confirmDelete) setConfirmDelete(null);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [dupTask, editTask, isCreateOpen, confirmDelete]);
 
   useEffect(() => {
     const saved: Task[] = JSON.parse(localStorage.getItem("dosen_new_tasks") || "[]");
@@ -117,8 +130,7 @@ export default function DosenTugasPage() {
     syncLocalStorage(updated);
     setCreateForm(EMPTY_FORM);
     setIsCreateOpen(false);
-    setCreateSaved(true);
-    setTimeout(() => setCreateSaved(false), 3000);
+    setToast({ message: "Tugas baru berhasil dibuat!", type: "success" });
   }
 
   function openEdit(task: Task) {
@@ -191,8 +203,7 @@ export default function DosenTugasPage() {
     setAllTasks(updated);
     syncLocalStorage(updated);
     setDupTask(null);
-    setCreateSaved(true);
-    setTimeout(() => setCreateSaved(false), 3000);
+    setToast({ message: "Tugas berhasil diduplikat!", type: "success" });
   }
 
   function handleGoToRekap(id: string) {
@@ -225,12 +236,7 @@ export default function DosenTugasPage() {
   return (
     <div className="flex flex-col gap-6">
 
-      {/* SUCCESS TOAST */}
-      {createSaved && (
-        <div className="fixed top-5 right-5 z-[200] flex items-center gap-2.5 bg-paper border border-forest/30 text-forest px-4 py-3 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.12)] text-[13.5px] font-medium animate-fadeIn">
-          <CheckCircle size={16} /> Tugas baru berhasil dibuat!
-        </div>
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
 
       {/* CREATE MODAL */}
       {isCreateOpen && (

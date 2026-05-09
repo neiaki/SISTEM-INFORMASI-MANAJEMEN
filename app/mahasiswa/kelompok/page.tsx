@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X, Plus, UserPlus, Search, Check, Users } from "lucide-react";
+import { Toast, type ToastType } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { useSearch } from "@/lib/search-context";
 
@@ -276,7 +277,8 @@ export default function KelompokPage() {
   const [inviteSearch, setInviteSearch] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [form, setForm] = useState({ name: "", course: "", maxSize: "5" });
-  const [toast, setToast] = useState("");
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+  const [confirmDeclineId, setConfirmDeclineId] = useState<string | null>(null);
   const [editingRole, setEditingRole] = useState<{ groupId: string; memberNim: string } | null>(null);
   const [editingMaxSize, setEditingMaxSize] = useState<{ groupId: string; value: string } | null>(null);
   const [roomSearch, setRoomSearch] = useState("");
@@ -322,10 +324,20 @@ export default function KelompokPage() {
     localStorage.setItem("sim_join_requests", JSON.stringify(reqs));
   };
 
-  const flash = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 3000);
+  const flash = (msg: string, type: ToastType = "success") => {
+    setToast({ message: msg, type });
   };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (confirmDeclineId) setConfirmDeclineId(null);
+      else if (inviteForGroup) setInviteForGroup(null);
+      else if (isCreateOpen) setIsCreateOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [confirmDeclineId, inviteForGroup, isCreateOpen]);
 
   const today = () => new Date().toISOString().slice(0, 10);
 
@@ -463,11 +475,17 @@ export default function KelompokPage() {
   };
 
   const handleDecline = (invId: string) => {
+    setConfirmDeclineId(invId);
+  };
+
+  const confirmDecline = () => {
+    if (!confirmDeclineId) return;
     const updInvs = invitations.map((i) =>
-      i.id === invId ? { ...i, status: "declined" as InvStatus } : i
+      i.id === confirmDeclineId ? { ...i, status: "declined" as InvStatus } : i
     );
     persist(groups, updInvs);
-    flash("Undangan ditolak.");
+    setConfirmDeclineId(null);
+    flash("Undangan ditolak.", "info");
   };
 
   const ROLES = ["Leader", "Anggota", "UI", "Analyst", "Presenter", "Notulis", "Backend", "Frontend"];
@@ -600,11 +618,24 @@ export default function KelompokPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-5 right-5 z-[200] flex items-center gap-2 bg-mhs-card border border-mhs-amber/30 text-mhs-amber px-4 py-3 rounded-xl shadow-lg text-[13.5px] font-medium animate-fadeIn">
-          <Check size={15} /> {toast}
-        </div>
+      {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
+
+      {/* Confirm Decline */}
+      {confirmDeclineId && (
+        <>
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-40" onClick={() => setConfirmDeclineId(null)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-mhs-card border border-mhs-border rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.18)] w-full max-w-sm p-6 text-center animate-fadeIn">
+              <div className="text-[32px] mb-3">🚫</div>
+              <h2 className="font-serif text-[17px] text-mhs-text mb-2">Tolak Undangan?</h2>
+              <p className="text-[13px] text-mhs-muted mb-5">Kamu akan menolak undangan ini. Tindakan tidak dapat dibatalkan.</p>
+              <div className="flex gap-2">
+                <button onClick={() => setConfirmDeclineId(null)} className="flex-1 border border-mhs-border text-mhs-muted hover:text-mhs-text py-2 rounded-lg text-[13px] transition-colors">Batal</button>
+                <button onClick={confirmDecline} className="flex-1 bg-mhs-rose text-white hover:opacity-90 py-2 rounded-lg text-[13px] font-semibold transition-colors">Tolak</button>
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Header */}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createSeedData } from "@/data/sim-data";
 import { useNotifStore } from "@/lib/notifStore";
+import { Toast, type ToastType } from "@/components/ui/toast";
 
 const data = createSeedData().mahasiswa;
 
@@ -26,6 +27,7 @@ type FilterTab = typeof FILTER_TABS[number];
 export default function NotifikasiPage() {
   const { readIds, markRead, markAllRead, togglePref, getPrefs } = useNotifStore("mahasiswa");
   const [activeFilter, setActiveFilter] = useState<FilterTab>("Semua");
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const prefs = getPrefs(data.preferences);
 
   const total = data.notifications.length;
@@ -53,6 +55,7 @@ export default function NotifikasiPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
       <div className="flex items-end justify-between">
         <div>
           <div className="text-[11px] text-mhs-muted uppercase tracking-[0.1em] mb-0.5">Modul</div>
@@ -66,7 +69,7 @@ export default function NotifikasiPage() {
           )}
           {unread > 0 && (
             <button
-              onClick={() => markAllRead("mahasiswa", total)}
+              onClick={() => { markAllRead("mahasiswa", total); setToast({ message: "Semua notifikasi ditandai dibaca", type: "success" }); }}
               className="text-[12px] bg-mhs-amber/10 text-mhs-amber font-semibold px-3 py-1.5 rounded-lg border border-mhs-amber/20 hover:bg-mhs-amber/20 transition-colors"
             >
               ✓ Tandai Semua Dibaca

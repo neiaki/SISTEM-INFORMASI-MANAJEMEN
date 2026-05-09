@@ -1,64 +1,36 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-## Aturan Commit
-
-Jangan pernah menambahkan `Co-Authored-By` atau atribusi Claude di pesan commit manapun.
-
-## Commands
+## Quick Start
 
 ```bash
-npm run dev      # Start dev server at http://localhost:3000
-npm run build    # Production build
-npm start        # Start production server
+npm run dev      # http://localhost:3000
+npm run build
+npm start
 ```
 
-No lint or test tooling is configured yet.
+## Important Notes
+
+- **No lint/test tooling configured** — `package.json` has no lint or test scripts
+- **Frontend-only prototype** — no backend, no database; all data is mock + localStorage
+- **Tailwind v4** — CSS-first config in `app/globals.css` (`@theme inline`), no `tailwind.config.js`
 
 ## Architecture
 
-**Frontend-only prototype** — Next.js 15 App Router, TypeScript/TSX, Tailwind CSS v4, shadcn/ui (Radix UI), React 19, no backend or database.
+- **4 roles**: Mahasiswa (students), Dosen (lecturers), Admin, Staff TU
+- **Entry point**: `/auth/login` — selects role and redirects to role-specific dashboard
+- **State**: local `useState` + localStorage, no real auth
+- **Path alias**: `@/*` maps to project root
 
-### Key directories
+## Key Files
 
-- `app/` — Next.js App Router pages by role:
-  - `auth/login/` — login page, selects role and redirects
-  - `mahasiswa/` — student dashboard (tugas, kelompok, laporan, log, notifikasi, proyek, participant, profil)
-  - `dosen/` — lecturer dashboard (tugas, rekap, kelompok, mahasiswa, matakuliah, laporan, log, notifikasi, profil)
-  - `admin/` — admin dashboard (tugas, laporan, notifikasi, profil)
-  - `staff-tu/` — staff TU dashboard (tugas, laporan, notifikasi, profil)
-- `components/ui/` — shadcn/ui primitives (Button, Badge, Card, Dialog, Select, Tabs, Checkbox, Input, Skeleton, ConfirmDialog)
-- `components/` — shared components (empty-state, task-detail-panel, theme-provider, reload-button)
-- `data/sim-data.ts` — all mock data and configuration constants (`AUTH_MODES`, `SECTION_OPTIONS`, `ACCESS_ROWS`, system settings)
-- `lib/` — stores and utilities:
-  - `utils.ts` — `cn()` helper (clsx + tailwind-merge)
-  - `taskStore.ts` — task state management
-  - `kelompokStore.ts` — group state management
-  - `notifStore.ts` — notification state management
-  - `activityLog.ts` — activity log helpers
-  - `exportUtils.ts` — export/download utilities
-  - `students-data.ts` — student mock data
-  - `search-context.tsx` — global search context
+| Path | Purpose |
+|------|---------|
+| `data/sim-data.ts` | All mock data, AUTH_MODES, SECTION_OPTIONS |
+| `lib/taskStore.ts` | Task state management |
+| `lib/kelompokStore.ts` | Group state management |
+| `lib/notifStore.ts` | Notification state |
+| `app/globals.css` | Theme variables (`mhs-*`, `dsn-*`, `adm-*`, `stu-*`) |
 
-### Role-based UI
+## Commit Rule
 
-The app has four user roles with distinct layouts and color palettes:
-- **Mahasiswa** (students) — Amber/Teal accent theme (`mhs-*` CSS vars)
-- **Dosen** (lecturers) — Forest/Gold on cream theme (`dsn-*` CSS vars)
-- **Admin** — institutional admin theme (`adm-*` CSS vars)
-- **Staff TU** — staff TU theme (`stu-*` CSS vars)
-
-Login at `/auth/login` selects the role and routes accordingly. All state is local (`useState`); no real authentication exists.
-
-### Theming
-
-Tailwind v4 uses CSS-first config in `app/globals.css` (`@theme inline { ... }`), no `tailwind.config.js`. `components/theme-provider.tsx` wraps `next-themes` for light/dark mode. `components.json` configures shadcn/ui (baseColor: slate, cssVariables enabled).
-
-### Path alias
-
-`@/*` maps to the project root (configured in `tsconfig.json`).
-
-## Product context
-
-This is a task/project management system for a university (SIM Tugas). Full requirements are in `prd-sim-tugas.md`. Planned future integrations: SIAKAD, campus LMS, email notifications, Telegram bot.
+Never add `Co-Authored-By` or Claude attribution to commit messages.

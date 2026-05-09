@@ -7,6 +7,7 @@ import { useTheme } from "next-themes";
 import { User, LogOut, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SearchContext } from "@/lib/search-context";
+import { getAllTaskData } from "@/lib/taskStore";
 
 export default function MahasiswaLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -16,11 +17,18 @@ export default function MahasiswaLayout({ children }: { children: ReactNode }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQ, setSearchQ] = useState("");
+  const [urgentCount, setUrgentCount] = useState(5);
 
-  useEffect(() => { setSearchQ(""); setSidebarOpen(false); setIsProfileOpen(false); }, [pathname]);
+  useEffect(() => {
+    setSearchQ(""); setSidebarOpen(false); setIsProfileOpen(false);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [pathname]);
 
   useEffect(() => {
     setMounted(true);
+    const data = getAllTaskData();
+    const count = Object.values(data).filter(d => !d.completed).length;
+    setUrgentCount(count || 5);
   }, []);
 
   const handleLogout = () => {
@@ -66,7 +74,7 @@ export default function MahasiswaLayout({ children }: { children: ReactNode }) {
           )}>
             {pathname === "/mahasiswa/tugas" && <div className="absolute left-0 top-1/2 -translate-y-1/2 h-[60%] w-[3px] bg-mhs-amber rounded-r-sm" />}
             <span className="text-[16px] w-5 text-center">☑</span> Manajemen Tugas
-            <span className="ml-auto bg-mhs-danger text-white text-[10px] font-semibold py-[1px] px-1.5 rounded-full">5</span>
+            <span className="ml-auto bg-mhs-danger text-white text-[10px] font-semibold py-[1px] px-1.5 rounded-full">{urgentCount}</span>
           </Link>
           <Link href="/mahasiswa/proyek" className={cn(
             "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13.5px] font-medium transition-all mb-0.5 relative group",

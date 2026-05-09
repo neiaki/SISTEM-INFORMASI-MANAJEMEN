@@ -2,9 +2,11 @@
 
 import { useState, useEffect, Fragment } from "react";
 import { MessageSquare, Paperclip, ChevronDown, ChevronUp, Check, X, Bell, Lock } from "lucide-react";
+import { Toast, type ToastType } from "@/components/ui/toast";
 import { createSeedData } from "@/data/sim-data";
 import { getAllTaskData, seedDummyComments, type TaskEntry } from "@/lib/taskStore";
 import { useSearch } from "@/lib/search-context";
+import { EmptyState } from "@/components/empty-state";
 
 const data = createSeedData().dosen;
 
@@ -37,7 +39,7 @@ export default function DosenRekapPage() {
   const [activeTask, setActiveTask]     = useState<string | null>(data.tasks[0]?.id ?? null);
   const [studentStore, setStudentStore] = useState<Record<string, unknown>>({});
   const [expandedComments, setExpandedComments]     = useState<Record<string, boolean>>({});
-  const [toast, setToast]               = useState("");
+  const [toast, setToast]               = useState<{ message: string; type: ToastType } | null>(null);
   const [notifModal, setNotifModal]     = useState(false);
   const [notifSelected, setNotifSelected]           = useState<string[]>([]);
   const [dismissedComments, setDismissedComments]   = useState<string[]>([]);
@@ -73,7 +75,14 @@ export default function DosenRekapPage() {
     setGrades(saved ? JSON.parse(saved) : {});
   }, [activeTask]);
 
-  const flash = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 3000); };
+  const flash = (msg: string, type: ToastType = "success") => { setToast({ message: msg, type }); };
+
+  useEffect(() => {
+    if (!notifModal) return;
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") setNotifModal(false); };
+    document.addEventListener("keydown", h);
+    return () => document.removeEventListener("keydown", h);
+  }, [notifModal]);
 
   function dismissComment(id: string) {
     setDismissedComments(prev => {
@@ -194,12 +203,7 @@ export default function DosenRekapPage() {
   return (
     <div className="flex flex-col gap-6">
 
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-5 right-5 z-[200] flex items-center gap-2 bg-paper border border-forest/30 text-forest px-4 py-3 rounded-xl shadow-lg text-[13.5px] font-medium animate-fadeIn">
-          <Check size={15} /> {toast}
-        </div>
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
 
       {/* Header */}
       <div className="flex items-end justify-between">
@@ -516,6 +520,12 @@ export default function DosenRekapPage() {
               })}
             </tbody>
           </table>
+
+          {displayRows.length === 0 && topbarQ && (
+            <div className="px-5 py-4">
+              <EmptyState theme="dosen" icon="🔍" title="Tidak ada hasil" description={`Tidak ada mahasiswa yang cocok dengan "${topbarQ}"`} />
+            </div>
+          )}
 
           {/* Footer actions */}
           <div className="px-5 py-4 border-t border-border flex gap-2 flex-wrap">

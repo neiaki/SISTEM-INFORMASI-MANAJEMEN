@@ -1,7 +1,24 @@
 "use client";
 
+import React from "react";
 import { useSearch } from "@/lib/search-context";
 import { PARTICIPANTS } from "@/lib/students-data";
+import { EmptyState } from "@/components/empty-state";
+
+function highlight(text: string, query: string): React.ReactNode {
+  if (!query) return text;
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="bg-mhs-amber/30 text-mhs-text not-italic rounded-sm px-0.5 font-medium">
+        {text.slice(idx, idx + query.length)}
+      </mark>
+      {text.slice(idx + query.length)}
+    </>
+  );
+}
 
 export default function ParticipantPage() {
   const q = useSearch().toLowerCase();
@@ -11,7 +28,7 @@ export default function ParticipantPage() {
       p.nama.toLowerCase().includes(q) ||
       p.nim.includes(q) ||
       p.email.toLowerCase().includes(q)
-  );
+  ).sort((a, b) => a.nama.localeCompare(b.nama));
 
   return (
     <div className="flex flex-col gap-6">
@@ -21,14 +38,20 @@ export default function ParticipantPage() {
           Daftar <span className="text-mhs-amber">Peserta</span>
         </div>
         <div className="text-[13px] text-mhs-muted mt-1">
-          {participants.length} mahasiswa{q ? " ditemukan" : " terdaftar pada kelas ini"}
+          {q
+            ? <>{participants.length} dari {PARTICIPANTS.length} mahasiswa ditemukan</>
+            : <>{PARTICIPANTS.length} mahasiswa terdaftar pada kelas ini</>
+          }
         </div>
       </div>
 
       {participants.length === 0 ? (
-        <div className="bg-mhs-card border border-mhs-border rounded-[12px] p-10 text-center text-mhs-muted">
-          Tidak ada peserta yang cocok dengan pencarian &quot;{q}&quot;.
-        </div>
+        <EmptyState
+          icon="🔍"
+          title="Tidak ditemukan"
+          description={`Tidak ada peserta dengan kata kunci "${q}".`}
+          theme="mahasiswa"
+        />
       ) : (
         <div className="flex flex-col gap-3">
           {participants.map((p) => (
@@ -38,15 +61,15 @@ export default function ParticipantPage() {
             >
               <div>
                 <div className="text-[11px] text-mhs-muted uppercase tracking-[0.08em] mb-0.5">NIM</div>
-                <div className="text-[15px] font-medium text-mhs-text">{p.nim}</div>
+                <div className="text-[15px] font-medium text-mhs-text">{highlight(p.nim, q)}</div>
               </div>
               <div>
                 <div className="text-[11px] text-mhs-muted uppercase tracking-[0.08em] mb-0.5">Nama</div>
-                <div className="text-[15px] font-medium text-mhs-text uppercase">{p.nama}</div>
+                <div className="text-[15px] font-medium text-mhs-text uppercase">{highlight(p.nama, q)}</div>
               </div>
               <div className="col-span-2">
                 <div className="text-[11px] text-mhs-muted uppercase tracking-[0.08em] mb-0.5">Email</div>
-                <div className="text-[14px] text-mhs-text">{p.email}</div>
+                <div className="text-[14px] text-mhs-text">{highlight(p.email, q)}</div>
               </div>
             </div>
           ))}

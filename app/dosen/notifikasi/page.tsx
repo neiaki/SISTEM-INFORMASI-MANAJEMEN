@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { createSeedData } from "@/data/sim-data";
 import { useNotifStore } from "@/lib/notifStore";
+import { Toast, type ToastType } from "@/components/ui/toast";
 
 const data = createSeedData().dosen;
 
@@ -47,6 +48,14 @@ export default function DosenNotifikasiPage() {
   const [activeTab, setActiveTab]     = useState("semua");
   const [modalOpen, setModalOpen]     = useState(false);
   const [form, setForm]               = useState({ title: "", message: "", target: "semua" });
+  const [toast, setToast]             = useState<{ message: string; type: ToastType } | null>(null);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") setModalOpen(false); };
+    document.addEventListener("keydown", h);
+    return () => document.removeEventListener("keydown", h);
+  }, [modalOpen]);
 
   const seedNotifs = [
     ...STATIC_NOTIFS.map((n, i) => ({ ...n, key: `dosen-notif-${i}` })),
@@ -83,6 +92,7 @@ export default function DosenNotifikasiPage() {
 
   function handleMarkAllRead() {
     allNotifs.forEach(n => { if (!readIds.includes(n.key)) markRead(n.key); });
+    setToast({ message: "Semua notifikasi telah ditandai dibaca.", type: "success" });
   }
 
   function handleSendBroadcast() {
@@ -99,6 +109,7 @@ export default function DosenNotifikasiPage() {
     setBroadcasts(prev => [b, ...prev]);
     setForm({ title: "", message: "", target: "semua" });
     setModalOpen(false);
+    setToast({ message: "Pengumuman berhasil dikirim!", type: "success" });
   }
 
   function applyTemplate(t: typeof TEMPLATES[0]) {
@@ -114,6 +125,8 @@ export default function DosenNotifikasiPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
+
       {/* Header */}
       <div className="flex items-end justify-between">
         <div>

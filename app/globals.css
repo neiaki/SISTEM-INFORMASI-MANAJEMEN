@@ -821,3 +821,61 @@ html.dark {
   .animate-fadeIn { animation: none !important; }
   * { box-shadow: none !important; }
 }
+
+/* ── Landing page animations ── */
+.font-clash { font-family: 'Clash Display', sans-serif; }
+
+html { scroll-behavior: smooth; }
+
+@keyframes icon-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes icon-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-14deg); }
+  40% { transform: rotate(14deg); }
+  60% { transform: rotate(-9deg); }
+  80% { transform: rotate(9deg); }
+}
+@keyframes icon-trend {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(5px, -5px); }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in-up { animation: fadeInUp 0.6s ease forwards; }
+.anim-float { animation: icon-float 5s ease-in-out infinite; }
+.anim-wiggle { animation: icon-wiggle 3.5s ease-in-out infinite; }
+.anim-trend { animation: icon-trend 2.5s ease-in-out infinite; }
+
+@keyframes btn-ripple {
+  0%   { transform: translate(-50%,-50%) scale(0); opacity: 0.5; }
+  100% { transform: translate(-50%,-50%) scale(3); opacity: 0; }
+}
+.btn-rpl { position: relative; overflow: hidden; }
+.btn-rpl::after { content: ''; position: absolute; width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.4); top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0); pointer-events: none; }
+.btn-rpl:active::after { animation: btn-ripple 0.45s ease-out; }
+
+@keyframes confetti-fall {
+  0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translateY(150px) rotate(720deg) scale(0.5); opacity: 0; }
+}
+.confetti-p { position: absolute; width: 8px; height: 8px; border-radius: 2px; pointer-events: none; }
+
+.feat-icon { transition: transform 0.25s ease; }
+.feat-card:hover .feat-icon { transform: scale(1.18) rotate(8deg); }
+
+/* Focus states accessibility */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
