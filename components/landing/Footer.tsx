@@ -240,12 +240,12 @@ export function Footer() {
                   ] as const
                 ).map((key) => (
                   <li key={key}>
-                    <button
-                      onClick={() => setFooterModal(key)}
+                    <Link
+                      href={`/fitur?tab=${key}`}
                       className="text-[#94a3b8] hover:text-white text-[13px] transition-colors text-left hover:translate-x-1 inline-block"
                     >
                       {FOOTER_INFO[key].title}
-                    </button>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -268,7 +268,7 @@ export function Footer() {
                 ).map((key) => (
                   <li key={key}>
                     <Link
-                      href={`/bantuan#${key}`}
+                      href={key === "panduan-pengguna" ? "/panduan" : `/bantuan?tab=${key}`}
                       className="text-[#94a3b8] hover:text-white text-[13px] transition-colors text-left hover:translate-x-1 inline-block"
                     >
                       {FOOTER_INFO[key].title}
@@ -292,12 +292,12 @@ export function Footer() {
                   ] as const
                 ).map((key) => (
                   <li key={key}>
-                    <button
-                      onClick={() => setFooterModal(key)}
+                    <Link
+                      href={`/legal?tab=${key}`}
                       className="text-[#94a3b8] hover:text-white text-[13px] transition-colors text-left hover:translate-x-1 inline-block"
                     >
                       {FOOTER_INFO[key].title}
-                    </button>
+                    </Link>
                   </li>
                 ))}
               </ul>

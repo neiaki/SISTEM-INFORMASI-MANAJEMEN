@@ -57,7 +57,7 @@ export function HeroSection({ heroParallax }: HeroSectionProps) {
               Mulai Sekarang
             </Link>
             <Link
-              href="/bantuan/panduan"
+              href="/panduan"
               className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white dark:bg-[#1e293b] border border-[#e2e8f0] dark:border-[#334155] text-[#1e3a8a] dark:text-[#60a5fa] font-semibold px-6 py-3 rounded-full transition-colors hover:shadow-md btn-rpl"
             >
               <BookOpen size={16} />

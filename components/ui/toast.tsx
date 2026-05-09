@@ -34,7 +34,7 @@ export function Toast({ message, type = "success", onDismiss, duration = 3000 }:
   }, [onDismiss, duration]);
 
   return (
-    <div className="fixed bottom-5 right-5 z-[9999] animate-fadeIn">
+    <div className="fixed top-5 right-5 z-[9999] animate-fadeIn">
       <div className={cn(
         "flex items-center gap-3 px-4 py-3 rounded-xl border shadow-[0_4px_20px_rgba(0,0,0,0.2)] min-w-[240px] max-w-[360px]",
         STYLES[type]

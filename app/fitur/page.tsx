@@ -4,115 +4,115 @@ import { Suspense, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  BookOpen,
-  HelpCircle,
-  PlayCircle,
-  Lightbulb,
-  Info,
+  ListTodo,
+  FileText,
+  MessageSquare,
+  PieChart,
+  Users,
   ArrowLeft,
   CheckCircle2,
-  ChevronRight,
+  Zap,
 } from "lucide-react";
 import { Footer } from "@/components/landing/Footer";
 
-const BANTUAN_TABS = [
+const FEATURES = [
   {
-    id: "panduan-pengguna",
-    title: "Panduan Pengguna",
-    icon: BookOpen,
-    description: "Dokumentasi komprehensif untuk membantu Anda menavigasi setiap fitur dalam platform AcadTrack.",
+    id: "manajemen-tugas",
+    title: "Manajemen Tugas",
+    icon: ListTodo,
+    description: "Kelola seluruh tugas dari semua mata kuliah dalam satu dashboard terpusat.",
     details: [
-      "Cara login dan mengatur profil.",
-      "Panduan lengkap manajemen tugas untuk Dosen.",
-      "Langkah-langkah pengumpulan file bagi Mahasiswa.",
-      "Cara membaca rekapitulasi nilai dan metrik.",
+      "Dosen dapat membuat, mengedit, dan mengatur deadline tugas.",
+      "Penanda prioritas (Tinggi, Sedang, Rendah).",
+      "Mahasiswa dapat melihat daftar tugas yang sedang aktif dan deadline terdekat.",
+      "Notifikasi otomatis saat ada tugas baru.",
     ],
     color: "text-blue-500",
     bgColor: "bg-blue-50",
     darkBgColor: "dark:bg-blue-500/10",
   },
   {
-    id: "faq",
-    title: "FAQ",
-    icon: HelpCircle,
-    description: "Pertanyaan yang paling sering diajukan mengenai akun, pendaftaran, dan masalah teknis platform.",
+    id: "pengumpulan-file",
+    title: "Pengumpulan File",
+    icon: FileText,
+    description: "Kumpulkan tugas Anda dalam berbagai format dengan cepat dan aman.",
     details: [
-      "Bagaimana cara mereset password akun?",
-      "Apa yang harus dilakukan jika file gagal diupload?",
-      "Bagaimana dosen menambah mahasiswa ke dalam kelas?",
-      "Berapa batas maksimal ukuran file tugas?",
-    ],
-    color: "text-amber-500",
-    bgColor: "bg-amber-50",
-    darkBgColor: "dark:bg-amber-500/10",
-  },
-  {
-    id: "video-tutorial",
-    title: "Video Tutorial",
-    icon: PlayCircle,
-    description: "Panduan visual langkah demi langkah untuk memaksimalkan penggunaan fitur AcadTrack.",
-    details: [
-      "Video instruksional cara membuat kelas baru.",
-      "Screencast tutorial memberikan review pada tugas.",
-      "Panduan interaktif pembentukan kelompok otomatis.",
-      "Webinar pengenalan platform bagi mahasiswa baru.",
-    ],
-    color: "text-red-500",
-    bgColor: "bg-red-50",
-    darkBgColor: "dark:bg-red-500/10",
-  },
-  {
-    id: "blog-tips",
-    title: "Blog & Tips",
-    icon: Lightbulb,
-    description: "Artikel pilihan dan tips untuk meningkatkan produktivitas belajar serta efektivitas mengajar.",
-    details: [
-      "Tips mengatur waktu (time-management) selama perkuliahan.",
-      "Praktik terbaik dalam mengerjakan proyek kelompok.",
-      "Cara dosen memberikan feedback yang membangun.",
-      "Update dan fitur terbaru dari tim pengembang AcadTrack.",
+      "Mendukung upload berbagai jenis format file (PDF, DOCX, ZIP, dll).",
+      "Validasi ukuran file otomatis.",
+      "Tanda terima pengumpulan tercatat dengan timestamp (waktu server).",
+      "Dosen dapat melihat hasil pengumpulan secara real-time.",
     ],
     color: "text-emerald-500",
     bgColor: "bg-emerald-50",
     darkBgColor: "dark:bg-emerald-500/10",
   },
   {
-    id: "tentang-kami",
-    title: "Tentang Kami",
-    icon: Info,
-    description: "Mengenal lebih dekat visi, misi, dan tim pengembang di balik AcadTrack Universitas Pamulang.",
+    id: "review-komentar",
+    title: "Review & Komentar",
+    icon: MessageSquare,
+    description: "Interaksi dua arah antara dosen dan mahasiswa terkait evaluasi tugas.",
     details: [
-      "Latar belakang pengembangan platform manajemen tugas.",
-      "Visi untuk memajukan ekosistem perkuliahan digital.",
-      "Daftar anggota tim pengembang dari fakultas IT.",
-      "Roadmap fitur yang akan datang di versi berikutnya.",
+      "Dosen dapat memberikan feedback spesifik pada file yang dikumpulkan.",
+      "Sistem penilaian langsung (skoring).",
+      "Mahasiswa dapat membalas komentar dosen untuk klarifikasi.",
+      "Riwayat diskusi tersimpan secara permanen untuk referensi.",
     ],
-    color: "text-indigo-500",
-    bgColor: "bg-indigo-50",
-    darkBgColor: "dark:bg-indigo-500/10",
+    color: "text-purple-500",
+    bgColor: "bg-purple-50",
+    darkBgColor: "dark:bg-purple-500/10",
+  },
+  {
+    id: "rekap-pengumpulan",
+    title: "Rekap Pengumpulan",
+    icon: PieChart,
+    description: "Pantau kemajuan dan status pengumpulan mahasiswa secara menyeluruh.",
+    details: [
+      "Dashboard analitik menampilkan persentase pengumpulan kelas.",
+      "Daftar mahasiswa yang sudah dan belum mengumpulkan.",
+      "Filter berdasarkan status (Tepat Waktu, Terlambat, Tidak Mengumpulkan).",
+      "Ekspor laporan rekapitulasi nilai dan status ke Excel/PDF.",
+    ],
+    color: "text-orange-500",
+    bgColor: "bg-orange-50",
+    darkBgColor: "dark:bg-orange-500/10",
+  },
+  {
+    id: "proyek-kelompok",
+    title: "Proyek Kelompok",
+    icon: Users,
+    description: "Fasilitasi kerja sama tim dalam menyelesaikan proyek perkuliahan.",
+    details: [
+      "Pembuatan grup manual atau acak otomatis oleh sistem.",
+      "Ruang kerja virtual khusus untuk setiap kelompok.",
+      "Penilaian individu berbasis kontribusi dalam kelompok (peer review).",
+      "Tracking progres per anggota kelompok secara transparan.",
+    ],
+    color: "text-pink-500",
+    bgColor: "bg-pink-50",
+    darkBgColor: "dark:bg-pink-500/10",
   },
 ];
 
-function BantuanContent() {
+function FiturContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const initialTab = searchParams.get("tab") || "panduan-pengguna";
+  const initialTab = searchParams.get("tab") || "manajemen-tugas";
   
   const [activeTab, setActiveTab] = useState(initialTab);
 
   useEffect(() => {
     const tab = searchParams.get("tab");
-    if (tab && BANTUAN_TABS.some(f => f.id === tab)) {
+    if (tab && FEATURES.some(f => f.id === tab)) {
       setActiveTab(tab);
     }
   }, [searchParams]);
 
   const handleTabChange = (id: string) => {
     setActiveTab(id);
-    router.replace(`/bantuan?tab=${id}`, { scroll: false });
+    router.replace(`/fitur?tab=${id}`, { scroll: false });
   };
 
-  const activeFeature = BANTUAN_TABS.find((f) => f.id === activeTab) || BANTUAN_TABS[0];
+  const activeFeature = FEATURES.find((f) => f.id === activeTab) || FEATURES[0];
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#020817] flex flex-col">
@@ -138,17 +138,17 @@ function BantuanContent() {
       <main className="flex-1 max-w-[1200px] mx-auto w-full px-6 py-12 lg:py-20">
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-clash font-bold text-[#0f172a] dark:text-white mb-6">
-            Pusat <span className="text-[#2563eb]">Bantuan</span>
+            Eksplorasi Fitur <span className="text-[#2563eb]">AcadTrack</span>
           </h1>
           <p className="text-[#64748b] dark:text-[#94a3b8] text-[16px] max-w-2xl mx-auto leading-relaxed">
-            Temukan jawaban, panduan lengkap, dan tips terbaik untuk memastikan pengalaman akademik Anda di AcadTrack berjalan mulus tanpa hambatan.
+            Platform kami menyediakan berbagai instrumen esensial untuk mempermudah kegiatan akademik Anda. Pelajari bagaimana tiap fitur bekerja untuk mendukung ekosistem perkuliahan digital.
           </p>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
           {/* Sidebar Tabs */}
           <div className="lg:w-1/3 flex flex-col gap-3">
-            {BANTUAN_TABS.map((feature) => {
+            {FEATURES.map((feature) => {
               const isActive = activeTab === feature.id;
               const Icon = feature.icon;
               return (
@@ -201,7 +201,7 @@ function BantuanContent() {
               </p>
 
               <div className="space-y-4 flex-1">
-                <h4 className="font-semibold text-[#0f172a] dark:text-white text-[15px] mb-4">Informasi Tersedia:</h4>
+                <h4 className="font-semibold text-[#0f172a] dark:text-white text-[15px] mb-4">Kemampuan Utama:</h4>
                 {activeFeature.details.map((detail, idx) => (
                   <div key={idx} className="flex items-start gap-3">
                     <CheckCircle2 className="text-[#10b981] mt-0.5 shrink-0" size={20} />
@@ -213,17 +213,10 @@ function BantuanContent() {
               </div>
 
               <div className="mt-12 pt-8 border-t border-[#e2e8f0] dark:border-[#334155]">
-                 {activeFeature.id === "panduan-pengguna" ? (
-                   <Link href="/panduan" className="inline-flex items-center gap-2 bg-[#f8fafc] dark:bg-[#0f172a] text-[#1e3a8a] dark:text-white px-6 py-3 rounded-full font-semibold text-[14px] hover:bg-black/5 dark:hover:bg-white/5 border border-[#e2e8f0] dark:border-[#334155] transition-colors">
-                      <span>Buka Halaman Panduan Lengkap</span>
-                      <ChevronRight size={16} />
-                   </Link>
-                 ) : (
-                   <button className="inline-flex items-center gap-2 bg-[#f8fafc] dark:bg-[#0f172a] text-[#1e3a8a] dark:text-white px-6 py-3 rounded-full font-semibold text-[14px] hover:bg-black/5 dark:hover:bg-white/5 border border-[#e2e8f0] dark:border-[#334155] transition-colors">
-                      <span>Lihat Selengkapnya</span>
-                      <ChevronRight size={16} />
-                   </button>
-                 )}
+                 <Link href="/auth/login" className="inline-flex items-center gap-2 bg-[#1e3a8a] text-white px-6 py-3 rounded-full font-semibold text-[14px] hover:bg-[#1e3a8a]/90 transition-colors shadow-lg">
+                    <Zap size={16} />
+                    Coba Fitur Ini Sekarang
+                 </Link>
               </div>
             </div>
           </div>
@@ -235,14 +228,14 @@ function BantuanContent() {
   );
 }
 
-export default function BantuanPage() {
+export default function FiturPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-[#f8fafc] dark:bg-[#020817] flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-[#2563eb] border-t-transparent rounded-full" />
       </div>
     }>
-      <BantuanContent />
+      <FiturContent />
     </Suspense>
   );
 }

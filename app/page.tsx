@@ -53,7 +53,7 @@ export default function LandingPage() {
   >([]);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
-  const heroRef  = useInView();
+  const heroRef = useInView();
   const fiturRef = useInView();
 
   useEffect(() => {
@@ -196,7 +196,7 @@ export default function LandingPage() {
         className={cn(
           "px-6 py-4 flex items-center justify-between sticky top-0 z-50 bg-[#f4f6f8]/90 dark:bg-[#020817]/90 backdrop-blur-md transition-all duration-300 border-b border-transparent dark:border-white/10",
           scrolled &&
-            "shadow-md border-b border-[#e2e8f0] dark:border-white/10 backdrop-blur-xl"
+          "shadow-md border-b border-[#e2e8f0] dark:border-white/10 backdrop-blur-xl"
         )}
       >
         <button
@@ -347,7 +347,7 @@ export default function LandingPage() {
             <div className="h-px bg-[#e2e8f0] dark:bg-white/10 my-2" />
             {[
               { href: "/bantuan", label: "Bantuan" },
-              { href: "/bantuan/panduan", label: "Panduan Pengguna" },
+              { href: "/panduan", label: "Panduan Pengguna" },
               { href: "/auth/login", label: "Masuk ke Platform" },
             ].map(({ href, label }) => (
               <Link
@@ -367,7 +367,7 @@ export default function LandingPage() {
       <section
         ref={heroRef.ref}
         className={cn(
-          "max-w-[1200px] mx-auto px-6 pt-16 pb-24 relative transition-all duration-700",
+          "max-w-[1200px] mx-auto px-6 pt-[9vh] pb-24 relative transition-all duration-700",
           heroRef.visible ? "fade-in-up opacity-100" : "opacity-0"
         )}
       >
@@ -406,7 +406,7 @@ export default function LandingPage() {
                 Mulai Sekarang
               </Link>
               <Link
-                href="/bantuan/panduan"
+                href="/panduan"
                 className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white dark:bg-[#1e293b] border border-[#e2e8f0] dark:border-[#334155] text-[#1e3a8a] dark:text-[#60a5fa] font-semibold px-6 py-3 rounded-full transition-colors hover:shadow-md btn-rpl"
               >
                 <BookOpen size={16} />
@@ -497,43 +497,43 @@ export default function LandingPage() {
 
 
       {/* ECOSYSTEM SECTION */}
-      <section className="max-w-[1200px] mx-auto px-6 py-20">
+      <section className="max-w-[1200px] mx-auto px-6 pt-32 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           {/* Left: UI Mockup + Badges */}
           <div className="relative h-[550px] flex justify-center items-center order-2 lg:order-1">
             {/* Main card — task list mockup */}
-            <div className="relative w-[340px] rounded-2xl overflow-hidden shadow-2xl border border-[#e2e8f0] dark:border-[#334155] z-10">
-              <div className="bg-[#1e3a8a] px-4 py-3 flex items-center justify-between">
-                <div className="text-white font-bold text-[13px] font-clash">
+            <div className="relative w-[380px] rounded-2xl overflow-hidden shadow-2xl border border-[#e2e8f0] dark:border-[#334155] z-10">
+              <div className="bg-[#1e3a8a] px-5 py-3.5 flex items-center justify-between">
+                <div className="text-white font-bold text-[14px] font-clash">
                   Daftar Tugas
                 </div>
-                <div className="text-white/70 text-[11px]">
+                <div className="text-white/70 text-[12px]">
                   Pemweb — Semester 5
                 </div>
               </div>
-              <div className="bg-white dark:bg-[#1e293b] p-3 space-y-2">
+              <div className="bg-white dark:bg-[#1e293b] p-3.5 space-y-2.5">
                 {[
-                  { title: "Tugas 1 — HTML Dasar",   status: "Selesai", deadline: "3 Apr",  done: true  },
-                  { title: "Tugas 2 — CSS Layout",   status: "Selesai", deadline: "10 Apr", done: true  },
-                  { title: "UTS Pemrograman Web",    status: "Aktif",   deadline: "Besok",  done: false },
-                  { title: "Tugas 3 — JavaScript",   status: "Aktif",   deadline: "18 Mei", done: false },
-                  { title: "Proyek Akhir",           status: "Aktif",   deadline: "10 Jun", done: false },
+                  { title: "Tugas 1 — HTML Dasar", status: "Selesai", deadline: "3 Apr", done: true },
+                  { title: "Tugas 2 — CSS Layout", status: "Selesai", deadline: "10 Apr", done: true },
+                  { title: "UTS Pemrograman Web", status: "Aktif", deadline: "Besok", done: false },
+                  { title: "Tugas 3 — JavaScript", status: "Aktif", deadline: "18 Mei", done: false },
+                  { title: "Proyek Akhir", status: "Aktif", deadline: "10 Jun", done: false },
                 ].map(({ title, status, deadline, done }) => (
-                  <div key={title} className="flex items-center gap-3 bg-[#f8fafc] dark:bg-[#0f172a] rounded-xl p-2.5">
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${done ? "bg-[#dcfce7]" : "bg-[#dbeafe]"}`}>
+                  <div key={title} className="flex items-center gap-3 bg-[#f8fafc] dark:bg-[#0f172a] rounded-xl px-3.5 py-3">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${done ? "bg-[#dcfce7]" : "bg-[#dbeafe]"}`}>
                       {done ? (
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                        <svg width="12" height="10" viewBox="0 0 10 8" fill="none">
                           <path d="M1 4L4 7L9 1" stroke="#16a34a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       ) : (
-                        <div className="w-2 h-2 rounded-full bg-[#2563eb]" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#2563eb]" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[11px] font-semibold text-[#0f172a] dark:text-white truncate">{title}</div>
-                      <div className="text-[9px] text-[#64748b] dark:text-[#94a3b8]">Deadline: {deadline}</div>
+                      <div className="text-[13px] font-semibold text-[#0f172a] dark:text-white truncate">{title}</div>
+                      <div className="text-[10px] text-[#64748b] dark:text-[#94a3b8] mt-0.5">Deadline: {deadline}</div>
                     </div>
-                    <div className={`text-[9px] font-semibold px-1.5 py-0.5 rounded shrink-0 ${done ? "bg-[#dcfce7] text-[#16a34a]" : "bg-[#dbeafe] text-[#2563eb]"}`}>
+                    <div className={`text-[10px] font-semibold px-2 py-0.5 rounded shrink-0 ${done ? "bg-[#dcfce7] text-[#16a34a]" : "bg-[#dbeafe] text-[#2563eb]"}`}>
                       {status}
                     </div>
                   </div>
@@ -542,7 +542,7 @@ export default function LandingPage() {
             </div>
 
             {/* Floating Badge — Kelompok */}
-            <div className="absolute top-[-3%] -left-[12%] z-20">
+            <div className="absolute top-[8%] -left-[18%] z-20">
               <div className="bg-white dark:bg-[#1e293b] rounded-3xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex flex-col items-center text-center w-36 border border-gray-100 dark:border-[#334155]">
                 <div className="w-12 h-12 bg-[#1e3a8a] text-white rounded-xl flex items-center justify-center mb-3">
                   <Users size={24} className="anim-wiggle" />
@@ -557,7 +557,7 @@ export default function LandingPage() {
             </div>
 
             {/* Floating Badge — Rekap */}
-            <div className="absolute bottom-[10%] -right-[10%] z-20 w-[220px]">
+            <div className="absolute -bottom-[6%] -right-[4%] z-20 w-[220px]">
               <div className="bg-white dark:bg-[#1e293b] rounded-2xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex items-center gap-4 border border-gray-100 dark:border-[#334155]">
                 <div className="text-[#1e3a8a]">
                   <TrendingUp size={36} strokeWidth={2.5} className="anim-trend" />
@@ -943,11 +943,11 @@ export default function LandingPage() {
                   type="email"
                   required
                   value={newsletterEmail}
-	                  onChange={(e) => setNewsletterEmail(e.target.value)}
-	                  placeholder="Masukkan email kamu…"
-	                  suppressHydrationWarning
-	                  className="flex-1 bg-white/10 border border-white/20 text-white placeholder-white/40 rounded-full px-5 py-2.5 text-[13.5px] outline-none focus:border-white/50 transition-colors"
-	                />
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  placeholder="Masukkan email kamu…"
+                  suppressHydrationWarning
+                  className="flex-1 bg-white/10 border border-white/20 text-white placeholder-white/40 rounded-full px-5 py-2.5 text-[13.5px] outline-none focus:border-white/50 transition-colors"
+                />
                 <button
                   type="submit"
                   className="bg-white text-[#1e3a8a] font-semibold px-6 py-2.5 rounded-full text-[13.5px] hover:bg-white/90 transition-colors shadow-md shrink-0 btn-rpl"
@@ -1012,7 +1012,7 @@ export default function LandingPage() {
                     Masuk ke Platform
                   </button>
                 </Link>
-                <Link href="/bantuan/panduan">
+                <Link href="/panduan">
                   <button className="bg-white/10 hover:bg-white/20 border border-white/30 text-white font-semibold px-5 py-3 rounded-full text-sm transition-colors flex items-center gap-2 btn-rpl">
                     <BookOpen size={15} />
                     Layanan Panduan
@@ -1054,8 +1054,8 @@ export default function LandingPage() {
                         <div className="truncate text-[15px] font-semibold text-white">{title}</div>
                       </div>
                       <div className={`shrink-0 rounded-md px-3 py-1.5 text-[12px] font-semibold ${score !== null ? getScoreBadgeClass(score) : "bg-[#334155] text-[#94a3b8]"}`}>
-                          {score !== null ? score : "—"}
-                        </div>
+                        {score !== null ? score : "—"}
+                      </div>
                     </div>
                   ))}
                 </div>
