@@ -218,6 +218,11 @@ function BantuanContent() {
                       <span>Buka Halaman Panduan Lengkap</span>
                       <ChevronRight size={16} />
                    </Link>
+                 ) : activeFeature.id === "faq" ? (
+                   <Link href="/#faq" className="inline-flex items-center gap-2 bg-[#f8fafc] dark:bg-[#0f172a] text-[#1e3a8a] dark:text-white px-6 py-3 rounded-full font-semibold text-[14px] hover:bg-black/5 dark:hover:bg-white/5 border border-[#e2e8f0] dark:border-[#334155] transition-colors">
+                      <span>Lihat Selengkapnya</span>
+                      <ChevronRight size={16} />
+                   </Link>
                  ) : (
                    <button className="inline-flex items-center gap-2 bg-[#f8fafc] dark:bg-[#0f172a] text-[#1e3a8a] dark:text-white px-6 py-3 rounded-full font-semibold text-[14px] hover:bg-black/5 dark:hover:bg-white/5 border border-[#e2e8f0] dark:border-[#334155] transition-colors">
                       <span>Lihat Selengkapnya</span>

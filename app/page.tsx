@@ -20,6 +20,7 @@ import {
   X,
   Briefcase,
   Zap,
+  Bell,
   ChevronRight,
   Menu,
   ArrowUp,
@@ -579,9 +580,11 @@ export default function LandingPage() {
             <h2 className="text-[44px] font-clash text-[#0f172a] dark:text-white leading-[1.1] mb-4">
               Ekosistem
               <br />
-              Akademik
-              <br />
-              Yang Terpadu
+              <span className="text-[#2563eb] dark:text-[#3b82f6]">
+                Akademik
+                <br />
+                Yang Terpadu
+              </span>
             </h2>
             <p className="text-[#475569] dark:text-[#94a3b8] text-[15px] leading-relaxed mb-10 max-w-md">
               Platform terintegrasi yang menghubungkan mahasiswa dan dosen
@@ -721,38 +724,38 @@ export default function LandingPage() {
           {(
             [
               {
-                key: "tugas-online",
+                key: "manajemen-tugas",
                 icon: ClipboardList,
                 title: "Manajemen Tugas",
                 desc: "Dosen buat dan kelola tugas per mata kuliah; mahasiswa lihat status, prioritas, dan deadline.",
               },
               {
-                key: "jurnal-pkl",
+                key: "pengumpulan-file",
                 icon: Briefcase,
                 title: "Pengumpulan File",
                 desc: "Mahasiswa submit file dan komentar langsung di platform — tidak perlu email atau WhatsApp.",
               },
               {
-                key: "jurnal-dosen",
+                key: "review-komentar",
                 icon: MessageCircle,
                 title: "Review & Komentar",
                 desc: "Dosen beri komentar per submission; mahasiswa bisa melihat feedback langsung di dashboard.",
               },
               {
-                key: "kuis-interaktif",
+                key: "rekap-pengumpulan",
                 icon: TrendingUp,
                 title: "Rekap Pengumpulan",
                 desc: "Dosen lihat rekap siapa sudah/belum kumpul per tugas dengan filter dan statistik lengkap.",
               },
               {
-                key: "jurnal-harian",
+                key: "proyek-kelompok",
                 icon: Users,
                 title: "Tugas Kelompok",
                 desc: "Buat kelompok manual atau acak otomatis; anggota bisa koordinasi dan submit bersama.",
               },
               {
-                key: "panduan-pengguna",
-                icon: Zap,
+                key: "notifikasi-deadline",
+                icon: Bell,
                 title: "Notifikasi Deadline",
                 desc: "Reminder otomatis sebelum deadline agar tidak ada tugas yang terlewat.",
               },
@@ -765,7 +768,7 @@ export default function LandingPage() {
           ).map(({ key, icon: Icon, title, desc }, idx) => (
             <Link
               key={key}
-              href={`/bantuan#${key}`}
+              href={`/features?tab=${key}`}
               className={cn(
                 "feat-card group bg-white dark:bg-[#1e293b] border border-[#e2e8f0] dark:border-[#334155] rounded-2xl p-5 flex items-start gap-4 hover:border-[#2563eb]/50 hover:shadow-md transition-all duration-500",
                 fiturRef.visible

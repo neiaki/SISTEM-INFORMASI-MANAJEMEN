@@ -68,10 +68,22 @@ const FOOTER_INFO: Record<
       "Rekap otomatis siapa saja yang sudah dan belum mengumpulkan tugas. Dosen dapat melihat seluruh submission per tugas dari satu halaman rekap.",
   },
   "proyek-kelompok": {
-    title: "Proyek Kelompok",
+    title: "Tugas Kelompok",
     category: "Fitur",
     description:
       "Buat dan kelola proyek kelompok dengan manajemen anggota, milestone, dan status proyek. Dosen dapat membentuk kelompok manual atau acak otomatis.",
+  },
+  "notifikasi-deadline": {
+    title: "Notifikasi Deadline",
+    category: "Fitur",
+    description:
+      "Reminder otomatis sebelum deadline agar tidak ada tugas yang terlewat.",
+  },
+  "demo-interaktif": {
+    title: "Demo Interaktif",
+    category: "Fitur",
+    description:
+      "Coba langsung pengalaman menggunakan platform AcadTrack tanpa perlu membuat akun atau login.",
   },
   "panduan-pengguna": {
     title: "Panduan Pengguna",
@@ -237,11 +249,12 @@ export function Footer() {
                     "review-komentar",
                     "rekap-pengumpulan",
                     "proyek-kelompok",
+                    "notifikasi-deadline",
                   ] as const
                 ).map((key) => (
                   <li key={key}>
                     <Link
-                      href={`/fitur?tab=${key}`}
+                      href={`/features?tab=${key}`}
                       className="text-[#94a3b8] hover:text-white text-[13px] transition-colors text-left hover:translate-x-1 inline-block"
                     >
                       {FOOTER_INFO[key].title}

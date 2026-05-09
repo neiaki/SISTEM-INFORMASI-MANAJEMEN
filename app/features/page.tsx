@@ -12,6 +12,8 @@ import {
   ArrowLeft,
   CheckCircle2,
   Zap,
+  MonitorPlay,
+  Bell,
 } from "lucide-react";
 import { Footer } from "@/components/landing/Footer";
 
@@ -78,7 +80,7 @@ const FEATURES = [
   },
   {
     id: "proyek-kelompok",
-    title: "Proyek Kelompok",
+    title: "Tugas Kelompok",
     icon: Users,
     description: "Fasilitasi kerja sama tim dalam menyelesaikan proyek perkuliahan.",
     details: [
@@ -90,6 +92,36 @@ const FEATURES = [
     color: "text-pink-500",
     bgColor: "bg-pink-50",
     darkBgColor: "dark:bg-pink-500/10",
+  },
+  {
+    id: "notifikasi-deadline",
+    title: "Notifikasi Deadline",
+    icon: Bell,
+    description: "Sistem pengingat otomatis agar tidak ada tugas yang terlewat.",
+    details: [
+      "Reminder otomatis H-3 dan H-1 sebelum batas waktu pengumpulan.",
+      "Notifikasi langsung di dashboard.",
+      "Penanda visual untuk tugas yang berstatus 'Mendesak'.",
+      "Pengaturan preferensi notifikasi yang dapat disesuaikan."
+    ],
+    color: "text-amber-500",
+    bgColor: "bg-amber-50",
+    darkBgColor: "dark:bg-amber-500/10",
+  },
+  {
+    id: "demo-interaktif",
+    title: "Demo Interaktif",
+    icon: MonitorPlay,
+    description: "Coba langsung pengalaman menggunakan platform AcadTrack tanpa perlu membuat akun atau login.",
+    details: [
+      "Akses ke antarmuka simulasi dashboard secara instan.",
+      "Eksplorasi fitur manajemen tugas, rekap pengumpulan, dan data entitas.",
+      "Data simulasi sudah terisi penuh untuk memberikan gambaran fungsionalitas yang realistis.",
+      "Sistem yang aman — semua interaksi pada mode demo bersifat sementara."
+    ],
+    color: "text-teal-500",
+    bgColor: "bg-teal-50",
+    darkBgColor: "dark:bg-teal-500/10",
   },
 ];
 
@@ -109,7 +141,7 @@ function FiturContent() {
 
   const handleTabChange = (id: string) => {
     setActiveTab(id);
-    router.replace(`/fitur?tab=${id}`, { scroll: false });
+    router.replace(`/features?tab=${id}`, { scroll: false });
   };
 
   const activeFeature = FEATURES.find((f) => f.id === activeTab) || FEATURES[0];
@@ -213,9 +245,9 @@ function FiturContent() {
               </div>
 
               <div className="mt-12 pt-8 border-t border-[#e2e8f0] dark:border-[#334155]">
-                 <Link href="/auth/login" className="inline-flex items-center gap-2 bg-[#1e3a8a] text-white px-6 py-3 rounded-full font-semibold text-[14px] hover:bg-[#1e3a8a]/90 transition-colors shadow-lg">
+                 <Link href={activeFeature.id === "demo-interaktif" ? "/demo" : "/auth/login"} className="inline-flex items-center gap-2 bg-[#1e3a8a] text-white px-6 py-3 rounded-full font-semibold text-[14px] hover:bg-[#1e3a8a]/90 transition-colors shadow-lg">
                     <Zap size={16} />
-                    Coba Fitur Ini Sekarang
+                    {activeFeature.id === "demo-interaktif" ? "Buka Demo Publik Sekarang" : "Coba Fitur Ini Sekarang"}
                  </Link>
               </div>
             </div>
