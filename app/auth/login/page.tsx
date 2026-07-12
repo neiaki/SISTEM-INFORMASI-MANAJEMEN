@@ -2,8 +2,9 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Globe, Eye, EyeOff, Mail, KeyRound, X, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import { Globe, Eye, EyeOff, Mail, KeyRound, X, ArrowLeft, CheckCircle2, Loader2, Database, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { signIn } from "next-auth/react";
 
 type ForgotStep = "input" | "otp" | "reset" | "success";
 
@@ -99,25 +100,70 @@ function LoginForm() {
     }, 1200);
   };
 
-  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+  const [validationError, setValidationError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    // Check for Staff/Admin special login
-    if (role === "dosen" && credential === "001" && password === "admin123") {
-      router.push("/dosen");
+    setValidationError("");
+    setError(false);
+
+    // Validasi basic
+    if (!credential.trim()) {
+      setValidationError("NIM/NIDN atau Email tidak boleh kosong");
+      return;
+    }
+    if (password.length < 6) {
+      setValidationError("Password minimal harus 6 karakter");
       return;
     }
 
-    // Dummy generic login
-    if (credential && password) {
-      const routes: Record<string, string> = {
-        dosen: "/dosen",
-        admin: "/admin",
-        staff_tu: "/staff-tu",
-      };
-      router.push(routes[role] ?? "/mahasiswa");
-    } else {
+    // Cek Demo Mode (Fallback default)
+    const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE !== "false";
+    if (isDemo) {
+      // Logic login bypass untuk demo/mock data
+      if (role === "dosen" && credential === "001" && password === "admin123") {
+        router.push("/dosen");
+        return;
+      }
+      if (credential && password) {
+        const routes: Record<string, string> = {
+          dosen: "/dosen",
+          admin: "/admin",
+          staff_tu: "/staff-tu",
+        };
+        router.push(routes[role] ?? "/mahasiswa");
+      } else {
+        setError(true);
+      }
+      return;
+    }
+
+    // Login sesungguhnya ke database menggunakan NextAuth
+    setIsSubmitting(true);
+    try {
+      const result = await signIn("credentials", {
+        username: credential,
+        password,
+        role: role.toUpperCase(),
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError(true);
+      } else {
+        const routes: Record<string, string> = {
+          MAHASISWA: "/mahasiswa",
+          DOSEN: "/dosen",
+          ADMIN: "/admin",
+          STAFF_TU: "/staff-tu",
+        };
+        router.push(routes[role.toUpperCase()] ?? "/mahasiswa");
+      }
+    } catch (err) {
       setError(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
