@@ -1,0 +1,271 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  MAHASISWA
+  DOSEN
+  ADMIN
+  STAFF_TU
+}
+
+model User {
+  id           String       @id @default(uuid())
+  username     String       @unique // NIM, NIDN, atau username/email kampus
+  passwordHash String       @map("password_hash")
+  role         Role
+  lastLogin    DateTime?    @map("last_login")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  mahasiswa    Mahasiswa?
+  dosen        Dosen?
+  adminCampus  AdminCampus?
+  staffTU      StaffTU?
+
+  @@map("users")
+}
+
+model Mahasiswa {
+  id            String       @id @default(uuid())
+  userId        String       @unique @map("id_user")
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nama          String
+  nim           String       @unique @map("NIM")
+  email         String       @unique
+  noHp          String?      @map("no_hp")
+  semesterAktif Int          @map("semester_aktif")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  enrollments        Enrollment[]
+  anggotaKelompoks   AnggotaKelompok[]
+  logAktivitas       LogAktivitas[]
+  submissions        Submission[]
+  comments           Comment[]
+  deliverable        Deliverable[]
+
+  @@map("mahasiswa")
+}
+
+model Dosen {
+  id        String       @id @default(uuid())
+  userId    String       @unique @map("id_user")
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nama      String
+  email     String       @unique
+  noHp      String?      @map("no_hp")
+  nidn      String       @unique @map("nidn")
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  mataKuliahs MataKuliah[]
+  comments    Comment[]
+
+  @@map("dosen")
+}
+
+model AdminCampus {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("id_user")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nama      String
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("admin_campus")
+}
+
+model StaffTU {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("id_user")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nama      String
+  email     String   @unique
+  unit      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("staff_tu")
+}
+
+model MataKuliah {
+  id        String       @id @default(uuid())
+  namaMk    String       @map("nama_mk")
+  kodeMk    String       @unique @map("kode_mk")
+  idDosen   String       @map("id_dosen")
+  dosen     Dosen        @relation(fields: [idDosen], references: [id], onDelete: Restrict)
+  semester  Int
+  tahunAjar String       @map("tahun_ajar")
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  enrollments   Enrollment[]
+  tugas         Tugas[]
+  proyek        Proyek[]
+  kelompok      Kelompok[]
+
+  @@map("mata_kuliah")
+}
+
+model Enrollment {
+  id          String     @id @default(uuid())
+  idMahasiswa String     @map("id_mahasiswa")
+  mahasiswa   Mahasiswa  @relation(fields: [idMahasiswa], references: [id], onDelete: Cascade)
+  idMk        String     @map("id_mk")
+  mataKuliah  MataKuliah @relation(fields: [idMk], references: [id], onDelete: Cascade)
+  semester    Int
+  tahunAjar   String     @map("tahun_ajar")
+  status      String     // e.g. "Aktif", "Lulus", "Batal"
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  @@unique([idMahasiswa, idMk, tahunAjar])
+  @@map("enrollment")
+}
+
+model Tugas {
+  id               String        @id @default(uuid())
+  idMk             String        @map("id_mk")
+  mataKuliah       MataKuliah    @relation(fields: [idMk], references: [id], onDelete: Cascade)
+  judul            String
+  deskripsi        String?
+  tanggalDiberikan DateTime      @map("tanggal_diberikan")
+  deadline         DateTime
+  bobotNilai       Int           @map("bobot_nilai")
+  jenis            String        // "Individu" atau "Kelompok"
+  statusGlobal     String        @map("status_global") // "Belum Mulai", "Sedang Dikerjakan", "Selesai"
+  tipe             String?       // "Tugas", "Ujian", "Kuis"
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  submissions      Submission[]
+  comments         Comment[]
+  deliverables     Deliverable[]
+
+  @@map("tugas")
+}
+
+model Proyek {
+  id             String        @id @default(uuid())
+  idMk           String        @map("id_mk")
+  mataKuliah     MataKuliah    @relation(fields: [idMk], references: [id], onDelete: Cascade)
+  namaProyek     String        @map("nama_proyek")
+  deskripsi      String?
+  tanggalMulai   DateTime      @map("tanggal_mulai")
+  deadlineAkhir  DateTime      @map("deadline_akhir")
+  progresProyek  Int           @default(0) @map("progres_proyek")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  kelompoks      Kelompok[]
+  deliverables   Deliverable[]
+
+  @@map("proyek")
+}
+
+model Deliverable {
+  id                 String     @id @default(uuid())
+  idTugas            String?    @map("id_tugas")
+  tugas              Tugas?     @relation(fields: [idTugas], references: [id], onDelete: Cascade)
+  idProyek           String?    @map("id_proyek")
+  proyek             Proyek?    @relation(fields: [idProyek], references: [id], onDelete: Cascade)
+  namaAktivitas      String     @map("nama_aktivitas")
+  idPenanggungJawab  String?    @map("id_penanggung_jawab")
+  penanggungJawab    Mahasiswa? @relation(fields: [idPenanggungJawab], references: [id], onDelete: SetNull)
+  status             String     // "Pending", "In Progress", "Completed"
+  deadlineKhusus     DateTime?  @map("deadline_khusus")
+  persentaseBobot    Int        @map("persentase_bobot")
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+
+  @@map("deliverable")
+}
+
+model Kelompok {
+  id           String            @id @default(uuid())
+  idMk         String            @map("id_mk")
+  mataKuliah   MataKuliah        @relation(fields: [idMk], references: [id], onDelete: Cascade)
+  idProyek     String?           @map("id_proyek")
+  proyek       Proyek?           @relation(fields: [idProyek], references: [id], onDelete: SetNull)
+  namaKelompok String            @map("nama_kelompok")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  anggota      AnggotaKelompok[]
+  submissions  Submission[]
+  comments     Comment[]
+
+  @@map("kelompok")
+}
+
+model AnggotaKelompok {
+  id          String    @id @default(uuid())
+  idKelompok  String    @map("id_kelompok")
+  kelompok    Kelompok  @relation(fields: [idKelompok], references: [id], onDelete: Cascade)
+  idMahasiswa String    @map("id_mahasiswa")
+  mahasiswa   Mahasiswa @relation(fields: [idMahasiswa], references: [id], onDelete: Cascade)
+  peran       String?   // "Ketua" atau "Anggota"
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@unique([idKelompok, idMahasiswa])
+  @@map("anggota_kelompok")
+}
+
+model LogAktivitas {
+  id            String    @id @default(uuid())
+  idReferensi   String    @map("id_referensi") // e.g. ID tugas, proyek, atau kelompok
+  idMahasiswa   String    @map("id_mahasiswa")
+  mahasiswa     Mahasiswa @relation(fields: [idMahasiswa], references: [id], onDelete: Cascade)
+  tanggal       DateTime  @default(now())
+  catatan       String
+  persenProgres Int       @map("persen_progres")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@map("log_aktivitas")
+}
+
+model Submission {
+  id          String     @id @default(uuid())
+  idTugas     String?    @map("id_tugas")
+  tugas       Tugas?     @relation(fields: [idTugas], references: [id], onDelete: Cascade)
+  idKelompok  String?    @map("id_kelompok")
+  kelompok    Kelompok?  @relation(fields: [idKelompok], references: [id], onDelete: Cascade)
+  idMahasiswa String     @map("id_mahasiswa")
+  mahasiswa   Mahasiswa  @relation(fields: [idMahasiswa], references: [id], onDelete: Cascade)
+  fileName    String?    @map("file_name")
+  fileSize    String?    @map("file_size")
+  note        String?
+  url         String?
+  type        String     // "file" atau "link"
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  @@map("submission")
+}
+
+model Comment {
+  id          String     @id @default(uuid())
+  idTugas     String?    @map("id_tugas")
+  tugas       Tugas?     @relation(fields: [idTugas], references: [id], onDelete: Cascade)
+  idKelompok  String?    @map("id_kelompok")
+  kelompok    Kelompok?  @relation(fields: [idKelompok], references: [id], onDelete: Cascade)
+  idMahasiswa String?    @map("id_mahasiswa")
+  mahasiswa   Mahasiswa? @relation(fields: [idMahasiswa], references: [id], onDelete: Cascade)
+  idDosen     String?    @map("id_dosen")
+  dosen       Dosen?     @relation(fields: [idDosen], references: [id], onDelete: Cascade)
+  text        String
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  @@map("comment")
+}
