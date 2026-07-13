@@ -122,6 +122,7 @@ Optimasi fundamental sistem database telah berhasil diimplementasikan sepenuhnya
 **Optimasi yang SUDAH Selesai Diterapkan:**
 - ✅ **Database Indexing:** Compound index telah ditambahkan ke skema Prisma pada tabel `Enrollment`, `Tugas`, `Proyek`, dan `Submission` (contoh: `@@index([idMk, deadline])`). Query berat akan berjalan efisien tanpa perlu memindai seluruh tabel.
 - ✅ **Optimasi Caching (SWR):** Setelan `revalidateOnFocus: false` dan `dedupingInterval: 60000` telah diterapkan pada tabel yang jarang berubah secara drastis (seperti Metrik dan Laporan), meminimalisir spam pemanggilan endpoint backend.
+- ✅ **Reduksi Boilerplate Auth Guard:** Guard `auth()` + cek `session.user` + validasi `role` yang berulang di route handler diekstrak ke `lib/auth-guard.ts` (`requireSession`, `requireRole`) dan diterapkan ke `/api/tugas`, `/api/proyek`, `/api/notifikasi`. `requireSession` memakai dynamic import agar modul mudah diuji. Dilengkapi unit test `lib/auth-guard.test.ts` (`bun test`).
 
 **Rencana Optimasi Tingkat Lanjut (Untuk Peningkatan Skala Skala Besar):**
 - ✅ **Pagination & Lazy Loading:** Diterapkan server-side di `GET /api/tugas`, `GET /api/proyek`, dan `GET /api/notifikasi` via `lib/pagination.ts` (skip/take + `count` + meta `pagination`). Backward-compatible: hanya paginasi bila param `page` dikirim; UI lama tetap mendapat seluruh daftar. Dilengkapi unit test (`lib/pagination.test.ts`, `bun test`).

@@ -1,22 +1,19 @@
-import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/logger";
 import { notifyEnrolledStudents } from "@/lib/notifikasi";
 import { getPagination, buildPaginationMeta } from "@/lib/pagination";
+import { requireSession, requireRole } from "@/lib/auth-guard";
 
 export async function GET(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireSession();
+    if (session instanceof NextResponse) return session;
 
     const { searchParams } = new URL(req.url);
     const idMk = searchParams.get("idMk");
 
-    const role = (session.user as any).role;
-    const userId = (session.user as any).id;
+    const { role, userId } = session;
 
     if (role === "MAHASISWA") {
       const mahasiswa = await prisma.mahasiswa.findUnique({ where: { userId } });
@@ -105,15 +102,11 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireSession();
+    if (session instanceof NextResponse) return session;
 
-    const role = (session.user as any).role;
-    if (role !== "DOSEN" && role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const forbidden = requireRole(session, ["DOSEN", "ADMIN"]);
+    if (forbidden) return forbidden;
 
     const body = await req.json();
     const { idMk, namaProyek, deskripsi, tanggalMulai, deadlineAkhir, groupId } = body;

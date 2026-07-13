@@ -1,17 +1,15 @@
-import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { JenisNotifikasi } from "@prisma/client";
 import { getPagination, buildPaginationMeta } from "@/lib/pagination";
+import { requireSession } from "@/lib/auth-guard";
 
 export async function GET(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireSession();
+    if (session instanceof NextResponse) return session;
 
-    const userId = (session.user as any).id;
+    const userId = session.userId;
     const { searchParams } = new URL(req.url);
     const filter = searchParams.get("filter") || "all"; // all, unread
     const pageParam = searchParams.get("page");
@@ -50,10 +48,8 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireSession();
+    if (session instanceof NextResponse) return session;
 
     // Only allow explicit POSTs from specific roles if needed, 
     // or rely on server-side helpers for auto-generation instead of this route.
