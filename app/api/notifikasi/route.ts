@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { JenisNotifikasi } from "@prisma/client";
+import { getPagination, buildPaginationMeta } from "@/lib/pagination";
 
 export async function GET(req: Request) {
   try {
@@ -13,16 +14,31 @@ export async function GET(req: Request) {
     const userId = (session.user as any).id;
     const { searchParams } = new URL(req.url);
     const filter = searchParams.get("filter") || "all"; // all, unread
+    const pageParam = searchParams.get("page");
+    const pg = getPagination(pageParam, searchParams.get("limit"));
 
     const where: any = { idUser: userId };
     if (filter === "unread") {
       where.statusBaca = false;
     }
 
+    if (pageParam) {
+      const [notifikasi, total] = await Promise.all([
+        prisma.notifikasi.findMany({
+          where,
+          orderBy: { waktuKirim: "desc" },
+          skip: pg.skip,
+          take: pg.take,
+        }),
+        prisma.notifikasi.count({ where }),
+      ]);
+      return NextResponse.json({ notifikasi, pagination: buildPaginationMeta(pg.page, pg.limit, total) });
+    }
+
     const notifikasi = await prisma.notifikasi.findMany({
       where,
       orderBy: { waktuKirim: "desc" },
-      take: 50, // limit to recent 50
+      take: 50, // limit to recent 50 when not paginated
     });
 
     return NextResponse.json({ notifikasi });

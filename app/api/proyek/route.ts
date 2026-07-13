@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/logger";
 import { notifyEnrolledStudents } from "@/lib/notifikasi";
+import { getPagination, buildPaginationMeta } from "@/lib/pagination";
 
 export async function GET(req: Request) {
   try {
@@ -33,15 +34,26 @@ export async function GET(req: Request) {
         courseIds = [idMk];
       }
 
-      const projects = await prisma.proyek.findMany({
-        where: { idMk: { in: courseIds } },
-        include: {
-          mataKuliah: true,
-          deliverables: true,
-        },
-        orderBy: { deadlineAkhir: "asc" },
-      });
+      const pageParam = searchParams.get("page");
+      const pg = getPagination(pageParam, searchParams.get("limit"));
 
+      const [projects, total] = await Promise.all([
+        prisma.proyek.findMany({
+          where: { idMk: { in: courseIds } },
+          include: {
+            mataKuliah: true,
+            deliverables: true,
+          },
+          orderBy: { deadlineAkhir: "asc" },
+          skip: pg.skip,
+          take: pg.take,
+        }),
+        prisma.proyek.count({ where: { idMk: { in: courseIds } } }),
+      ]);
+
+      if (pageParam) {
+        return NextResponse.json({ projects, pagination: buildPaginationMeta(pg.page, pg.limit, total) });
+      }
       return NextResponse.json({ projects });
     }
 
@@ -61,15 +73,26 @@ export async function GET(req: Request) {
         courseIds = [idMk];
       }
 
-      const projects = await prisma.proyek.findMany({
-        where: { idMk: { in: courseIds } },
-        include: {
-          mataKuliah: true,
-          _count: { select: { kelompoks: true } },
-        },
-        orderBy: { deadlineAkhir: "desc" },
-      });
+      const pageParam = searchParams.get("page");
+      const pg = getPagination(pageParam, searchParams.get("limit"));
 
+      const [projects, total] = await Promise.all([
+        prisma.proyek.findMany({
+          where: { idMk: { in: courseIds } },
+          include: {
+            mataKuliah: true,
+            _count: { select: { kelompoks: true } },
+          },
+          orderBy: { deadlineAkhir: "desc" },
+          skip: pg.skip,
+          take: pg.take,
+        }),
+        prisma.proyek.count({ where: { idMk: { in: courseIds } } }),
+      ]);
+
+      if (pageParam) {
+        return NextResponse.json({ projects, pagination: buildPaginationMeta(pg.page, pg.limit, total) });
+      }
       return NextResponse.json({ projects });
     }
 

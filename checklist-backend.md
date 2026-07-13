@@ -124,5 +124,5 @@ Optimasi fundamental sistem database telah berhasil diimplementasikan sepenuhnya
 - ✅ **Optimasi Caching (SWR):** Setelan `revalidateOnFocus: false` dan `dedupingInterval: 60000` telah diterapkan pada tabel yang jarang berubah secara drastis (seperti Metrik dan Laporan), meminimalisir spam pemanggilan endpoint backend.
 
 **Rencana Optimasi Tingkat Lanjut (Untuk Peningkatan Skala Skala Besar):**
-- ✅ **Pagination & Lazy Loading:** Diterapkan server-side di `GET /api/tugas` via `lib/pagination.ts` (skip/take + `count` + meta `pagination`). Backward-compatible: hanya paginasi bila param `page` dikirim; UI lama tetap mendapat seluruh daftar. Dilengkapi unit test (`lib/pagination.test.ts`, `bun test`).
+- ✅ **Pagination & Lazy Loading:** Diterapkan server-side di `GET /api/tugas`, `GET /api/proyek`, dan `GET /api/notifikasi` via `lib/pagination.ts` (skip/take + `count` + meta `pagination`). Backward-compatible: hanya paginasi bila param `page` dikirim; UI lama tetap mendapat seluruh daftar. Dilengkapi unit test (`lib/pagination.test.ts`, `bun test`).
 - ⏳ **Dynamic Imports:** Hanya me-load ekstensi berat (seperti library Excel/CSV) ketika pengguna menekan tombol "Export" guna mengurangi Initial Bundle Size dari halaman tersebut.
