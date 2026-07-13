@@ -265,13 +265,43 @@ const AVATAR_COLORS = [
   "from-mhs-amber to-mhs-rose",
   "from-mhs-purple to-mhs-teal",
 ];
+import useSWR from "swr";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function KelompokPage() {
   const topbarQ = useSearch();
   const [tab, setTab] = useState<"myGroups" | "invitations" | "room">("myGroups");
-  const [groups, setGroups] = useState<Group[]>([]);
+  
+  // Ambil data kelompok dari backend
+  const { data: apiData, mutate: mutateKelompok } = useSWR("/api/kelompok", fetcher);
+  
+  const [localGroups, setLocalGroups] = useState<Group[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
+  
+  // Mapping dari API ke format UI
+  const groups: Group[] = apiData?.kelompoks
+    ? apiData.kelompoks.map((k: any) => ({
+        id: k.id,
+        name: k.namaKelompok,
+        course: k.mataKuliah?.namaMk || "Umum",
+        maxSize: 5,
+        createdBy: k.anggota?.[0]?.mahasiswa?.nim || "",
+        mode: "mahasiswa",
+        members: k.anggota?.map((a: any) => ({
+          nim: a.mahasiswa?.nim,
+          nama: a.mahasiswa?.nama,
+          role: a.peran,
+          joinedAt: new Date(a.createdAt).toISOString().split("T")[0],
+        })) || [],
+        createdAt: new Date(k.createdAt).toISOString().split("T")[0],
+      }))
+    : localGroups;
+
+  // Untuk fallback local groups
+  const setGroups = setLocalGroups;
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [inviteForGroup, setInviteForGroup] = useState<string | null>(null);
   const [inviteSearch, setInviteSearch] = useState("");
@@ -289,7 +319,8 @@ export default function KelompokPage() {
     const inv = localStorage.getItem("sim_invitations");
     const jr = localStorage.getItem("sim_join_requests");
 
-    setGroups(g ? JSON.parse(g) : SEED_GROUPS);
+    if (g) setLocalGroups(JSON.parse(g));
+    else setLocalGroups(SEED_GROUPS);
 
     if (inv) {
       const stored: Invitation[] = JSON.parse(inv);

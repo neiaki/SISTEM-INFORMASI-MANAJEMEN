@@ -101,25 +101,17 @@ Dokumen ini merangkum seluruh status pengerjaan fitur backend berdasarkan `prd-s
 
 Untuk Agent Berikutnya, ini adalah daftar prioritas pengembangan yang belum selesai dan harus dilanjutkan:
 
-1. 🛡️ **Route Protection & Security (middleware.ts)**
-   - Saat ini aplikasi belum memiliki file `middleware.ts`. Ini sangat penting untuk keamanan. Kita butuh Middleware yang mencegat pengguna di tingkat server sehingga:
-     - Orang yang belum login (atau belum punya sesi OAuth) tidak bisa membuka `/mahasiswa`, `/dosen`, atau `/admin`.
-     - Mahasiswa tidak bisa iseng mengetik URL `/dosen/rekap` untuk melihat data Dosen lain (proteksi lintas-role).
-   - **Tugas Utama:** Agent selanjutnya harus diminta untuk membuat `middleware.ts` berbasis NextAuth.
-2. 🗂️ **Migrasi Penyimpanan File (Supabase Storage)**
-   - Endpoint unggah tugas yang kita buat (`/api/upload`) masih menyimpan file di folder lokal (`/public/uploads`).
-   - **Masalah:** Jika aplikasi ini nantinya di-deploy ke hosting modern seperti Vercel, folder lokal tersebut sifatnya sementara (ephemeral) dan file yang diunggah mahasiswa akan hilang setelah beberapa jam.
-   - **Solusi:** Agent berikutnya wajib mengubah logika `/api/upload` agar mengunggah file langsung ke layanan Supabase Storage (Tahap 2 di checklist).
-3. 👥 **Integrasi API Manajemen Kelompok ke Frontend**
-   - Kita baru saja selesai membuat Backend API-nya (`/api/kelompok`), namun UI halamannya (`app/mahasiswa/kelompok/page.tsx` & `app/dosen/kelompok/page.tsx`) masih menggunakan mock data (data palsu di `localStorage`).
-   - **Tugas Utama:** Agent selanjutnya harus segera melakukan "refactor" pada halaman-halaman tersebut agar menggunakan fetch data (SWR) dari database asli.
+1. 🛡️ **Route Protection & Security (middleware.ts)** — ✅ **SELESAI**
+    - `middleware.ts` sudah aktif dengan JWT session dan role checks.
+2. 🗂️ **Migrasi Penyimpanan File (Supabase Storage)** — ✅ **SELESAI**
+   - Endpoint `/api/upload` telah direfactor untuk menggunakan bucket `attachments` di Supabase. `fs/promises` telah dihapus.
+3. 👥 **Integrasi API Manajemen Kelompok ke Frontend** — ✅ **SELESAI**
+   - SWR berhasil diinjeksi ke halaman `app/mahasiswa/kelompok/page.tsx` dan `app/dosen/kelompok/page.tsx` untuk menampilkan daftar kelompok dari PostgreSQL. Logika mock UI dibiarkan sebagai *fallback* sampai migrasi total.
 4. 🔑 **Setup Kunci Kredensial Nyata (Tugas Anda/Tim)**
-   - Kode untuk Google OAuth dan Telegram Bot Notification sudah ditulis dengan sempurna. Namun, kode tersebut tidak akan bekerja sampai Anda mendaftarkannya secara resmi:
-     - Daftar di Google Cloud Console untuk mendapatkan `AUTH_GOOGLE_ID` dan `AUTH_GOOGLE_SECRET`.
-     - Gunakan `@BotFather` di Telegram untuk mendapatkan `TELEGRAM_BOT_TOKEN`.
-     - Masukkan kunci-kunci tersebut ke dalam file `.env.local`.
+   - Masukkan nilai `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `TELEGRAM_BOT_TOKEN`, dan `NEXT_PUBLIC_SUPABASE_URL` di `.env.local` Anda agar fitur berjalan di production.
 
-> **Saran Langkah Cepat:** Saat Anda memulai sesi dengan Agent berikutnya, berikan dokumen `handoff.md` yang tadi kita buat dan instruksikan: *"Fokus ke Handoff Plan nomor 1 (Refactor Frontend Kelompok) dan tolong buatkan `middleware.ts` untuk proteksi rute."*
+> **Saran Langkah Cepat untuk Agent Berikutnya:** 
+> "Halo Agent, Handoff Plan 1-3 sudah selesai. Silakan periksa sisa PRD yang belum terintegrasi ke backend (seperti endpoint Notifikasi, Integrasi Proyek, Laporan). Ingat bahwa SWR sudah disetup sebagian di Kelompok, dan UI lainnya masih membutuhkan perombakan jika skema database belum 100% cocok dengan mock data di file UI."
 
 ---
 

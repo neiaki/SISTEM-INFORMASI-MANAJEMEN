@@ -253,10 +253,41 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+import useSWR from "swr";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 export default function DosenKelompokPage() {
   const topbarQ = useSearch();
   const [tab, setTab] = useState<"list" | "manual" | "random">("list");
-  const [groups, setGroups] = useState<Group[]>([]);
+  
+  // Ambil data kelompok dari backend
+  const { data: apiData, mutate: mutateKelompok } = useSWR("/api/kelompok", fetcher);
+  
+  const [localGroups, setLocalGroups] = useState<Group[]>([]);
+
+  // Mapping dari API ke format UI
+  const groups: Group[] = apiData?.kelompoks
+    ? apiData.kelompoks.map((k: any) => ({
+        id: k.id,
+        name: k.namaKelompok,
+        course: k.mataKuliah?.namaMk || "Umum",
+        maxSize: 5,
+        createdBy: k.anggota?.[0]?.mahasiswa?.nim || "dosen",
+        mode: "dosen_manual",
+        members: k.anggota?.map((a: any) => ({
+          nim: a.mahasiswa?.nim,
+          nama: a.mahasiswa?.nama,
+          role: a.peran,
+          joinedAt: new Date(a.createdAt).toISOString().split("T")[0],
+        })) || [],
+        createdAt: new Date(k.createdAt).toISOString().split("T")[0],
+      }))
+    : localGroups;
+
+  // Untuk fallback local groups
+  const setGroups = setLocalGroups;
+
   const [toast, setToast] = useState("");
 
   // Manual form
@@ -278,8 +309,12 @@ export default function DosenKelompokPage() {
   const [editGroup, setEditGroup] = useState<Group | null>(null);
 
   useEffect(() => {
-    const g = localStorage.getItem("sim_kelompok");
-    setGroups(g ? JSON.parse(g) : SEED_GROUPS);
+    const stored = localStorage.getItem("sim_dosen_kelompok");
+    if (stored) {
+      setLocalGroups(JSON.parse(stored));
+    } else {
+      setLocalGroups(SEED_GROUPS);
+    }
   }, []);
 
   const persist = (g: Group[]) => {
