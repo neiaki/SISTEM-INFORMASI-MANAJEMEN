@@ -5,21 +5,33 @@ const prisma = new PrismaClient();
 
 async function main() {
   console.log("Cleaning database...");
-  await prisma.comment.deleteMany({});
-  await prisma.submission.deleteMany({});
-  await prisma.logAktivitas.deleteMany({});
-  await prisma.deliverable.deleteMany({});
-  await prisma.anggotaKelompok.deleteMany({});
-  await prisma.kelompok.deleteMany({});
-  await prisma.tugas.deleteMany({});
-  await prisma.proyek.deleteMany({});
-  await prisma.enrollment.deleteMany({});
-  await prisma.mataKuliah.deleteMany({});
-  await prisma.mahasiswa.deleteMany({});
-  await prisma.dosen.deleteMany({});
-  await prisma.adminCampus.deleteMany({});
-  await prisma.staffTU.deleteMany({});
-  await prisma.user.deleteMany({});
+  const deleteSilent = async (deleteFn: () => Promise<any>, tableName: string) => {
+    try {
+      await deleteFn();
+    } catch (e: any) {
+      if (e.code === 'P2021') {
+        console.log(`Skipping cleanup for ${tableName} (table not found).`);
+      } else {
+        throw e;
+      }
+    }
+  };
+
+  await deleteSilent(() => prisma.comment.deleteMany({}), "comment");
+  await deleteSilent(() => prisma.submission.deleteMany({}), "submission");
+  await deleteSilent(() => prisma.logAktivitas.deleteMany({}), "logAktivitas");
+  await deleteSilent(() => prisma.deliverable.deleteMany({}), "deliverable");
+  await deleteSilent(() => prisma.anggotaKelompok.deleteMany({}), "anggotaKelompok");
+  await deleteSilent(() => prisma.kelompok.deleteMany({}), "kelompok");
+  await deleteSilent(() => prisma.tugas.deleteMany({}), "tugas");
+  await deleteSilent(() => prisma.proyek.deleteMany({}), "proyek");
+  await deleteSilent(() => prisma.enrollment.deleteMany({}), "enrollment");
+  await deleteSilent(() => prisma.mataKuliah.deleteMany({}), "mataKuliah");
+  await deleteSilent(() => prisma.mahasiswa.deleteMany({}), "mahasiswa");
+  await deleteSilent(() => prisma.dosen.deleteMany({}), "dosen");
+  await deleteSilent(() => prisma.adminCampus.deleteMany({}), "adminCampus");
+  await deleteSilent(() => prisma.staffTU.deleteMany({}), "staffTU");
+  await deleteSilent(() => prisma.user.deleteMany({}), "user");
 
   console.log("Creating users & credentials...");
   const hashedPassword = await bcrypt.hash("123456", 10);

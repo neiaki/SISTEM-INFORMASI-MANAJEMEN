@@ -31,16 +31,16 @@ Dokumen ini merangkum seluruh status pengerjaan fitur backend berdasarkan `prd-s
   - [x] Tabel `Kelompok` & `AnggotaKelompok`.
   - [x] Tabel `LogAktivitas` & `Submission`.
   - [x] Tabel `Comment` & `Lampiran`.
-- [ ] **Endpoint API Tugas & Proyek**
-  - [ ] `GET /api/tugas` — Mengambil daftar tugas (per user/mata kuliah).
-  - [ ] `POST /api/tugas` — Dosen membuat tugas baru.
-  - [ ] `PUT /api/tugas/[id]` — Edit status/deadline tugas.
-  - [ ] `DELETE /api/tugas/[id]` — Hapus tugas.
-  - [ ] `GET /api/proyek` — Mengambil daftar proyek.
-  - [ ] `POST /api/proyek` — Dosen/Mahasiswa membuat proyek.
-- [ ] **Endpoint API Dashboard Role-Specific**
-  - [ ] `GET /api/mahasiswa/dashboard` (Sedang berjalan menggunakan SWR, perlu disempurnakan).
-  - [ ] `GET /api/dosen/dashboard` (Sedang berjalan).
+- [x] **Endpoint API Tugas & Proyek**
+  - [x] `GET /api/tugas` — Mengambil daftar tugas (per user/mata kuliah).
+  - [x] `POST /api/tugas` — Dosen membuat tugas baru.
+  - [x] `PUT /api/tugas/[id]` — Edit status/deadline tugas.
+  - [x] `DELETE /api/tugas/[id]` — Hapus tugas.
+  - [x] `GET /api/proyek` — Mengambil daftar proyek.
+  - [x] `POST /api/proyek` — Dosen/Mahasiswa membuat proyek.
+- [x] **Endpoint API Dashboard Role-Specific**
+  - [x] `GET /api/mahasiswa/dashboard` (Diakses via `/api/dashboard` dengan role Mahasiswa).
+  - [x] `GET /api/dosen/dashboard` (Diakses via `/api/dashboard` dengan role Dosen).
   - [x] `GET /api/staff-tu/dashboard` (API Selesai dibuat, mereturn ringkasan sistem & tugas TU).
   - [x] `GET /api/admin/dashboard` (API Selesai dibuat, mereturn status sistem & metrik pengguna).
 
@@ -85,6 +85,14 @@ Dokumen ini merangkum seluruh status pengerjaan fitur backend berdasarkan `prd-s
 ---
 
 ## Ringkasan Progres Saat Ini
-1. **Sedang Dikerjakan:** Pengujian akhir stabilitas aplikasi.
-2. **Prioritas Berikutnya:** Pemeliharaan sistem rutin, kustomisasi notifikasi Telegram (jika diperlukan).
-3. **Pencapaian Terakhir:** Indeks database compound (`Enrollment`, `Tugas`, `Proyek`, `Submission`) berhasil ditambahkan di Prisma & di-sync ke DB, setelan SWR caching dioptimalkan, aturan workspace `AGENTS.md` diperbarui, dan route upload file lokal `/api/upload` telah selesai. Proyek berhasil di-build tanpa error.
+1. **Sedang Dikerjakan:** Integrasi Google OAuth dan persiapan Telegram Bot.
+2. **Prioritas Berikutnya:** Setup `AUTH_GOOGLE_ID`/`AUTH_GOOGLE_SECRET` di `.env.local`, lalu konfigurasi Telegram Bot notifikasi.
+3. **Pencapaian Terakhir:**
+   - ✅ Google OAuth Provider ditambahkan ke `lib/auth.ts` (signIn/jwt/session callbacks lengkap).
+   - ✅ Tombol "Masuk dengan Google" & "SSO Terpadu" di halaman login dihubungkan ke `signIn("google")`.
+   - ✅ API `POST /api/tugas/[id]/comment` dibuat untuk komentar langsung ke database.
+   - ✅ `TaskDetailPanel` diperbarui: submissions & comments dibaca dari database (SWR), dengan fallback localStorage.
+   - ✅ File upload & submission (`/api/upload` + `/api/submission`) terintegrasi penuh di panel tugas.
+   - ✅ `.env.example` diperbarui dengan panduan `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, dan `TELEGRAM_BOT_TOKEN`.
+   - ✅ Build production sukses (59/59 halaman).
+

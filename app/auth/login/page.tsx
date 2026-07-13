@@ -321,7 +321,14 @@ function LoginForm() {
           <div className="mt-6 space-y-3">
             <button 
               type="button"
-              onClick={() => router.push(role === "dosen" ? "/dosen" : role === "admin" ? "/admin" : role === "staff_tu" ? "/staff-tu" : "/mahasiswa")}
+              onClick={() => {
+                const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE !== "false";
+                if (isDemo) {
+                  router.push(role === "dosen" ? "/dosen" : role === "admin" ? "/admin" : role === "staff_tu" ? "/staff-tu" : "/mahasiswa");
+                } else {
+                  signIn("google");
+                }
+              }}
               className="w-full bg-[#334155]/50 hover:bg-[#334155] border border-[#475569] text-white font-medium py-3 rounded-xl flex items-center justify-center gap-3 transition-colors text-sm"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -335,7 +342,14 @@ function LoginForm() {
             
             <button 
               type="button"
-              onClick={() => router.push(role === "dosen" ? "/dosen" : role === "admin" ? "/admin" : role === "staff_tu" ? "/staff-tu" : "/mahasiswa")}
+              onClick={() => {
+                const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE !== "false";
+                if (isDemo) {
+                  router.push(role === "dosen" ? "/dosen" : role === "admin" ? "/admin" : role === "staff_tu" ? "/staff-tu" : "/mahasiswa");
+                } else {
+                  signIn("google");
+                }
+              }}
               className="w-full bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/50 text-blue-400 font-medium py-3 rounded-xl flex items-center justify-center gap-3 transition-colors text-sm"
             >
               <KeyRound size={18} />

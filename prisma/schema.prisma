@@ -9,19 +9,19 @@ datasource db {
 }
 
 model User {
-  id           String        @id @default(uuid())
-  username     String        @unique
-  passwordHash String        @map("password_hash")
+  id           String       @id @default(uuid())
+  username     String       @unique
+  passwordHash String       @map("password_hash")
   role         Role
-  lastLogin    DateTime?     @map("last_login")
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
+  lastLogin    DateTime?    @map("last_login")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  preferences  Json?
   adminCampus  AdminCampus?
   dosen        Dosen?
   mahasiswa    Mahasiswa?
-  staffTU      StaffTU?
   notifikasi   Notifikasi[]
-  preferences  Json?
+  staffTU      StaffTU?
 
   @@map("users")
 }
@@ -235,9 +235,9 @@ model Submission {
   note        String?
   url         String?
   type        String
-  nilai       Int?
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
+  nilai       Int?
   kelompok    Kelompok? @relation(fields: [idKelompok], references: [id], onDelete: Cascade)
   mahasiswa   Mahasiswa @relation(fields: [idMahasiswa], references: [id], onDelete: Cascade)
   tugas       Tugas?    @relation(fields: [idTugas], references: [id], onDelete: Cascade)
@@ -264,17 +264,17 @@ model Comment {
 }
 
 model Notifikasi {
-  id         String              @id @default(uuid())
-  idUser     String              @map("id_user")
+  id         String            @id @default(uuid())
+  idUser     String            @map("id_user")
   judul      String
   pesan      String
   jenis      JenisNotifikasi
-  waktuKirim DateTime            @default(now()) @map("waktu_kirim")
-  statusBaca Boolean             @default(false) @map("status_baca")
-  channel    ChannelNotifikasi   @default(IN_APP)
-  createdAt  DateTime            @default(now()) @map("created_at")
-  updatedAt  DateTime            @updatedAt @map("updated_at")
-  user       User                @relation(fields: [idUser], references: [id], onDelete: Cascade)
+  waktuKirim DateTime          @default(now()) @map("waktu_kirim")
+  statusBaca Boolean           @default(false) @map("status_baca")
+  channel    ChannelNotifikasi @default(IN_APP)
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+  user       User              @relation(fields: [idUser], references: [id], onDelete: Cascade)
 
   @@index([idUser, statusBaca])
   @@map("notifikasi")

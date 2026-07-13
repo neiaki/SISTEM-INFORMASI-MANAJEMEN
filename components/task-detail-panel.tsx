@@ -2,10 +2,13 @@
 
 import { useState, useEffect, useRef } from "react";
 import { MessageSquare, Paperclip, X, Send, Upload, CheckCircle2 } from "lucide-react";
+import useSWR from "swr";
 import { addSubmission, addComment, markCompleted, type TaskEntry } from "@/lib/taskStore";
 import type { SeedData } from "@/data/sim-data";
 
 export type MhsTask = SeedData["mahasiswa"]["tasks"][0];
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 /* ── Helpers ─────────────────────────────────── */
 const MK_COLORS = [
@@ -45,7 +48,7 @@ const STATUS_CLS: Record<string, string> = {
 };
 
 export function TaskDetailPanel({
-  task,
+  task: initialTask,
   localData,
   onClose,
   onSubmitted,
@@ -59,6 +62,9 @@ export function TaskDetailPanel({
   onCommented: (taskId?: string) => void;
   submittedBy?: string;
 }) {
+  const { data: apiData, mutate: mutateTask } = useSWR(`/api/tugas/${initialTask.id}`, fetcher);
+  const task = apiData?.task || initialTask;
+
   const [tab, setTab] = useState("submit");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [submitNote, setSubmitNote] = useState("");
@@ -71,8 +77,28 @@ export function TaskDetailPanel({
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
   const dl = deadlineInfo(task.deadline, task.status === "selesai");
-  const allSubs     = [...(task.submissions || []), ...(localData?.submissions || [])];
-  const allComments = [...(task.comments || []),    ...(localData?.comments || [])];
+
+  const dbComments = (task.comments || []).map((c: any) => ({
+    id: c.id,
+    author: c.mahasiswa?.nama || c.dosen?.nama || "Sistem",
+    role: c.mahasiswa ? "mahasiswa" : c.dosen ? "dosen" : "sistem",
+    text: c.text,
+    time: new Date(c.createdAt).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }),
+  }));
+
+  const dbSubs = (task.submissions || []).map((s: any) => ({
+    id: s.id,
+    fileName: s.fileName || s.url || "Lampiran",
+    fileSize: s.fileSize || "—",
+    submittedBy: s.mahasiswa?.nama || "Mahasiswa",
+    note: s.note || "",
+    submittedAt: new Date(s.createdAt).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }),
+    url: s.url,
+    type: s.type,
+  }));
+
+  const allSubs     = [...dbSubs, ...(localData?.submissions || [])];
+  const allComments = [...dbComments, ...(localData?.comments || [])];
 
   useEffect(() => {
     setSubmitDone(false);
@@ -83,7 +109,7 @@ export function TaskDetailPanel({
     setLinkDone(false);
     setCommentText("");
     setTab("submit");
-  }, [task.id]);
+  }, [initialTask.id]);
 
   useEffect(() => {
     if (tab === "comment") commentsEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -94,51 +120,137 @@ export function TaskDetailPanel({
     if (file) setSelectedFile(file);
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!selectedFile) return;
-    addSubmission(task.id, task.title, task.course, {
-      fileName: selectedFile.name,
-      fileSize: `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`,
-      submittedBy,
-      note: submitNote,
-      type: "file",
-    });
-    markCompleted(task.id);
-    onSubmitted(task.id);
-    setSubmitDone(true);
-    setSelectedFile(null);
-    setSubmitNote("");
-    if (fileInputRef.current) fileInputRef.current.value = "";
+
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const uploadData = await uploadRes.json();
+
+      if (!uploadRes.ok) {
+        throw new Error(uploadData.error || "Gagal mengunggah file");
+      }
+
+      const subRes = await fetch("/api/submission", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idTugas: task.id,
+          fileName: selectedFile.name,
+          fileSize: `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`,
+          note: submitNote,
+          url: uploadData.url,
+          type: "file",
+        }),
+      });
+
+      if (!subRes.ok) {
+        throw new Error("Gagal mengirim jawaban tugas");
+      }
+
+      mutateTask();
+      setSubmitDone(true);
+      setSelectedFile(null);
+      setSubmitNote("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      onSubmitted(task.id);
+    } catch (err) {
+      console.error(err);
+      addSubmission(task.id, task.title, task.course, {
+        fileName: selectedFile.name,
+        fileSize: `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`,
+        submittedBy,
+        note: submitNote,
+        type: "file",
+      });
+      markCompleted(task.id);
+      setSubmitDone(true);
+      setSelectedFile(null);
+      setSubmitNote("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      onSubmitted(task.id);
+    }
   }
 
-  function handleSubmitLink() {
+  async function handleSubmitLink() {
     const url = linkUrl.trim();
     if (!url) return;
     try { new URL(url); } catch { return; }
-    addSubmission(task.id, task.title, task.course, {
-      fileName: url.length > 50 ? url.slice(0, 50) + "…" : url,
-      fileSize: "—",
-      submittedBy,
-      note: linkNote,
-      url,
-      type: "link",
-    });
-    onSubmitted(task.id);
-    setLinkDone(true);
-    setLinkUrl("");
-    setLinkNote("");
+
+    try {
+      const res = await fetch("/api/submission", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idTugas: task.id,
+          fileName: url.length > 50 ? url.slice(0, 50) + "…" : url,
+          fileSize: "—",
+          note: linkNote,
+          url,
+          type: "link",
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Gagal mengirim link tugas");
+      }
+
+      mutateTask();
+      setLinkDone(true);
+      setLinkUrl("");
+      setLinkNote("");
+      onSubmitted(task.id);
+    } catch (err) {
+      console.error(err);
+      addSubmission(task.id, task.title, task.course, {
+        fileName: url.length > 50 ? url.slice(0, 50) + "…" : url,
+        fileSize: "—",
+        submittedBy,
+        note: linkNote,
+        url,
+        type: "link",
+      });
+      setLinkDone(true);
+      setLinkUrl("");
+      setLinkNote("");
+      onSubmitted(task.id);
+    }
   }
 
-  function handleSendComment() {
+  async function handleSendComment() {
     const text = commentText.trim();
     if (!text) return;
-    addComment(task.id, task.title, task.course, {
-      author: submittedBy,
-      role: "mahasiswa",
-      text,
-    });
-    onCommented(task.id);
-    setCommentText("");
+
+    try {
+      const res = await fetch(`/api/tugas/${task.id}/comment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Gagal mengirim komentar");
+      }
+
+      mutateTask();
+      setCommentText("");
+      onCommented(task.id);
+    } catch (err) {
+      console.error(err);
+      addComment(task.id, task.title, task.course, {
+        author: submittedBy,
+        role: "mahasiswa",
+        text,
+      });
+      setCommentText("");
+      onCommented(task.id);
+    }
   }
 
   const PRIORITY_CLS: Record<string, string> = {
@@ -426,7 +538,7 @@ export function TaskDetailPanel({
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold text-white shrink-0 ${
                             c.role === "dosen" ? "bg-gradient-to-br from-forest to-teal" : "bg-gradient-to-br from-mhs-amber to-mhs-amber-2"
                           }`}>
-                            {c.author.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase().slice(0, 2)}
+                            {c.author.split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)}
                           </div>
                           <div className={`max-w-[320px] flex flex-col ${isMine ? "items-end" : "items-start"}`}>
                             <div className={`flex items-center gap-1.5 mb-1 ${isMine ? "flex-row-reverse" : ""}`}>
