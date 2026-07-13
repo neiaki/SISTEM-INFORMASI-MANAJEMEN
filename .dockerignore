@@ -6,9 +6,6 @@
 !.env.example
 npm-debug.log*
 README.md
-Dockerfile
-docker-compose.yml
-.dockerignore
 *.log
 coverage
 .vercel

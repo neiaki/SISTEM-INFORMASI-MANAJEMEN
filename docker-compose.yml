@@ -24,7 +24,6 @@ services:
       AUTH_TRUST_HOST: "true"
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/db_sim_tugas?schema=public
       AUTH_SECRET: ${AUTH_SECRET}
-      AUTH_REDIRECT_PROXY_URL: ${APP_URL:-http://localhost:3000}
       NEXTAUTH_URL: ${APP_URL:-http://localhost:3000}
       NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
