@@ -125,5 +125,18 @@ Optimasi fundamental sistem database telah berhasil diimplementasikan sepenuhnya
 - ✅ **Reduksi Boilerplate Auth Guard:** Guard `auth()` + cek `session.user` + validasi `role` yang berulang di route handler diekstrak ke `lib/auth-guard.ts` (`requireSession`, `requireRole`) dan **diterapkan ke seluruh 22 route handler** API (`admin/*`, `dashboard`, `kelompok`, `proyek`, `tugas`, `notifikasi`, `staff-tu/*`, `submission`, `upload`, `users/preferences`). Session dinormalisasi menjadi `SessionContext { userId, role, email }` dan respons wrong-role distandardisasi ke `403`. `requireSession` memakai dynamic import agar modul mudah diuji. Dilengkapi unit test `lib/auth-guard.test.ts` (`bun test`). Tidak ada lagi pemanggilan `await auth()` langsung di route.
 
 **Rencana Optimasi Tingkat Lanjut (Untuk Peningkatan Skala Skala Besar):**
-- ✅ **Pagination & Lazy Loading:** Diterapkan server-side di `GET /api/tugas`, `GET /api/proyek`, dan `GET /api/notifikasi` via `lib/pagination.ts` (skip/take + `count` + meta `pagination`). Backward-compatible: hanya paginasi bila param `page` dikirim; UI lama tetap mendapat seluruh daftar. Dilengkapi unit test (`lib/pagination.test.ts`, `bun test`).
+- ✅ **Pagination & Lazy Loading:** Diterapkan server-side di `GET /api/tugas`, `GET /api/proyek`, `GET /api/notifikasi`, komentar `GET /api/tugas/[id]` (opt-in via `?page`), dan `GET /api/submission` (role-aware) via `lib/pagination.ts` (skip/take + `count` + meta `pagination`). Backward-compatible: hanya paginasi bila param `page` dikirim; UI lama tetap mendapat seluruh daftar. Dilengkapi unit test (`lib/pagination.test.ts`, `bun test`).
+
+---
+
+## 🐳 Persiapan Deploy (Docker + Coolify VPS)
+
+- [x] **Dockerfile** — multi-stage (`deps` → `builder` → `runner`), user non-root `nextjs`, healthcheck `curl`, CMD `npx prisma migrate deploy && npx next start`.
+- [x] **docker-compose.yml** — service `app` + `postgres:16-alpine`, healthcheck, env wiring (mengandalkan `DATABASE_URL` dari Coolify).
+- [x] **.dockerignore** — secret (`.env*`) dikecualikan; file Docker tetap disertakan agar build context Coolify benar.
+- [x] **Prisma env-aware** — `lib/prisma.ts` membaca `DATABASE_URL` dari env (fallback localhost untuk dev).
+- [x] **Prisma Migrations ter-version** — `prisma/migrations/0001_init/migration.sql` dibuat dari skema (`migrate diff --from-empty`). Container pakai `migrate deploy` (bukan `db push`).
+- [x] **Perbaikan config deploy** — hapus `AUTH_REDIRECT_PROXY_URL` yang salah diset ke `APP_URL` (bisa merusak OAuth); Coolify cukup `AUTH_TRUST_HOST=true` + `NEXTAUTH_URL`.
+
+> **Catatan deploy pertama:** karena migrasi baru dibuat (`0001_init`), pastikan belum ada tabel di DB VPS (atau jalankan `prisma migrate reset` di VPS bila DB sudah pernah `db push`). `migrate deploy` idempoten untuk boot selanjutnya.
 - ⏳ **Dynamic Imports:** Hanya me-load ekstensi berat (seperti library Excel/CSV) ketika pengguna menekan tombol "Export" guna mengurangi Initial Bundle Size dari halaman tersebut.

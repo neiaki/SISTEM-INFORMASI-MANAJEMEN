@@ -37,9 +37,9 @@ USER nextjs
 
 EXPOSE 3000
 
-# Sync the Prisma schema to the database (idempotent), then start Next.js.
+# Apply versioned Prisma migrations (idempotent), then start Next.js.
 # On first boot this creates the tables; subsequent boots are no-ops.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:3000/ || exit 1
 
-CMD ["sh", "-c", "npx prisma db push && npx next start"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npx next start"]
