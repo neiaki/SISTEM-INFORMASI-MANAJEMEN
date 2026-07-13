@@ -139,7 +139,7 @@ function LoginForm() {
     setIsSubmitting(true);
     try {
       const result = await signIn("credentials", {
-        username: credential,
+        username: credential.trim(),
         password,
         role: role.toUpperCase(),
         redirect: false,

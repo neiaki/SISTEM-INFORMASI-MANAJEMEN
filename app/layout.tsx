@@ -1,6 +1,7 @@
 import "./globals.css";
 import type { ReactNode } from "react";
 import { ThemeProvider } from "@/components/theme-provider";
+import ClientSessionProvider from "@/components/client-session-provider";
 
 export const metadata = {
   title: "AcadTrack — Manajemen Tugas & Proyek Kuliah",
@@ -66,10 +67,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body className="min-h-screen antialiased" suppressHydrationWarning>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          {children}
-        </ThemeProvider>
+        <ClientSessionProvider>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+            {children}
+          </ThemeProvider>
+        </ClientSessionProvider>
       </body>
     </html>
   );
 }
+

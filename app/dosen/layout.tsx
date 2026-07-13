@@ -4,6 +4,7 @@ import { useState, useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { useSession } from "next-auth/react";
 import { User, LogOut, Menu, X, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SearchContext } from "@/lib/search-context";
@@ -18,6 +19,16 @@ export default function DosenLayout({ children }: { children: ReactNode }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQ, setSearchQ] = useState("");
   const [rekapCount, setRekapCount] = useState(3);
+  const { data: session } = useSession();
+
+  const userName = session?.user?.name || "Dosen";
+  const userUsername = (session?.user as any)?.username || "";
+  const userInitials = userName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w: string) => w[0]?.toUpperCase())
+    .join("");
   useEffect(() => {
     setSearchQ(""); setSidebarOpen(false);
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -194,11 +205,11 @@ export default function DosenLayout({ children }: { children: ReactNode }) {
             className="px-5 py-4 flex items-center gap-2.5 cursor-pointer hover:bg-cream transition-colors"
           >
             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-forest to-teal flex items-center justify-center text-[13px] font-bold text-white shrink-0">
-              BS
+              {userInitials || "DS"}
             </div>
             <div className="min-w-0">
-              <div className="text-[13px] font-semibold truncate text-ink">Dr. Budi Santoso</div>
-              <div className="text-[11px] text-muted truncate">Dosen Tetap · NIP 19780501</div>
+              <div className="text-[13px] font-semibold truncate text-ink">{userName}</div>
+              <div className="text-[11px] text-muted truncate">Dosen Tetap · {userUsername}</div>
             </div>
           </div>
         </div>

@@ -4,6 +4,7 @@ import { useState, useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { useSession } from "next-auth/react";
 import { User, LogOut, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SearchContext } from "@/lib/search-context";
@@ -18,6 +19,16 @@ export default function MahasiswaLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQ, setSearchQ] = useState("");
   const [urgentCount, setUrgentCount] = useState(5);
+  const { data: session } = useSession();
+
+  const userName = session?.user?.name || "Mahasiswa";
+  const userUsername = (session?.user as any)?.username || "";
+  const userInitials = userName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w: string) => w[0]?.toUpperCase())
+    .join("");
 
   useEffect(() => {
     setSearchQ(""); setSidebarOpen(false); setIsProfileOpen(false);
@@ -162,11 +173,11 @@ export default function MahasiswaLayout({ children }: { children: ReactNode }) {
             className="px-6 py-4 flex items-center gap-2.5 cursor-pointer hover:bg-mhs-card transition-colors"
           >
             <div className="w-[34px] h-[34px] rounded-full bg-gradient-to-br from-mhs-amber to-mhs-purple flex items-center justify-center text-[13px] font-bold text-white shrink-0">
-              EK
+              {userInitials || "MH"}
             </div>
             <div className="min-w-0">
-              <div className="text-[13px] font-semibold truncate text-mhs-text">Febiyanto Rizki Qurbandi</div>
-              <div className="text-[11px] text-mhs-muted">NIM 231011450284</div>
+              <div className="text-[13px] font-semibold truncate text-mhs-text">{userName}</div>
+              <div className="text-[11px] text-mhs-muted">NIM {userUsername}</div>
             </div>
           </div>
         </div>

@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import useSWR from "swr";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const TODAY = new Date("2026-05-08");
 function daysLeft(dateStr: string) {
@@ -61,13 +64,22 @@ function MiniCalendar() {
 }
 
 export default function MahasiswaDashboard() {
+  const { data, error, isLoading } = useSWR("/api/dashboard", fetcher);
+
+  if (isLoading) return <div className="text-white p-5 animate-pulse">Memuat dashboard...</div>;
+  if (error || !data) return <div className="text-red-500 p-5">Gagal memuat dashboard</div>;
+
+  const { stats, upcomingDeadlines, projects } = data;
+
   return (
     <div className="flex flex-col gap-6">
       {/* HINT BAR */}
-      <div className="bg-gradient-to-r from-mhs-amber/10 to-mhs-teal/5 border border-mhs-amber/20 rounded-xl px-4 py-2.5 text-[12.5px] text-mhs-muted flex items-center gap-2.5">
-        <span>⚠️</span>
-        <span>Terdapat <strong className="text-mhs-amber font-medium">3 tugas mendesak</strong> yang deadline-nya dalam <strong className="text-mhs-amber font-medium">3 hari ke depan</strong>. Segera kerjakan!</span>
-      </div>
+      {stats.urgentTasks > 0 && (
+        <div className="bg-gradient-to-r from-mhs-amber/10 to-mhs-teal/5 border border-mhs-amber/20 rounded-xl px-4 py-2.5 text-[12.5px] text-mhs-muted flex items-center gap-2.5">
+          <span>⚠️</span>
+          <span>Terdapat <strong className="text-mhs-amber font-medium">{stats.urgentTasks} tugas mendesak</strong> yang deadline-nya dalam <strong className="text-mhs-amber font-medium">3 hari ke depan</strong>. Segera kerjakan!</span>
+        </div>
+      )}
 
       {/* STAT CARDS */}
       <div className="grid grid-cols-4 gap-4">
@@ -75,9 +87,8 @@ export default function MahasiswaDashboard() {
         <div className="bg-mhs-card border border-mhs-border rounded-xl p-5 relative overflow-hidden hover:-translate-y-[3px] transition-transform group">
           <div className="absolute -top-7 -right-7 w-20 h-20 rounded-full bg-mhs-amber opacity-10 group-hover:opacity-20 transition-opacity" />
           <div className="w-9 h-9 rounded-lg bg-mhs-amber/15 text-mhs-amber flex items-center justify-center text-lg mb-3.5">☑</div>
-          <div className="font-serif text-[32px] leading-none text-mhs-text">12</div>
+          <div className="font-serif text-[32px] leading-none text-mhs-text">{stats.activeTasks}</div>
           <div className="text-[12px] text-mhs-muted mt-1">Tugas Aktif</div>
-          <div className="text-[11px] mt-2.5 text-mhs-green flex items-center gap-1">↑ 3 tugas baru minggu ini</div>
         </div>
         
         {/* Card 2 */}
@@ -90,27 +101,24 @@ export default function MahasiswaDashboard() {
               <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray="87.96 87.96" strokeDashoffset="61.57" strokeLinecap="round" className="text-mhs-rose" />
             </svg>
           </div>
-          <div className="font-serif text-[32px] leading-none text-mhs-text">3</div>
+          <div className="font-serif text-[32px] leading-none text-mhs-text">{stats.urgentTasks}</div>
           <div className="text-[12px] text-mhs-muted mt-1">Mendesak (≤3 hari)</div>
-          <div className="text-[11px] mt-2.5 text-mhs-rose flex items-center gap-1">↑ 2 dari minggu lalu</div>
         </div>
 
         {/* Card 3 */}
         <div className="bg-mhs-card border border-mhs-border rounded-xl p-5 relative overflow-hidden hover:-translate-y-[3px] transition-transform group">
           <div className="absolute -top-7 -right-7 w-20 h-20 rounded-full bg-mhs-teal opacity-10 group-hover:opacity-20 transition-opacity" />
           <div className="w-9 h-9 rounded-lg bg-mhs-teal/15 text-mhs-teal flex items-center justify-center text-lg mb-3.5">🗂</div>
-          <div className="font-serif text-[32px] leading-none text-mhs-text">4</div>
+          <div className="font-serif text-[32px] leading-none text-mhs-text">{stats.activeProjects}</div>
           <div className="text-[12px] text-mhs-muted mt-1">Proyek Berjalan</div>
-          <div className="text-[11px] mt-2.5 text-mhs-green flex items-center gap-1">Rata-rata progres 62%</div>
         </div>
 
         {/* Card 4 */}
         <div className="bg-mhs-card border border-mhs-border rounded-xl p-5 relative overflow-hidden hover:-translate-y-[3px] transition-transform group">
           <div className="absolute -top-7 -right-7 w-20 h-20 rounded-full bg-mhs-green opacity-10 group-hover:opacity-20 transition-opacity" />
           <div className="w-9 h-9 rounded-lg bg-mhs-green/15 text-mhs-green flex items-center justify-center text-lg mb-3.5">✅</div>
-          <div className="font-serif text-[32px] leading-none text-mhs-text">18</div>
+          <div className="font-serif text-[32px] leading-none text-mhs-text">{stats.completedTasksThisMonth}</div>
           <div className="text-[12px] text-mhs-muted mt-1">Selesai Bulan Ini</div>
-          <div className="text-[11px] mt-2.5 text-mhs-green flex items-center gap-1">↑ +6 dari bulan lalu</div>
         </div>
       </div>
 
@@ -128,56 +136,27 @@ export default function MahasiswaDashboard() {
             </div>
 
             <div className="space-y-1">
-              {/* Task 1 */}
-              <div className="flex items-center gap-3 p-2.5 border-b border-mhs-border/50 hover:bg-mhs-hover rounded-lg transition-colors cursor-pointer group">
-                <Checkbox className="w-4.5 h-4.5 rounded-full border-mhs-border data-[state=checked]:bg-mhs-green data-[state=checked]:border-mhs-green" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13.5px] font-medium truncate text-mhs-text">Laporan Praktikum Algoritma Sorting</div>
-                  <div className="text-[11px] text-mhs-muted mt-0.5 flex gap-2 items-center">
-                    <span>Pemrograman Lanjut</span><span className="w-1 h-1 bg-mhs-muted rounded-full"></span><span>Individu</span>
+              {upcomingDeadlines.length === 0 && (
+                <div className="text-[13px] text-mhs-muted p-3 text-center">Tidak ada tugas dalam minggu ini</div>
+              )}
+              {upcomingDeadlines.map((task: any, idx: number) => {
+                const hl = daysLeft(task.deadline);
+                const urgent = hl <= 3;
+                return (
+                  <div key={task.id} className="flex items-center gap-3 p-2.5 border-b border-mhs-border/50 hover:bg-mhs-hover rounded-lg transition-colors cursor-pointer group">
+                    <Checkbox className="w-4.5 h-4.5 rounded-full border-mhs-border data-[state=checked]:bg-mhs-green data-[state=checked]:border-mhs-green" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[13.5px] font-medium truncate text-mhs-text">{task.title}</div>
+                      <div className="text-[11px] text-mhs-muted mt-0.5 flex gap-2 items-center">
+                        <span>{task.subject}</span><span className="w-1 h-1 bg-mhs-muted rounded-full"></span><span>{task.type}</span>
+                      </div>
+                    </div>
+                    <span className={`font-mono text-[11px] px-2 py-0.5 rounded-md ${urgent ? 'bg-mhs-rose/15 text-mhs-rose' : 'bg-mhs-amber/15 text-mhs-amber'} shrink-0`}>
+                      H-{hl}
+                    </span>
                   </div>
-                </div>
-                <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-mhs-rose/15 text-mhs-rose shrink-0">H-1</span>
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-mhs-rose/15 text-mhs-rose shrink-0">Tinggi</span>
-              </div>
-
-              {/* Task 2 */}
-              <div className="flex items-center gap-3 p-2.5 border-b border-mhs-border/50 hover:bg-mhs-hover rounded-lg transition-colors cursor-pointer group">
-                <Checkbox className="w-4.5 h-4.5 rounded-full border-mhs-border data-[state=checked]:bg-mhs-green data-[state=checked]:border-mhs-green" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13.5px] font-medium truncate text-mhs-text">ERD Sistem Informasi Perpustakaan</div>
-                  <div className="text-[11px] text-mhs-muted mt-0.5 flex gap-2 items-center">
-                    <span>Basis Data</span><span className="w-1 h-1 bg-mhs-muted rounded-full"></span><span>Kelompok</span>
-                  </div>
-                </div>
-                <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-mhs-rose/15 text-mhs-rose shrink-0">H-2</span>
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-mhs-rose/15 text-mhs-rose shrink-0">Tinggi</span>
-              </div>
-
-              {/* Task 3 */}
-              <div className="flex items-center gap-3 p-2.5 border-b border-mhs-border/50 hover:bg-mhs-hover rounded-lg transition-colors cursor-pointer group">
-                <Checkbox className="w-4.5 h-4.5 rounded-full border-mhs-border data-[state=checked]:bg-mhs-green data-[state=checked]:border-mhs-green" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13.5px] font-medium truncate text-mhs-text">Resume Materi Sistem Operasi Bab 4</div>
-                  <div className="text-[11px] text-mhs-muted mt-0.5 flex gap-2 items-center">
-                    <span>Sistem Operasi</span><span className="w-1 h-1 bg-mhs-muted rounded-full"></span><span>Individu</span>
-                  </div>
-                </div>
-                <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-mhs-amber/15 text-mhs-amber shrink-0">H-4</span>
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-mhs-amber/15 text-mhs-amber shrink-0">Sedang</span>
-              </div>
-
-              {/* Task 4 (Done) */}
-              <div className="flex items-center gap-3 p-2.5 hover:bg-mhs-hover rounded-lg transition-colors cursor-pointer group">
-                <Checkbox checked className="w-4.5 h-4.5 rounded-full border-mhs-green bg-mhs-green text-mhs-on" />
-                <div className="flex-1 min-w-0 opacity-50">
-                  <div className="text-[13.5px] font-medium truncate text-mhs-text line-through">Quiz Kalkulus Online – Bab Limit</div>
-                  <div className="text-[11px] text-mhs-muted mt-0.5 flex gap-2 items-center">
-                    <span>Kalkulus</span><span className="w-1 h-1 bg-mhs-muted rounded-full"></span><span>Individu</span>
-                  </div>
-                </div>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-mhs-green/15 text-mhs-green shrink-0">Selesai</span>
-              </div>
+                )
+              })}
             </div>
           </div>
 
@@ -189,45 +168,23 @@ export default function MahasiswaDashboard() {
             </div>
 
             <div className="space-y-4.5">
-              {/* Project 1 */}
-              <div>
-                <div className="flex justify-between items-center mb-1.5">
-                  <div>
-                    <div className="text-[13px] font-medium text-mhs-text">Aplikasi Mobile Keuangan Mahasiswa</div>
-                    <div className="text-[11px] text-mhs-muted mt-0.5">RPL – Kelompok A</div>
+              {projects.length === 0 && (
+                <div className="text-[13px] text-mhs-muted p-3 text-center">Tidak ada proyek berjalan</div>
+              )}
+              {projects.map((project: any) => (
+                <div key={project.id}>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <div>
+                      <div className="text-[13px] font-medium text-mhs-text">{project.name}</div>
+                      <div className="text-[11px] text-mhs-muted mt-0.5">{project.subject}</div>
+                    </div>
+                    <div className="font-mono text-[12px] text-mhs-amber">{project.progress}%</div>
                   </div>
-                  <div className="font-mono text-[12px] text-mhs-amber">72%</div>
-                </div>
-                <div className="h-1.5 bg-mhs-border rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-mhs-amber to-mhs-amber-2 rounded-full transition-all duration-1000 w-[72%]" />
-                </div>
-                <div className="flex gap-1 mt-2 flex-wrap">
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-mhs-green/15 text-mhs-green">Perencanaan</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-mhs-green/15 text-mhs-green">Desain</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-mhs-teal/15 text-mhs-teal">Implementasi</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-mhs-border text-mhs-muted">Presentasi</span>
-                </div>
-              </div>
-
-              {/* Project 2 */}
-              <div>
-                <div className="flex justify-between items-center mb-1.5">
-                  <div>
-                    <div className="text-[13px] font-medium text-mhs-text">Sistem Manajemen Perpustakaan</div>
-                    <div className="text-[11px] text-mhs-muted mt-0.5">Basis Data – Kelompok B</div>
+                  <div className="h-1.5 bg-mhs-border rounded-full overflow-hidden">
+                    <div className={`h-full bg-gradient-to-r from-mhs-amber to-mhs-amber-2 rounded-full transition-all duration-1000`} style={{ width: `${project.progress}%` }} />
                   </div>
-                  <div className="font-mono text-[12px] text-mhs-teal">45%</div>
                 </div>
-                <div className="h-1.5 bg-mhs-border rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-mhs-teal to-[#67e8f9] rounded-full transition-all duration-1000 w-[45%]" />
-                </div>
-                <div className="flex gap-1 mt-2 flex-wrap">
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-mhs-green/15 text-mhs-green">Perencanaan</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-mhs-teal/15 text-mhs-teal">Desain</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-mhs-border text-mhs-muted">Implementasi</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-mhs-border text-mhs-muted">Presentasi</span>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
@@ -242,22 +199,24 @@ export default function MahasiswaDashboard() {
             <h3 className="text-[14px] font-semibold text-mhs-text mb-4 px-1">⏰ Deadline Mendatang</h3>
 
             <div className="space-y-3">
-              {[
-                { date: "2026-05-10", day: "10", mon: "Mei", title: "Laporan Praktikum Sorting", sub: "Pemrograman Lanjut • Individu", status: "Dikerjakan", statusCls: "bg-mhs-teal/15 text-mhs-teal" },
-                { date: "2026-05-12", day: "12", mon: "Mei", title: "ERD Sistem Perpustakaan", sub: "Basis Data • Kelompok", status: "Dikerjakan", statusCls: "bg-mhs-teal/15 text-mhs-teal" },
-                { date: "2026-05-15", day: "15", mon: "Mei", title: "Resume SO Bab 4", sub: "Sistem Operasi • Individu", status: "Belum Mulai", statusCls: "bg-mhs-muted/15 text-mhs-muted" },
-              ].map((item, idx) => {
-                const hl = daysLeft(item.date);
+              {upcomingDeadlines.length === 0 && (
+                <div className="text-[13px] text-mhs-muted p-3 text-center">Tidak ada deadline mendatang</div>
+              )}
+              {upcomingDeadlines.map((item: any, idx: number) => {
+                const dateObj = new Date(item.deadline);
+                const day = dateObj.getDate();
+                const mon = dateObj.toLocaleString('id-ID', { month: 'short' });
+                const hl = daysLeft(item.deadline);
                 const urgent = hl <= 3;
                 return (
-                  <div key={idx} className={`flex items-start gap-2.5 ${idx < 2 ? "pb-3 border-b border-mhs-border/50" : "pb-1"}`}>
+                  <div key={item.id} className={`flex items-start gap-2.5 ${idx < upcomingDeadlines.length - 1 ? "pb-3 border-b border-mhs-border/50" : "pb-1"}`}>
                     <div className={`w-10 text-center rounded-lg py-1 shrink-0 ${urgent ? "bg-mhs-rose/15 border border-mhs-rose/30" : "bg-mhs-border"}`}>
-                      <div className={`font-serif text-[18px] leading-none ${urgent ? "text-mhs-rose" : "text-mhs-text"}`}>{item.day}</div>
-                      <div className="text-[9px] text-mhs-muted uppercase tracking-wider">{item.mon}</div>
+                      <div className={`font-serif text-[18px] leading-none ${urgent ? "text-mhs-rose" : "text-mhs-text"}`}>{day}</div>
+                      <div className="text-[9px] text-mhs-muted uppercase tracking-wider">{mon}</div>
                     </div>
                     <div className="flex-1 min-w-0 pt-0.5">
-                      <div className="text-[13px] font-medium text-mhs-text">{item.title}</div>
-                      <div className="text-[11px] text-mhs-muted mt-0.5">{item.sub}</div>
+                      <div className="text-[13px] font-medium text-mhs-text truncate">{item.title}</div>
+                      <div className="text-[11px] text-mhs-muted mt-0.5 truncate">{item.subject} • {item.type}</div>
                       <div className="flex items-center gap-2 mt-1.5">
                         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${urgent ? "bg-mhs-rose/15 text-mhs-rose" : "bg-mhs-amber/15 text-mhs-amber"}`}>
                           H-{hl}
@@ -265,7 +224,6 @@ export default function MahasiswaDashboard() {
                         <Link href="/mahasiswa/tugas" className="text-[10px] text-mhs-teal hover:underline">→ Kerjakan</Link>
                       </div>
                     </div>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${item.statusCls}`}>{item.status}</span>
                   </div>
                 );
               })}

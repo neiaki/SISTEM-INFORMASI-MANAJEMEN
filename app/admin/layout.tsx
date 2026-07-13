@@ -4,6 +4,7 @@ import { useState, useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { useSession } from "next-auth/react";
 import { User, LogOut, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SearchContext } from "@/lib/search-context";
@@ -32,6 +33,16 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQ, setSearchQ] = useState("");
+  const { data: session } = useSession();
+
+  const userName = session?.user?.name || "Admin Kampus";
+  const userEmail = session?.user?.email || "admin@unpam.ac.id";
+  const userInitials = userName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w: string) => w[0]?.toUpperCase())
+    .join("");
 
   useEffect(() => {
     setSearchQ(""); setSidebarOpen(false);
@@ -113,11 +124,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           )}
           <div onClick={() => setIsProfileOpen(!isProfileOpen)} className="px-6 py-4 flex items-center gap-2.5 cursor-pointer hover:bg-adm-hover transition-colors">
             <div className="w-[34px] h-[34px] rounded-full bg-adm-accent/20 flex items-center justify-center text-[13px] font-bold text-adm-accent shrink-0">
-              AK
+              {userInitials || "AK"}
             </div>
             <div className="min-w-0">
-              <div className="text-[13px] font-semibold truncate text-adm-text">Admin Kampus</div>
-              <div className="text-[11px] text-adm-muted">admin@unpam.ac.id</div>
+              <div className="text-[13px] font-semibold truncate text-adm-text">{userName}</div>
+              <div className="text-[11px] text-adm-muted">{userEmail}</div>
             </div>
           </div>
         </div>
