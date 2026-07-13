@@ -1,24 +1,63 @@
-import { createSeedData } from "@/data/sim-data";
+"use client";
 
-const data = createSeedData().dosen;
+import useSWR from "swr";
+import { Loader2 } from "lucide-react";
 
-const GRADE_DIST = [
-  { course: "Pemrog. Lanjut", pillCls: "bg-forest/10 text-forest", students: 36, avg: 84.2, high: 97, low: 52, pass: 34, passP: 94, fail: 2, failP: 6, avgCls: "text-forest", bar: "from-forest to-teal", barW: 84 },
-  { course: "Basis Data",     pillCls: "bg-teal/10 text-teal",     students: 40, avg: 79.8, high: 95, low: 48, pass: 36, passP: 90, fail: 4, failP: 10, avgCls: "text-teal",   bar: "from-teal to-[#2a9d8f]", barW: 80 },
-  { course: "RPL",            pillCls: "bg-gold/15 text-gold",     students: 38, avg: 81.5, high: 92, low: 55, pass: 36, passP: 95, fail: 2, failP: 5,  avgCls: "text-gold",   bar: "from-gold to-[#f39c12]",  barW: 82 },
-  { course: "Keamanan Sistem",pillCls: "bg-rose/10 text-rose",     students: 42, avg: null, high: null, low: null, pass: null, passP: null, fail: null, failP: null, avgCls: "text-muted", bar: "from-rose to-[#e74c3c]", barW: 0 },
-];
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
-const WEEKLY = [
-  { label: "Mg 1", count: 28 },
-  { label: "Mg 2", count: 42 },
-  { label: "Mg 3", count: 35 },
-  { label: "Mg 4", count: 52 },
-  { label: "Mg 5", count: 30 },
-];
-const maxWeekly = Math.max(...WEEKLY.map(w => w.count));
+const getPillCls = (idx: number) => {
+  const classes = [
+    "bg-forest/10 text-forest",
+    "bg-teal/10 text-teal",
+    "bg-gold/15 text-gold",
+    "bg-rose/10 text-rose"
+  ];
+  return classes[idx % classes.length];
+};
+
+const getBarCls = (idx: number) => {
+  const classes = [
+    "from-forest to-teal",
+    "from-teal to-[#2a9d8f]",
+    "from-gold to-[#f39c12]",
+    "from-rose to-[#e74c3c]"
+  ];
+  return classes[idx % classes.length];
+};
+
+const getAvgCls = (idx: number) => {
+  const classes = [
+    "text-forest",
+    "text-teal",
+    "text-gold",
+    "text-rose"
+  ];
+  return classes[idx % classes.length];
+};
 
 export default function DosenLaporanPage() {
+  const { data, isLoading, error } = useSWR('/api/laporan', fetcher);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-muted gap-3">
+        <Loader2 className="animate-spin" size={24} />
+        <span className="text-[13px]">Memuat laporan...</span>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-rose gap-3">
+        <span className="text-[13px] font-medium">Gagal memuat laporan.</span>
+      </div>
+    );
+  }
+
+  const { summary, courseStats, weekly } = data;
+  const maxWeekly = Math.max(...(weekly.map((w: any) => w.count) as number[]), 1);
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-end justify-between">
@@ -39,10 +78,10 @@ export default function DosenLaporanPage() {
       {/* STAT CARDS */}
       <div className="grid grid-cols-4 gap-3">
         {[
-          { label: "Total Pengumpulan", val: 187, icon: "📬", accent: "text-forest", bg: "bg-forest/8" },
-          { label: "Mahasiswa Terlambat", val: 8,   icon: "⚠️", accent: "text-rose",   bg: "bg-rose/8"   },
-          { label: "Rata-rata Nilai",    val: "82.4", icon: "⭐", accent: "text-gold",   bg: "bg-gold/8"   },
-          { label: "Tingkat Pengumpulan", val: "94%", icon: "✅", accent: "text-teal",  bg: "bg-teal/8"   },
+          { label: "Total Pengumpulan", val: summary.totalSubmissions, icon: "📬", accent: "text-forest", bg: "bg-forest/8" },
+          { label: "Mahasiswa Terlambat", val: summary.totalLate || 0,   icon: "⚠️", accent: "text-rose",   bg: "bg-rose/8"   },
+          { label: "Rata-rata Nilai",    val: summary.averageNilai, icon: "⭐", accent: "text-gold",   bg: "bg-gold/8"   },
+          { label: "Tingkat Pengumpulan", val: summary.completionRate, icon: "✅", accent: "text-teal",  bg: "bg-teal/8"   },
         ].map((s, i) => (
           <div key={i} className={`${s.bg} border border-border/60 rounded-xl px-4 py-3 flex items-center gap-3`}>
             <span className="text-[22px]">{s.icon}</span>
@@ -60,7 +99,7 @@ export default function DosenLaporanPage() {
         <div className="bg-paper border-[1.5px] border-border rounded-[14px] p-5 shadow-[0_1px_6px_rgba(26,26,20,0.06)]">
           <h3 className="text-[14px] font-semibold text-ink mb-5">📊 Pengumpulan per Minggu</h3>
           <div className="flex items-end gap-3 h-[100px]">
-            {WEEKLY.map((w, i) => {
+            {weekly.map((w: any, i: number) => {
               const h = maxWeekly > 0 ? (w.count / maxWeekly) * 100 : 0;
               const isMax = w.count === maxWeekly;
               return (
@@ -81,17 +120,20 @@ export default function DosenLaporanPage() {
         <div className="bg-paper border-[1.5px] border-border rounded-[14px] p-5 shadow-[0_1px_6px_rgba(26,26,20,0.06)]">
           <h3 className="text-[14px] font-semibold text-ink mb-5">📈 Tingkat Kelulusan per MK</h3>
           <div className="flex flex-col gap-3.5">
-            {GRADE_DIST.filter(g => g.pass !== null).map((g, i) => (
+            {courseStats.filter((g: any) => g.pass !== null).map((g: any, i: number) => (
               <div key={i}>
                 <div className="flex justify-between text-[12px] mb-1">
-                  <span className={`text-[11px] font-medium px-2 py-0.5 rounded ${g.pillCls}`}>{g.course}</span>
+                  <span className={`text-[11px] font-medium px-2 py-0.5 rounded ${getPillCls(i)}`}>{g.course}</span>
                   <span className="font-mono text-muted">{g.passP}%</span>
                 </div>
                 <div className="w-full h-1.5 bg-cream-2 rounded-full overflow-hidden">
-                  <div className={`h-full bg-gradient-to-r ${g.bar} rounded-full`} style={{ width: `${g.passP}%` }} />
+                  <div className={`h-full bg-gradient-to-r ${getBarCls(i)} rounded-full`} style={{ width: `${g.passP}%` }} />
                 </div>
               </div>
             ))}
+            {courseStats.filter((g: any) => g.pass !== null).length === 0 && (
+                <div className="text-[13px] text-muted text-center py-4">Belum ada mahasiswa yang dinilai.</div>
+            )}
           </div>
         </div>
       </div>
@@ -112,14 +154,14 @@ export default function DosenLaporanPage() {
             </tr>
           </thead>
           <tbody>
-            {GRADE_DIST.map((g, i) => (
+            {courseStats.map((g: any, i: number) => (
               <tr key={i} className="border-b border-border/50 last:border-0 hover:bg-forest/[0.03] transition-colors">
                 <td className="py-3 px-5">
-                  <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${g.pillCls}`}>{g.course}</span>
+                  <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${getPillCls(i)}`}>{g.course}</span>
                 </td>
                 <td className="py-3 px-5 text-ink">{g.students}</td>
-                <td className={`py-3 px-5 font-mono font-semibold ${g.avgCls}`}>
-                  {g.avg !== null ? g.avg.toFixed(1) : "—"}
+                <td className={`py-3 px-5 font-mono font-semibold ${g.avg !== null ? getAvgCls(i) : "text-muted"}`}>
+                  {g.avg !== null ? g.avg : "—"}
                 </td>
                 <td className="py-3 px-5 font-mono text-[12px] text-muted">{g.high ?? "—"}</td>
                 <td className="py-3 px-5 font-mono text-[12px] text-muted">{g.low ?? "—"}</td>

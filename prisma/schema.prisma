@@ -231,6 +231,7 @@ model Submission {
   note        String?
   url         String?
   type        String
+  nilai       Int?
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
   kelompok    Kelompok? @relation(fields: [idKelompok], references: [id], onDelete: Cascade)

@@ -1,16 +1,13 @@
 "use client";
 
 import { useState, useEffect, Fragment } from "react";
-import { MessageSquare, Paperclip, ChevronDown, ChevronUp, Check, X, Bell, Lock } from "lucide-react";
+import { MessageSquare, Paperclip, ChevronDown, ChevronUp, Check, X, Bell, Lock, Loader2 } from "lucide-react";
 import { Toast, type ToastType } from "@/components/ui/toast";
-import { createSeedData } from "@/data/sim-data";
-import { getAllTaskData, seedDummyComments, type TaskEntry } from "@/lib/taskStore";
 import { useSearch } from "@/lib/search-context";
 import { EmptyState } from "@/components/empty-state";
+import useSWR from "swr";
 
-const data = createSeedData().dosen;
-
-type DosenTask = typeof data.tasks[0] & { closed?: boolean; closedAt?: string; note?: string; createdAt?: string };
+const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 const AVATAR_COLORS = [
   "from-forest to-teal",
@@ -20,60 +17,65 @@ const AVATAR_COLORS = [
   "from-[#636e72] to-[#b2bec3]",
 ];
 
-function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+function formatDate(d: string | Date) {
+  return new Date(d).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: '2-digit', minute: '2-digit' });
 }
 
 function initials(name: string) {
   return name.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase();
 }
 
-function isGradingAvailable(task: DosenTask): boolean {
-  return task.closed === true || task.status === "selesai";
+function isGradingAvailable(task: any): boolean {
+  // Can only grade if task is closed or deadline passed
+  if (!task) return false;
+  if (task.status === "selesai") return true;
+  return new Date(task.deadline).getTime() < Date.now();
 }
 
 export default function DosenRekapPage() {
   const topbarQ = useSearch();
-  const [grades, setGrades]             = useState<Record<string, string>>({});
-  const [allTasks, setAllTasks]         = useState<DosenTask[]>(data.tasks as DosenTask[]);
-  const [activeTask, setActiveTask]     = useState<string | null>(data.tasks[0]?.id ?? null);
-  const [studentStore, setStudentStore] = useState<Record<string, unknown>>({});
-  const [expandedComments, setExpandedComments]     = useState<Record<string, boolean>>({});
-  const [toast, setToast]               = useState<{ message: string; type: ToastType } | null>(null);
-  const [notifModal, setNotifModal]     = useState(false);
-  const [notifSelected, setNotifSelected]           = useState<string[]>([]);
-  const [dismissedComments, setDismissedComments]   = useState<string[]>([]);
-  const [dismissedSubmissions, setDismissedSubmissions] = useState<string[]>([]);
+  const [grades, setGrades] = useState<Record<string, string>>({});
+  const [activeTask, setActiveTask] = useState<string | null>(null);
+  const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+  const [notifModal, setNotifModal] = useState(false);
+  const [notifSelected, setNotifSelected] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
 
+  // 1. Fetch all tasks for the dosen
+  const { data: tasksData, isLoading: isLoadingTasks } = useSWR('/api/tugas', fetcher);
+  const allTasks = tasksData?.tasks || [];
+
+  // Automatically select the first task if not selected
   useEffect(() => {
-    seedDummyComments();
-    setStudentStore(getAllTaskData());
-    const savedC = localStorage.getItem("dosen_dismissed_comments");
-    if (savedC) setDismissedComments(JSON.parse(savedC));
-    const savedS = localStorage.getItem("dosen_dismissed_submissions");
-    if (savedS) setDismissedSubmissions(JSON.parse(savedS));
-    // Muat tugas baru yang dibuat dosen
-    const newTasks: DosenTask[] = JSON.parse(localStorage.getItem("dosen_new_tasks") || "[]");
-    const overrides: Record<string, { closed?: boolean; closedAt?: string }> =
-      JSON.parse(localStorage.getItem("dosen_task_overrides") || "{}");
-    const seedTasks = (data.tasks as DosenTask[]).map(t =>
-      overrides[t.id] ? { ...t, ...overrides[t.id] } : t
-    );
-    setAllTasks([...newTasks, ...seedTasks]);
-    // Cek jika dinavigasi dari halaman Manajemen Tugas dengan task tertentu
-    const preselected = localStorage.getItem("dosen_rekap_active_task");
-    if (preselected) {
-      setActiveTask(preselected);
-      localStorage.removeItem("dosen_rekap_active_task");
+    if (allTasks.length > 0 && !activeTask) {
+        // Cek localStorage first (kalau baru pindah halaman)
+        const preselected = localStorage.getItem("dosen_rekap_active_task");
+        if (preselected && allTasks.find((t: any) => t.id === preselected)) {
+            setActiveTask(preselected);
+            localStorage.removeItem("dosen_rekap_active_task");
+        } else {
+            setActiveTask(allTasks[0].id);
+        }
     }
-  }, []);
+  }, [allTasks, activeTask]);
 
-  // Muat nilai tersimpan saat task aktif berubah
+  // 2. Fetch active task details
+  const { data: activeTaskData, mutate: mutateTask } = useSWR(activeTask ? `/api/tugas/${activeTask}` : null, fetcher);
+  const task = activeTaskData?.task;
+
+  // 3. Pre-fill grades from DB
   useEffect(() => {
-    if (!activeTask) return;
-    const saved = localStorage.getItem(`dosen_grades_${activeTask}`);
-    setGrades(saved ? JSON.parse(saved) : {});
-  }, [activeTask]);
+    if (task && task.submissions) {
+        const initialGrades: Record<string, string> = {};
+        task.submissions.forEach((s: any) => {
+            if (s.nilai !== null && s.nilai !== undefined) {
+                initialGrades[s.id] = String(s.nilai);
+            }
+        });
+        setGrades(initialGrades);
+    }
+  }, [task]);
 
   const flash = (msg: string, type: ToastType = "success") => { setToast({ message: msg, type }); };
 
@@ -84,92 +86,87 @@ export default function DosenRekapPage() {
     return () => document.removeEventListener("keydown", h);
   }, [notifModal]);
 
-  function dismissComment(id: string) {
-    setDismissedComments(prev => {
-      const next = [...prev, id];
-      localStorage.setItem("dosen_dismissed_comments", JSON.stringify(next));
-      return next;
-    });
-  }
-
-  function dismissSubmission(id: string) {
-    setDismissedSubmissions(prev => {
-      const next = [...prev, id];
-      localStorage.setItem("dosen_dismissed_submissions", JSON.stringify(next));
-      return next;
-    });
-  }
-
-  const task      = allTasks.find(t => t.id === activeTask) ?? allTasks[0];
   const gradingOk = task ? isGradingAvailable(task) : false;
-  const submitted = task?.submissions?.length ?? 0;
-  const total     = 36;
-  const pct       = Math.round((submitted / total) * 100);
+  
+  // Aggregate students
+  const enrolledStudents = task?.mataKuliah?.enrollments?.map((e: any) => e.mahasiswa) || [];
+  const submissions = task?.submissions || [];
+  
+  const total = enrolledStudents.length;
+  const submitted = submissions.length;
+  const pct = total > 0 ? Math.round((submitted / total) * 100) : 0;
 
-  const mockRows = task ? [
-    ...task.submissions.map((s, i) => ({
-      id: s.id,
-      name: s.submittedBy,
-      nim: `202200${1234 + i}`,
-      time: s.submittedAt,
-      file: s.fileName,
-      status: "sudah",
-      avatarIdx: i % AVATAR_COLORS.length,
-      note: s.note,
-    })),
-    {
-      id: "pending-1",
-      name: "Andi Syahputra",
-      nim: "2022001240",
-      time: null,
-      file: null,
-      status: "belum",
-      avatarIdx: 4,
-      note: null,
-    },
-  ] : [];
+  // Build rows matching the enrolled students
+  const rows = enrolledStudents.map((mhs: any, i: number) => {
+      const sub = submissions.find((s: any) => s.idMahasiswa === mhs.id);
+      return {
+          id: sub?.id || `pending-${mhs.id}`,
+          isSubmitted: !!sub,
+          name: mhs.user?.username || mhs.id, // we might not have the full name, username works
+          nim: mhs.nim,
+          time: sub ? formatDate(sub.updatedAt) : null,
+          file: sub?.fileName || null,
+          status: sub ? "sudah" : "belum",
+          avatarIdx: i % AVATAR_COLORS.length,
+          note: sub?.note,
+          submissionId: sub?.id
+      };
+  });
 
-  const allNewSubmissions = Object.entries(studentStore).flatMap(([taskId, entry]) => {
-    const e = entry as TaskEntry;
-    return (e.submissions || []).map(s => ({ ...s, taskId, taskTitle: e.taskTitle, taskCourse: e.taskCourse }));
-  }).filter(s => !dismissedSubmissions.includes(String(s.id)));
-
-  const allNewComments = Object.entries(studentStore).flatMap(([taskId, entry]) => {
-    const e = entry as TaskEntry;
-    return (e.comments || []).map(c => ({ ...c, taskId, taskTitle: e.taskTitle, taskCourse: e.taskCourse }));
-  }).filter(c => !dismissedComments.includes(String(c.id)));
-
-  // Filter berdasarkan task yang sedang aktif
-  const taskSubmissions = activeTask ? allNewSubmissions.filter(s => s.taskId === activeTask) : allNewSubmissions;
-  const taskComments    = activeTask ? allNewComments.filter(c => c.taskId === activeTask) : allNewComments;
-  const hasNewActivity  = taskSubmissions.length > 0 || taskComments.length > 0;
+  const displayRows = topbarQ
+    ? rows.filter((r: any) => r.name.toLowerCase().includes(topbarQ.toLowerCase()) || r.nim.includes(topbarQ))
+    : rows;
+  
+  const belumKumpul = rows.filter((r: any) => r.status === "belum");
 
   function toggleComments(key: string) {
     setExpandedComments(prev => ({ ...prev, [key]: !prev[key] }));
   }
 
-  function handleSaveGrades() {
-    if (!activeTask) return;
-    localStorage.setItem(`dosen_grades_${activeTask}`, JSON.stringify(grades));
-    flash("Semua nilai berhasil disimpan!");
+  async function handleSaveGrades() {
+    if (!task) return;
+    setIsSaving(true);
+    
+    let successCount = 0;
+    
+    for (const row of rows) {
+        if (!row.isSubmitted) continue; // cannot grade non-submissions
+        const val = grades[row.id];
+        if (val !== undefined && val !== "") {
+            try {
+                await fetch(`/api/submission/${row.submissionId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nilai: parseInt(val, 10) })
+                });
+                successCount++;
+            } catch (err) {
+                console.error("Failed to save grade for", row.name);
+            }
+        }
+    }
+    
+    setIsSaving(false);
+    mutateTask(); // Refresh task to get new grades
+    flash(`Berhasil menyimpan ${successCount} nilai!`);
   }
 
   function handleExportCSV() {
     if (!task) return;
     const header = ["Nama", "NIM", "Waktu Kumpul", "File", "Status", "Nilai"];
-    const rows = mockRows.map(r => [
+    const csvRows = rows.map((r: any) => [
       r.name, r.nim,
       r.time ?? "Belum Kumpul",
       r.file ?? "-",
       r.status === "sudah" ? "Sudah Kumpul" : "Belum Kumpul",
       grades[r.id] ?? "-",
     ]);
-    const csv = [header, ...rows].map(r => r.map(v => `"${v}"`).join(",")).join("\n");
+    const csv = [header, ...csvRows].map(r => r.map((v: string) => `"${v}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `rekap_${task.title.replace(/\s+/g, "_")}.csv`;
+    a.download = `rekap_${task.judul.replace(/\s+/g, "_")}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     flash("File CSV berhasil diunduh!");
@@ -185,20 +182,19 @@ export default function DosenRekapPage() {
   } as const;
   const maxBucket = Math.max(...Object.values(gradeBuckets), 1);
 
-  const displayRows = topbarQ
-    ? mockRows.filter(r => r.name.toLowerCase().includes(topbarQ.toLowerCase()) || r.nim.includes(topbarQ))
-    : mockRows;
-  const belumKumpul = mockRows.filter(r => r.status === "belum");
-
   function openNotifModal() {
-    setNotifSelected(belumKumpul.map(r => r.id));
+    setNotifSelected(belumKumpul.map((r: any) => r.id));
     setNotifModal(true);
   }
 
-  function handleSendNotif() {
+  async function handleSendNotif() {
+    // We would trigger a broadcast endpoint here.
+    // For now, it just shows a success toast
     setNotifModal(false);
     flash(`Notifikasi terkirim ke ${notifSelected.length} mahasiswa!`);
   }
+
+  if (isLoadingTasks) return <div className="p-8 text-center text-muted flex items-center justify-center gap-2"><Loader2 className="animate-spin" /> Memuat data...</div>;
 
   return (
     <div className="flex flex-col gap-6">
@@ -221,137 +217,11 @@ export default function DosenRekapPage() {
         </div>
       </div>
 
-      {/* Kiriman baru dari mahasiswa */}
-      {hasNewActivity && (
-        <div className="bg-paper border-[1.5px] border-forest/30 rounded-[14px] shadow-[0_1px_6px_rgba(26,26,20,0.06)] overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-border bg-forest/[0.04] flex items-center gap-2.5">
-            <div className="w-2 h-2 rounded-full bg-forest animate-pulse" />
-            <h3 className="text-[13.5px] font-semibold text-ink flex-1">Kiriman Baru dari Mahasiswa</h3>
-            <span className="text-[11px] text-muted mr-2">
-              {taskSubmissions.length} file · {taskComments.length} komentar
-            </span>
-            <button
-              onClick={() => {
-                localStorage.removeItem("dosen_dismissed_comments");
-                localStorage.removeItem("dosen_dismissed_submissions");
-                setDismissedComments([]);
-                setDismissedSubmissions([]);
-                flash("Semua kiriman berhasil direset.");
-              }}
-              className="text-[10.5px] font-semibold text-muted hover:text-forest border border-border hover:border-forest px-2.5 py-1 rounded-lg transition-all"
-            >
-              ↺ Reset Komentar
-            </button>
-          </div>
-
-          {taskSubmissions.length > 0 && (
-            <div className="px-5 py-4 border-b border-border/60">
-              <div className="text-[11px] text-muted uppercase tracking-[0.08em] mb-3 flex items-center justify-between gap-1.5">
-                <span className="flex items-center gap-1.5"><Paperclip size={11} /> File Dikumpulkan</span>
-                <button
-                  onClick={() => {
-                    const allIds = taskSubmissions.map((s, i) => String(s.id ?? i));
-                    setDismissedSubmissions(prev => {
-                      const next = [...new Set([...prev, ...allIds])];
-                      localStorage.setItem("dosen_dismissed_submissions", JSON.stringify(next));
-                      return next;
-                    });
-                    flash("Semua file dikumpulkan telah ditutup.");
-                  }}
-                  className="text-[10.5px] font-semibold text-rose/70 hover:text-rose border border-rose/20 hover:border-rose/50 px-2.5 py-1 rounded-lg transition-all flex items-center gap-1"
-                >
-                  <X size={11} /> Tutup Semua
-                </button>
-              </div>
-              <div className="flex flex-col gap-2">
-                {taskSubmissions.map((s, i) => (
-                  <div key={s.id || i} className="flex items-start gap-3 bg-cream/60 rounded-xl px-4 py-3 group">
-                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${AVATAR_COLORS[i % AVATAR_COLORS.length]} flex items-center justify-center text-[11px] font-bold text-white shrink-0`}>
-                      {initials(s.submittedBy || "EK")}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[13px] font-medium text-ink">{s.submittedBy}</span>
-                        <span className="text-[11px] text-forest font-semibold">📎 {s.fileName}</span>
-                        {s.fileSize && <span className="text-[11px] text-muted">{s.fileSize}</span>}
-                      </div>
-                      <div className="text-[11px] text-muted mt-0.5">
-                        {s.taskTitle && <><span className="text-ink-2 font-medium">{s.taskTitle}</span> · </>}
-                        {s.taskCourse && <span className="text-teal">{s.taskCourse}</span>}
-                        {s.submittedAt && <> · {s.submittedAt}</>}
-                      </div>
-                      {s.note && <div className="text-[11px] text-muted mt-1 italic">"{s.note}"</div>}
-                    </div>
-                    <span className="text-[10.5px] font-semibold px-2.5 py-1 rounded-full bg-teal/10 text-teal shrink-0">Sudah Kumpul</span>
-                    <button
-                      onClick={() => dismissSubmission(String(s.id ?? i))}
-                      title="Tutup"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 self-start p-1 rounded-md text-muted hover:text-rose hover:bg-rose/10"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {taskComments.length > 0 && (
-            <div className="px-5 py-4">
-              <div className="text-[11px] text-muted uppercase tracking-[0.08em] mb-3 flex items-center gap-1.5 justify-between">
-                <span className="flex items-center gap-1.5"><MessageSquare size={11} /> Komentar Mahasiswa</span>
-                <button
-                  onClick={() => {
-                    const allIds = taskComments.map((c, i) => String(c.id ?? i));
-                    setDismissedComments(prev => {
-                      const next = [...new Set([...prev, ...allIds])];
-                      localStorage.setItem("dosen_dismissed_comments", JSON.stringify(next));
-                      return next;
-                    });
-                    flash("Semua komentar telah ditutup.");
-                  }}
-                  className="text-[10.5px] font-semibold text-rose/70 hover:text-rose border border-rose/20 hover:border-rose/50 px-2.5 py-1 rounded-lg transition-all flex items-center gap-1"
-                >
-                  <X size={11} /> Tutup Semua
-                </button>
-              </div>
-              <div className="flex flex-col gap-2">
-                {taskComments.map((c, i) => (
-                  <div key={c.id || i} className="flex gap-3 bg-cream/60 rounded-xl px-4 py-3 group relative">
-                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${AVATAR_COLORS[i % AVATAR_COLORS.length]} flex items-center justify-center text-[11px] font-bold text-white shrink-0`}>
-                      {initials(c.author || "EK")}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-[13px] font-medium text-ink">{c.author}</span>
-                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-gold/15 text-gold">Mahasiswa</span>
-                        {c.taskTitle && (
-                          <span className="text-[11px] text-muted">→ <span className="text-ink-2 font-medium">{c.taskTitle}</span></span>
-                        )}
-                      </div>
-                      <div className="text-[12.5px] text-ink-2 leading-relaxed">{c.text}</div>
-                      <div className="text-[10.5px] text-muted mt-1">{c.time}</div>
-                    </div>
-                    <button
-                      onClick={() => dismissComment(String(c.id ?? i))}
-                      title="Tandai sudah dibaca"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 self-start mt-0.5 p-1 rounded-md text-muted hover:text-rose hover:bg-rose/10"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Task selector */}
       <div className="flex gap-2 flex-wrap">
-        {allTasks.map(t => {
-          const isSelesai = t.closed || t.status === "selesai";
-          const gradable  = isGradingAvailable(t);
+        {allTasks.map((t: any) => {
+          const isSelesai = t.status === "selesai" || new Date(t.deadline).getTime() < Date.now();
+          const gradable  = isSelesai;
           return (
             <button
               key={t.id}
@@ -362,7 +232,7 @@ export default function DosenRekapPage() {
                   : "bg-paper text-muted border-border hover:border-forest hover:text-forest"
               }`}
             >
-              {t.title}
+              {t.judul}
               {isSelesai && (
                 gradable
                   ? <span className="w-1.5 h-1.5 rounded-full bg-teal shrink-0" title="Penilaian tersedia" />
@@ -379,7 +249,7 @@ export default function DosenRekapPage() {
           {/* Card header */}
           <div className="px-5 py-4 border-b border-border flex items-center justify-between">
             <div>
-              <div className="font-semibold text-ink text-[14px]">📥 {task.title} — {task.course}</div>
+              <div className="font-semibold text-ink text-[14px]">📥 {task.judul} — {task.mataKuliah.namaMk}</div>
               <div className="text-[12px] text-muted mt-0.5">Deadline: {formatDate(task.deadline)} · {total} Mahasiswa</div>
             </div>
             <div className="flex items-center gap-3">
@@ -400,7 +270,7 @@ export default function DosenRekapPage() {
             <div className="px-5 py-3 bg-gold/10 border-b border-border flex items-center gap-2.5 text-[13px]">
               <Lock size={14} className="text-gold shrink-0" />
               <span className="text-gold font-semibold">Tugas Belum Ditutup</span>
-              <span className="text-muted">— tutup tugas di menu Manajemen Tugas untuk mengaktifkan penilaian</span>
+              <span className="text-muted">— penilaian dapat dilakukan setelah deadline lewat</span>
             </div>
           )}
 
@@ -416,17 +286,14 @@ export default function DosenRekapPage() {
               </tr>
             </thead>
             <tbody>
-              {displayRows.map(row => {
-                const taskEntry   = studentStore[task.id] as TaskEntry | undefined;
-                const newComments = (taskEntry?.comments || []).filter(c =>
-                  c.author?.toLowerCase().includes(row.name.split(" ")[0].toLowerCase())
-                );
+              {displayRows.length === 0 ? (
+                  <tr><td colSpan={7} className="text-center py-6 text-muted">Belum ada mahasiswa terdaftar</td></tr>
+              ) : displayRows.map((row: any) => {
                 const commentKey     = `${task.id}-${row.id}`;
                 const isExpanded     = expandedComments[commentKey];
-                const seedComments   = (task.comments || []).filter(c =>
-                  c.author?.toLowerCase().includes(row.name.split(" ")[0].toLowerCase())
-                );
-                const allRowComments = [...seedComments, ...newComments];
+                
+                // Simple comment mock for now since we haven't integrated deep comment relations
+                const allRowComments: any[] = []; 
 
                 return (
                   <Fragment key={row.id}>
@@ -489,174 +356,103 @@ export default function DosenRekapPage() {
                         )}
                       </td>
                     </tr>
-
-                    {isExpanded && allRowComments.length > 0 && (
-                      <tr className="bg-cream/50">
-                        <td colSpan={7} className="px-5 py-3 border-b border-border/40">
-                          <div className="flex flex-col gap-2 pl-10">
-                            {allRowComments.map((c, ci) => (
-                              <div key={c.id || ci} className="flex gap-2.5 items-start">
-                                <div className={`w-6 h-6 rounded-md flex items-center justify-center text-[9px] font-bold text-white shrink-0 ${c.role === "dosen" ? "bg-gradient-to-br from-forest to-teal" : "bg-gradient-to-br from-gold to-[#f39c12]"}`}>
-                                  {initials(c.author)}
-                                </div>
-                                <div className="flex-1 bg-paper border border-border/60 rounded-lg px-3 py-2">
-                                  <div className="flex items-center gap-2 mb-0.5">
-                                    <span className="text-[11.5px] font-semibold text-ink">{c.author}</span>
-                                    <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${c.role === "dosen" ? "bg-forest/10 text-forest" : "bg-gold/15 text-gold"}`}>
-                                      {c.role === "dosen" ? "Dosen" : "Mahasiswa"}
-                                    </span>
-                                    <span className="text-[10px] text-muted ml-auto">{c.time}</span>
-                                  </div>
-                                  <div className="text-[12px] text-ink-2 leading-relaxed">{c.text}</div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    )}
                   </Fragment>
                 );
               })}
             </tbody>
           </table>
 
-          {displayRows.length === 0 && topbarQ && (
-            <div className="px-5 py-4">
-              <EmptyState theme="dosen" icon="🔍" title="Tidak ada hasil" description={`Tidak ada mahasiswa yang cocok dengan "${topbarQ}"`} />
-            </div>
-          )}
-
-          {/* Footer actions */}
-          <div className="px-5 py-4 border-t border-border flex gap-2 flex-wrap">
-            <button
-              onClick={handleSaveGrades}
-              disabled={!gradingOk}
-              title={gradingOk ? undefined : "Penilaian belum tersedia untuk tugas ini"}
-              className="bg-forest text-white hover:bg-forest-2 hover:-translate-y-0.5 hover:shadow-[0_4px_14px_rgba(45,90,61,0.25)] disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0 disabled:shadow-none px-4 py-2 rounded-lg text-[13px] font-semibold transition-all flex items-center gap-1.5"
-            >
-              💾 Simpan Semua Nilai
-            </button>
-            <button onClick={handleExportCSV} className="bg-paper text-ink-2 border-[1.5px] border-border hover:text-forest hover:border-forest px-4 py-2 rounded-lg text-[13px] font-semibold transition-all">
-              📊 Ekspor Excel
-            </button>
-            <button onClick={openNotifModal} className="bg-paper text-ink-2 border-[1.5px] border-border hover:text-forest hover:border-forest px-4 py-2 rounded-lg text-[13px] font-semibold transition-all flex items-center gap-1.5">
-              <Bell size={14} /> Kirim Notifikasi ke Mahasiswa
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Distribusi Nilai */}
-      {task && (
-        <div className="bg-paper border-[1.5px] border-border rounded-[14px] shadow-[0_1px_6px_rgba(26,26,20,0.06)] p-5">
-          <div className="font-semibold text-ink text-[14px] mb-1">📊 Distribusi Nilai</div>
-          <div className="text-[12px] text-muted mb-4">
-            {gradeValues.length === 0
-              ? "Belum ada penilaian — isi nilai di tabel lalu simpan"
-              : `${gradeValues.length} mahasiswa dinilai · rata-rata ${(gradeValues.reduce((a, b) => a + b, 0) / gradeValues.length).toFixed(1)}`}
-          </div>
-          {gradeValues.length > 0 ? (
-            <div className="flex items-end gap-5 h-[130px]">
-              {(["A","B","C","D","E"] as const).map(grade => {
-                const count = gradeBuckets[grade];
-                const COLORS: Record<string, string> = { A: "bg-forest", B: "bg-teal", C: "bg-gold", D: "bg-rose/80", E: "bg-rose/50" };
-                const RANGE:  Record<string, string> = { A: "85–100", B: "70–84", C: "55–69", D: "40–54", E: "<40" };
-                return (
-                  <div key={grade} className="flex-1 flex flex-col items-center gap-1">
-                    <span className="text-[12px] font-mono text-ink-2 min-h-[18px]">{count > 0 ? count : ""}</span>
-                    <div className="w-full flex items-end justify-center h-[72px]">
-                      <div
-                        className={`w-full rounded-t-md transition-all duration-500 ${COLORS[grade]}`}
-                        style={{ height: `${count > 0 ? Math.max((count / maxBucket) * 72, 6) : 0}px` }}
-                      />
-                    </div>
-                    <span className="text-[14px] font-bold text-ink">{grade}</span>
-                    <span className="text-[10px] text-muted">{RANGE[grade]}</span>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="h-[100px] flex items-center justify-center border-[1.5px] border-dashed border-border rounded-xl text-muted text-[13px]">
-              Isi nilai di tabel lalu klik &quot;Simpan Semua Nilai&quot;
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Modal: Kirim Notifikasi */}
-      {notifModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setNotifModal(false)} />
-          <div className="relative bg-paper border border-border rounded-2xl shadow-2xl w-full max-w-md animate-fadeIn">
-            <div className="flex items-center justify-between px-6 py-5 border-b border-border">
-              <div>
-                <h2 className="font-serif text-[18px] text-ink">Kirim Notifikasi</h2>
-                <div className="text-[12px] text-muted mt-0.5">Pilih mahasiswa yang akan diingatkan</div>
+          {/* Footer Card */}
+          <div className="px-5 py-4 border-t border-border bg-cream/30 flex items-center justify-between">
+            <div className="flex gap-4">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-teal" />
+                <span className="text-[11px] text-muted font-medium">Sudah: <span className="text-ink">{submitted}</span></span>
               </div>
-              <button onClick={() => setNotifModal(false)} className="text-muted hover:text-ink transition-colors">
-                <X size={18} />
-              </button>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-rose" />
+                <span className="text-[11px] text-muted font-medium">Belum: <span className="text-ink">{total - submitted}</span></span>
+              </div>
             </div>
-
-            <div className="px-6 py-4">
-              {belumKumpul.length === 0 ? (
-                <div className="text-center py-6 text-muted text-[13px]">
-                  Semua mahasiswa sudah mengumpulkan tugas. 🎉
+            
+            <div className="flex gap-2 items-center">
+              {Object.keys(grades).length > 0 && (
+                <div className="flex items-center gap-1 text-[11px] text-muted mr-3">
+                  <span className="text-forest font-semibold">{gradeValues.length}</span> / {submitted} dinilai
                 </div>
-              ) : (
-                <>
-                  <div className="text-[11px] text-muted uppercase tracking-wider mb-3 flex items-center justify-between">
-                    <span>Belum mengumpulkan ({belumKumpul.length})</span>
-                    <button
-                      onClick={() => setNotifSelected(
-                        notifSelected.length === belumKumpul.length ? [] : belumKumpul.map(r => r.id)
-                      )}
-                      className="text-forest hover:underline normal-case font-normal text-[11px]"
-                    >
-                      {notifSelected.length === belumKumpul.length ? "Batal pilih semua" : "Pilih semua"}
-                    </button>
-                  </div>
-                  <div className="space-y-2 max-h-[240px] overflow-y-auto">
-                    {belumKumpul.map((row, i) => (
-                      <label key={row.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-cream transition-colors">
-                        <div className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-all shrink-0 ${notifSelected.includes(row.id) ? "bg-forest border-forest" : "border-border"}`}>
-                          {notifSelected.includes(row.id) && <Check size={11} className="text-white" strokeWidth={3} />}
-                        </div>
-                        <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${AVATAR_COLORS[i % AVATAR_COLORS.length]} flex items-center justify-center text-[11px] font-bold text-white shrink-0`}>
-                          {initials(row.name)}
-                        </div>
-                        <div className="flex-1">
-                          <div className="text-[13px] font-medium text-ink">{row.name}</div>
-                          <div className="text-[11px] text-muted">{row.nim}</div>
-                        </div>
-                        <input
-                          type="checkbox"
-                          className="sr-only"
-                          checked={notifSelected.includes(row.id)}
-                          onChange={() => setNotifSelected(p =>
-                            p.includes(row.id) ? p.filter(x => x !== row.id) : [...p, row.id]
-                          )}
-                        />
-                      </label>
-                    ))}
-                  </div>
-                </>
               )}
-            </div>
-
-            <div className="px-6 py-4 border-t border-border flex gap-3">
-              <button onClick={() => setNotifModal(false)} className="flex-1 border border-border text-muted hover:text-ink py-2 rounded-lg text-[13px] font-semibold transition-all">
-                Batal
-              </button>
+              {isSaving && <Loader2 className="animate-spin text-forest" size={18} />}
               <button
-                onClick={handleSendNotif}
-                disabled={notifSelected.length === 0}
-                className="flex-1 bg-forest text-white hover:bg-forest/90 disabled:opacity-40 py-2 rounded-lg text-[13px] font-semibold transition-all flex items-center justify-center gap-2"
+                onClick={handleSaveGrades}
+                disabled={!gradingOk || isSaving}
+                className={`px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all flex items-center gap-1.5 ${
+                  gradingOk
+                    ? "bg-forest text-white hover:bg-forest-2"
+                    : "bg-border text-muted cursor-not-allowed"
+                }`}
               >
-                <Bell size={14} /> Kirim ke {notifSelected.length} Mahasiswa
+                <Check size={14} /> Simpan Penilaian
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Analytics / Charts - grade distribution */}
+      {task && gradeValues.length > 0 && (
+        <div className="bg-paper border-[1.5px] border-border rounded-[14px] shadow-[0_1px_6px_rgba(26,26,20,0.06)] p-5">
+          <h3 className="text-[14px] font-semibold text-ink mb-5">📈 Distribusi Nilai Sementara</h3>
+          <div className="flex items-end gap-2 h-[120px]">
+            {Object.entries(gradeBuckets).map(([label, count]) => {
+              const h = (count / maxBucket) * 100;
+              return (
+                <div key={label} className="flex-1 flex flex-col items-center gap-2 group">
+                  <span className="font-mono text-[12px] text-muted opacity-0 group-hover:opacity-100 transition-opacity">
+                    {count}
+                  </span>
+                  <div
+                    className="w-full rounded-t-lg bg-gradient-to-t from-forest to-teal opacity-80 group-hover:opacity-100 transition-all min-h-[4px]"
+                    style={{ height: `${h}%` }}
+                  />
+                  <span className="font-semibold text-ink text-[13px]">{label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Modal Notif Peringatan */}
+      {notifModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+          <div className="bg-paper border-[1.5px] border-border rounded-2xl shadow-xl w-[400px] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between bg-cream/30">
+              <h3 className="font-semibold text-[14px] text-ink flex items-center gap-1.5">
+                <Bell size={15} className="text-gold" />
+                Kirim Peringatan
+              </h3>
+              <button onClick={() => setNotifModal(false)} className="text-muted hover:text-rose p-1">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-5">
+              <div className="text-[13px] text-ink-2 mb-4">
+                Peringatan akan dikirimkan ke <strong className="text-ink">{notifSelected.length} mahasiswa</strong> yang belum mengumpulkan tugas ini.
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setNotifModal(false)}
+                  className="flex-1 py-2 rounded-lg border-[1.5px] border-border text-[13px] font-semibold text-ink-2 hover:bg-cream"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleSendNotif}
+                  className="flex-1 py-2 rounded-lg bg-forest text-white text-[13px] font-semibold hover:bg-forest-2"
+                >
+                  Kirim
+                </button>
+              </div>
             </div>
           </div>
         </div>
