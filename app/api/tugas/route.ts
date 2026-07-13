@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/logger";
 import { notifyEnrolledStudents } from "@/lib/notifikasi";
+import { getPagination, buildPaginationMeta } from "@/lib/pagination";
 
 export async function GET(req: Request) {
   try {
@@ -33,15 +34,26 @@ export async function GET(req: Request) {
         courseIds = [idMk];
       }
 
-      const tasks = await prisma.tugas.findMany({
-        where: { idMk: { in: courseIds } },
-        include: {
-          mataKuliah: true,
-          submissions: { where: { idMahasiswa: mahasiswa.id } },
-        },
-        orderBy: { deadline: "asc" },
-      });
+      const pageParam = searchParams.get("page");
+      const pg = getPagination(pageParam, searchParams.get("limit"));
 
+      const [tasks, total] = await Promise.all([
+        prisma.tugas.findMany({
+          where: { idMk: { in: courseIds } },
+          include: {
+            mataKuliah: true,
+            submissions: { where: { idMahasiswa: mahasiswa.id } },
+          },
+          orderBy: { deadline: "asc" },
+          skip: pg.skip,
+          take: pg.take,
+        }),
+        prisma.tugas.count({ where: { idMk: { in: courseIds } } }),
+      ]);
+
+      if (pageParam) {
+        return NextResponse.json({ tasks, pagination: buildPaginationMeta(pg.page, pg.limit, total) });
+      }
       return NextResponse.json({ tasks });
     }
 
@@ -61,15 +73,26 @@ export async function GET(req: Request) {
         courseIds = [idMk];
       }
 
-      const tasks = await prisma.tugas.findMany({
-        where: { idMk: { in: courseIds } },
-        include: {
-          mataKuliah: true,
-          _count: { select: { submissions: true } },
-        },
-        orderBy: { deadline: "desc" },
-      });
+      const pageParam = searchParams.get("page");
+      const pg = getPagination(pageParam, searchParams.get("limit"));
 
+      const [tasks, total] = await Promise.all([
+        prisma.tugas.findMany({
+          where: { idMk: { in: courseIds } },
+          include: {
+            mataKuliah: true,
+            _count: { select: { submissions: true } },
+          },
+          orderBy: { deadline: "desc" },
+          skip: pg.skip,
+          take: pg.take,
+        }),
+        prisma.tugas.count({ where: { idMk: { in: courseIds } } }),
+      ]);
+
+      if (pageParam) {
+        return NextResponse.json({ tasks, pagination: buildPaginationMeta(pg.page, pg.limit, total) });
+      }
       return NextResponse.json({ tasks });
     }
 

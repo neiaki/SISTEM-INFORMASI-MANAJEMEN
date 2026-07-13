@@ -80,7 +80,7 @@ Dokumen ini merangkum seluruh status pengerjaan fitur backend berdasarkan `prd-s
 - [x] **File Storage (Lampiran Tugas)**
   - [x] Konfigurasi penyimpanan lokal di folder `public/uploads/` untuk upload lampiran/submission.
   - [x] Pembuatan route handler `/api/upload` untuk upload file standard.
-  - [ ] Integrasi ke Supabase Storage (jika disyaratkan produksi di masa depan).
+   - [x] Integrasi ke Supabase Storage (jika disyaratkan produksi di masa depan).
 
 ---
 
@@ -124,5 +124,5 @@ Optimasi fundamental sistem database telah berhasil diimplementasikan sepenuhnya
 - ✅ **Optimasi Caching (SWR):** Setelan `revalidateOnFocus: false` dan `dedupingInterval: 60000` telah diterapkan pada tabel yang jarang berubah secara drastis (seperti Metrik dan Laporan), meminimalisir spam pemanggilan endpoint backend.
 
 **Rencana Optimasi Tingkat Lanjut (Untuk Peningkatan Skala Skala Besar):**
-- ⏳ **Pagination & Lazy Loading:** Bisa diterapkan di halaman Tugas dan Notifikasi agar data dimuat secara bertahap (15 data/request) jika jumlah baris sudah membludak menjadi puluhan ribu.
+- ✅ **Pagination & Lazy Loading:** Diterapkan server-side di `GET /api/tugas` via `lib/pagination.ts` (skip/take + `count` + meta `pagination`). Backward-compatible: hanya paginasi bila param `page` dikirim; UI lama tetap mendapat seluruh daftar. Dilengkapi unit test (`lib/pagination.test.ts`, `bun test`).
 - ⏳ **Dynamic Imports:** Hanya me-load ekstensi berat (seperti library Excel/CSV) ketika pengguna menekan tombol "Export" guna mengurangi Initial Bundle Size dari halaman tersebut.
