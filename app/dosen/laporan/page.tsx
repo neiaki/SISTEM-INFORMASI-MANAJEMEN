@@ -37,7 +37,10 @@ const getAvgCls = (idx: number) => {
 };
 
 export default function DosenLaporanPage() {
-  const { data, isLoading, error } = useSWR('/api/laporan', fetcher);
+  const { data, isLoading, error } = useSWR('/api/laporan', fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000,
+  });
 
   if (isLoading) {
     return (

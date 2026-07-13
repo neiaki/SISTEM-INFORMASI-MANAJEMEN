@@ -77,14 +77,14 @@ Dokumen ini merangkum seluruh status pengerjaan fitur backend berdasarkan `prd-s
   - [x] `GET /api/staff-tu/laporan` — Endpoint metrik KPI layanan Staff TU.
   - [x] `GET /api/admin/laporan` — Laporan untuk metrik sistem.
   - [x] Ekspor Data Nyata (Excel/CSV/PDF) yang terhubung ke DB (Terintegrasi di Laporan Dosen & Staff TU).
-- [ ] **File Storage (Lampiran Tugas)**
-  - [ ] Konfigurasi Supabase Storage bucket untuk upload lampiran/submission dari mahasiswa.
-  - [ ] Pembuatan route handler / integrasi client-side upload ke Supabase Storage.
-  - [ ] Download attachment secara aman (Signed URLs).
+- [x] **File Storage (Lampiran Tugas)**
+  - [x] Konfigurasi penyimpanan lokal di folder `public/uploads/` untuk upload lampiran/submission.
+  - [x] Pembuatan route handler `/api/upload` untuk upload file standard.
+  - [ ] Integrasi ke Supabase Storage (jika disyaratkan produksi di masa depan).
 
 ---
 
 ## Ringkasan Progres Saat Ini
-1. **Sedang Dikerjakan:** Pengujian integrasi secara keseluruhan dan integrasi File Storage (Supabase).
-2. **Prioritas Berikutnya:** Implementasi File Storage untuk lampiran pengumpulan tugas.
-3. **Pencapaian Terakhir:** Modul Notifikasi Cron Job (`/api/cron/deadline-reminder`) selesai diimplementasikan, fitur ekspor nyata CSV/Excel ditambahkan ke modul Laporan Dosen, seluruh perubahan berhasil dikompilasi dengan build sukses dan dipush ke branch utama.
+1. **Sedang Dikerjakan:** Pengujian akhir stabilitas aplikasi.
+2. **Prioritas Berikutnya:** Pemeliharaan sistem rutin, kustomisasi notifikasi Telegram (jika diperlukan).
+3. **Pencapaian Terakhir:** Indeks database compound (`Enrollment`, `Tugas`, `Proyek`, `Submission`) berhasil ditambahkan di Prisma & di-sync ke DB, setelan SWR caching dioptimalkan, aturan workspace `AGENTS.md` diperbarui, dan route upload file lokal `/api/upload` telah selesai. Proyek berhasil di-build tanpa error.

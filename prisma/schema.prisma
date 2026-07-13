@@ -119,6 +119,7 @@ model Enrollment {
   mataKuliah  MataKuliah @relation(fields: [idMk], references: [id], onDelete: Cascade)
 
   @@unique([idMahasiswa, idMk, tahunAjar])
+  @@index([idMahasiswa, idMk])
   @@map("enrollment")
 }
 
@@ -140,6 +141,7 @@ model Tugas {
   submissions      Submission[]
   mataKuliah       MataKuliah    @relation(fields: [idMk], references: [id], onDelete: Cascade)
 
+  @@index([idMk, deadline])
   @@map("tugas")
 }
 
@@ -157,6 +159,7 @@ model Proyek {
   kelompoks     Kelompok[]
   mataKuliah    MataKuliah    @relation(fields: [idMk], references: [id], onDelete: Cascade)
 
+  @@index([idMk, deadlineAkhir])
   @@map("proyek")
 }
 
@@ -239,6 +242,7 @@ model Submission {
   mahasiswa   Mahasiswa @relation(fields: [idMahasiswa], references: [id], onDelete: Cascade)
   tugas       Tugas?    @relation(fields: [idTugas], references: [id], onDelete: Cascade)
 
+  @@index([idTugas, idMahasiswa])
   @@map("submission")
 }
 

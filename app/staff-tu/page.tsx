@@ -21,7 +21,10 @@ export default function StaffTUDashboard() {
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: apiData, mutate } = useSWR('/api/staff-tu/dashboard', fetcher);
+  const { data: apiData, mutate } = useSWR('/api/staff-tu/dashboard', fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000,
+  });
 
   const handleImport = async () => {
     if (!file) return;

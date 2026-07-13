@@ -20,7 +20,10 @@ const INTEG_COLORS: Record<string, string> = {
 };
 
 export default function AdminDashboard() {
-  const { data: apiData } = useSWR('/api/admin/dashboard', fetcher);
+  const { data: apiData } = useSWR('/api/admin/dashboard', fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000,
+  });
 
   if (!apiData) {
     return <div className="flex h-[400px] items-center justify-center text-adm-muted">Memuat data dashboard...</div>;

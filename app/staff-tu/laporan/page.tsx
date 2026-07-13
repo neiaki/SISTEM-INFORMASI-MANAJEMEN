@@ -6,7 +6,10 @@ import { exportToCSV, printAsPDF } from "@/lib/exportUtils";
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function StaffTULaporanPage() {
-  const { data: apiData } = useSWR('/api/staff-tu/laporan', fetcher);
+  const { data: apiData } = useSWR('/api/staff-tu/laporan', fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000,
+  });
 
   if (!apiData) {
     return <div className="flex h-[400px] items-center justify-center text-stu-muted">Memuat data laporan...</div>;

@@ -34,6 +34,7 @@ npm start
 | `lib/notifStore.ts` | Notification state |
 | `app/globals.css` | Theme variables (`mhs-*`, `dsn-*`, `adm-*`, `stu-*`) |
 | `planning-backend.md` | Backend migration plan (Supabase + Prisma + Auth.js) |
+| `checklist-backend.md` | Pelacakan status pengerjaan fitur backend |
 
 ## Commit Rule
 
@@ -42,10 +43,14 @@ Never add `Co-Authored-By` or Claude attribution to commit messages.
 ## Coding Guidelines
 
 **Clean Code & Minim Boilerplate:**
-1. **Single Responsibility (SRP):** Keep components and API handlers focused on a single task. Extract complex logic into helper functions (`lib/`) and large UIs into separate components (`components/`).
+1. **Single Responsibility (SRP):** Keep components and API handlers focused on a single task. Extract complex logic into helper functions (`lib/`) and UIs into separate components (`components/`).
 2. **Naming Conventions:** Use `camelCase` for variables/functions and `PascalCase` for React components. Use descriptive names instead of abbreviations.
 3. **Early Returns:** Prefer early returns to avoid deeply nested `if/else` statements.
 4. **Boilerplate Reduction:** 
    - Encapsulate repetitive API responses into utility functions.
    - Extract repeated state management (like data fetching with SWR) into custom hooks (e.g. `useTugas()`).
    - Create reusable UI components for common elements (Buttons, Cards, Inputs) to avoid duplicating long Tailwind class strings.
+
+**Backend Development Rules:**
+1. **Pembaruan Checklist**: Selalu perbarui status penyelesaian fitur/endpoint di dalam `checklist-backend.md` segera setelah fitur tersebut berhasil diimplementasikan dan diuji.
+2. **Template CSV & Impor Data**: Template CSV standar untuk impor massal diletakkan di `public/templates/` (`template-import-mahasiswa.csv`, `template-import-dosen.csv`, `template-import-staff.csv`). Jika skema database di tabel terkait berubah, template tersebut harus diperbarui secara manual agar tetap sinkron.
