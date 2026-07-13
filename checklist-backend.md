@@ -18,7 +18,7 @@ Dokumen ini merangkum seluruh status pengerjaan fitur backend berdasarkan `prd-s
   - [x] Setup `NextAuth` (v5 beta) di `lib/auth.ts`.
   - [x] Pembuatan Provider Credentials (NIM/Email + Password).
   - [x] Setup sesi berbasis session/JWT dan role-based middleware/auth context.
-  - [ ] Implementasi SSO Kampus / Google OAuth (Opsional - Tertunda).
+  - [x] Implementasi SSO Kampus / Google OAuth (Selesai).
 
 ---
 
@@ -57,7 +57,7 @@ Dokumen ini merangkum seluruh status pengerjaan fitur backend berdasarkan `prd-s
   - [x] Setup simulasi email pengiriman otomatis.
   - [x] Pembuatan `GET /api/cron/deadline-reminder` (dipanggil oleh Vercel Cron).
   - [x] Mengirim notifikasi / email peringatan (H-7, H-3, H-1) sesuai preferensi user.
-  - [ ] (Opsional) Notifikasi Telegram via Bot.
+  - [x] (Opsional) Notifikasi Telegram via Bot (Selesai).
 - [x] **Migrasi Notifikasi UI ke API**
   - [x] Halaman `/mahasiswa/notifikasi`.
   - [x] Halaman `/dosen/notifikasi`.
@@ -73,7 +73,7 @@ Dokumen ini merangkum seluruh status pengerjaan fitur backend berdasarkan `prd-s
   - [x] Pembuatan Template CSV untuk Mahasiswa, Dosen, dan Staff TU (`public/templates/`).
   - [x] Pembuatan `POST /api/admin/import-users` (menggunakan `csv-parse` untuk membaca dan menyimpan ke DB).
   - [x] UI Upload CSV di Dashboard Staff TU.
-- [ ] **Laporan & Ekspor**
+- [x] **Laporan & Ekspor**
   - [x] `GET /api/staff-tu/laporan` — Endpoint metrik KPI layanan Staff TU.
   - [x] `GET /api/admin/laporan` — Laporan untuk metrik sistem.
   - [x] Ekspor Data Nyata (Excel/CSV/PDF) yang terhubung ke DB (Terintegrasi di Laporan Dosen & Staff TU).
@@ -101,14 +101,25 @@ Dokumen ini merangkum seluruh status pengerjaan fitur backend berdasarkan `prd-s
 
 Untuk Agent Berikutnya, ini adalah daftar prioritas pengembangan yang belum selesai dan harus dilanjutkan:
 
-1. **Integrasi Frontend Manajemen Kelompok (Fokus Utama)**
-   - Saat ini Backend CRUD Kelompok (Tahap 4) sudah selesai (`/api/kelompok`).
-   - **Tugas Utama:** Refactor halaman `app/mahasiswa/kelompok/page.tsx` dan `app/dosen/kelompok/page.tsx` untuk menghapus penggunaan `kelompokStore.ts` (mock data lokal) dan menggantinya dengan fetch SWR asli ke `/api/kelompok`.
-2. **Integrasi Supabase Storage (Tahap 2)**
-   - File upload saat ini mengandalkan path lokal `/public/uploads` di server via `/api/upload/route.ts`.
-   - **Tugas Utama:** Modifikasi endpoint upload agar langsung mengirim file fisik ke bucket Supabase Storage, kemudian menyimpan URL Publik Supabase tersebut ke PostgreSQL.
-3. **Pengaturan Akun & Environment User**
-   - Minta user atau secara manual siapkan nilai untuk variabel-variabel kredensial di file `.env.local` (`AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `TELEGRAM_BOT_TOKEN`) untuk memfungsikan fitur OAuth & Notif.
+1. 🛡️ **Route Protection & Security (middleware.ts)**
+   - Saat ini aplikasi belum memiliki file `middleware.ts`. Ini sangat penting untuk keamanan. Kita butuh Middleware yang mencegat pengguna di tingkat server sehingga:
+     - Orang yang belum login (atau belum punya sesi OAuth) tidak bisa membuka `/mahasiswa`, `/dosen`, atau `/admin`.
+     - Mahasiswa tidak bisa iseng mengetik URL `/dosen/rekap` untuk melihat data Dosen lain (proteksi lintas-role).
+   - **Tugas Utama:** Agent selanjutnya harus diminta untuk membuat `middleware.ts` berbasis NextAuth.
+2. 🗂️ **Migrasi Penyimpanan File (Supabase Storage)**
+   - Endpoint unggah tugas yang kita buat (`/api/upload`) masih menyimpan file di folder lokal (`/public/uploads`).
+   - **Masalah:** Jika aplikasi ini nantinya di-deploy ke hosting modern seperti Vercel, folder lokal tersebut sifatnya sementara (ephemeral) dan file yang diunggah mahasiswa akan hilang setelah beberapa jam.
+   - **Solusi:** Agent berikutnya wajib mengubah logika `/api/upload` agar mengunggah file langsung ke layanan Supabase Storage (Tahap 2 di checklist).
+3. 👥 **Integrasi API Manajemen Kelompok ke Frontend**
+   - Kita baru saja selesai membuat Backend API-nya (`/api/kelompok`), namun UI halamannya (`app/mahasiswa/kelompok/page.tsx` & `app/dosen/kelompok/page.tsx`) masih menggunakan mock data (data palsu di `localStorage`).
+   - **Tugas Utama:** Agent selanjutnya harus segera melakukan "refactor" pada halaman-halaman tersebut agar menggunakan fetch data (SWR) dari database asli.
+4. 🔑 **Setup Kunci Kredensial Nyata (Tugas Anda/Tim)**
+   - Kode untuk Google OAuth dan Telegram Bot Notification sudah ditulis dengan sempurna. Namun, kode tersebut tidak akan bekerja sampai Anda mendaftarkannya secara resmi:
+     - Daftar di Google Cloud Console untuk mendapatkan `AUTH_GOOGLE_ID` dan `AUTH_GOOGLE_SECRET`.
+     - Gunakan `@BotFather` di Telegram untuk mendapatkan `TELEGRAM_BOT_TOKEN`.
+     - Masukkan kunci-kunci tersebut ke dalam file `.env.local`.
+
+> **Saran Langkah Cepat:** Saat Anda memulai sesi dengan Agent berikutnya, berikan dokumen `handoff.md` yang tadi kita buat dan instruksikan: *"Fokus ke Handoff Plan nomor 1 (Refactor Frontend Kelompok) dan tolong buatkan `middleware.ts` untuk proteksi rute."*
 
 ---
 
