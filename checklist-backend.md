@@ -109,3 +109,17 @@ Untuk Agent Berikutnya, ini adalah daftar prioritas pengembangan yang belum sele
    - **Tugas Utama:** Modifikasi endpoint upload agar langsung mengirim file fisik ke bucket Supabase Storage, kemudian menyimpan URL Publik Supabase tersebut ke PostgreSQL.
 3. **Pengaturan Akun & Environment User**
    - Minta user atau secara manual siapkan nilai untuk variabel-variabel kredensial di file `.env.local` (`AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `TELEGRAM_BOT_TOKEN`) untuk memfungsikan fitur OAuth & Notif.
+
+---
+
+## ⚡ Status Optimasi Performa (Telah Selesai & Rencana Lanjutan)
+
+Optimasi fundamental sistem database telah berhasil diimplementasikan sepenuhnya.
+
+**Optimasi yang SUDAH Selesai Diterapkan:**
+- ✅ **Database Indexing:** Compound index telah ditambahkan ke skema Prisma pada tabel `Enrollment`, `Tugas`, `Proyek`, dan `Submission` (contoh: `@@index([idMk, deadline])`). Query berat akan berjalan efisien tanpa perlu memindai seluruh tabel.
+- ✅ **Optimasi Caching (SWR):** Setelan `revalidateOnFocus: false` dan `dedupingInterval: 60000` telah diterapkan pada tabel yang jarang berubah secara drastis (seperti Metrik dan Laporan), meminimalisir spam pemanggilan endpoint backend.
+
+**Rencana Optimasi Tingkat Lanjut (Untuk Peningkatan Skala Skala Besar):**
+- ⏳ **Pagination & Lazy Loading:** Bisa diterapkan di halaman Tugas dan Notifikasi agar data dimuat secara bertahap (15 data/request) jika jumlah baris sudah membludak menjadi puluhan ribu.
+- ⏳ **Dynamic Imports:** Hanya me-load ekstensi berat (seperti library Excel/CSV) ketika pengguna menekan tombol "Export" guna mengurangi Initial Bundle Size dari halaman tersebut.
