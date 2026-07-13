@@ -21,10 +21,10 @@ const COURSES = ["Analisis SI", "Keamanan Sistem", "SI Enterprise", "PPL", "Inte
 
 const ALL_STUDENTS = [
   { nim: "221011400114", nama: "ALDI AL KAHFI" },
-  { nim: "231011450403", nama: "ANDRA RAFI IRGI" },
-  { nim: "231011400651", nama: "BAGUS ICHA SAPUTRA" },
-  { nim: "231011450408", nama: "DESTRAN ZAKIAN" },
-  { nim: "231011450284", nama: "FEBIYANTO RIZKI QURBANDI" },
+  { nim: "231011450403", nama: "Andi Pratama" },
+  { nim: "231011400651", nama: "Budi Santoso" },
+  { nim: "231011450408", nama: "Candra Wiguna" },
+  { nim: "231011450284", nama: "Hendra Saputra" },
   { nim: "231011450319", nama: "FAJAR NUGRAHA" },
   { nim: "231011400835", nama: "GILANG RAMADHAN" },
   { nim: "221011400227", nama: "HENDRA SAPUTRA" },
@@ -52,8 +52,8 @@ const SEED_GROUPS: Group[] = [
     mode: "dosen_manual",
     members: [
       { nim: "221011400114", nama: "ALDI AL KAHFI", role: "Leader", joinedAt: "2026-04-01" },
-      { nim: "231011450403", nama: "ANDRA RAFI IRGI", role: "Anggota", joinedAt: "2026-04-01" },
-      { nim: "231011400651", nama: "BAGUS ICHA SAPUTRA", role: "Anggota", joinedAt: "2026-04-01" },
+      { nim: "231011450403", nama: "Andi Pratama", role: "Anggota", joinedAt: "2026-04-01" },
+      { nim: "231011400651", nama: "Budi Santoso", role: "Anggota", joinedAt: "2026-04-01" },
     ],
     createdAt: "2026-04-01",
   },
@@ -65,8 +65,8 @@ const SEED_GROUPS: Group[] = [
     createdBy: "dosen",
     mode: "dosen_manual",
     members: [
-      { nim: "231011450408", nama: "DESTRAN ZAKIAN", role: "Leader", joinedAt: "2026-04-01" },
-      { nim: "231011450284", nama: "FEBIYANTO RIZKI QURBANDI", role: "Anggota", joinedAt: "2026-04-01" },
+      { nim: "231011450408", nama: "Candra Wiguna", role: "Leader", joinedAt: "2026-04-01" },
+      { nim: "231011450284", nama: "Hendra Saputra", role: "Anggota", joinedAt: "2026-04-01" },
       { nim: "231011450319", nama: "FAJAR NUGRAHA", role: "Anggota", joinedAt: "2026-04-01" },
     ],
     createdAt: "2026-04-01",

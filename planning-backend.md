@@ -201,23 +201,25 @@ Kalau mau mulai sekarang, urutan yang tepat:
 ## Checklist Progress
 
 ### Fase 1 — Pondasi
-- [ ] Buat akun Supabase
-- [ ] Install dan konfigurasi Prisma
-- [ ] Tulis schema database (users, mahasiswa, dosen, mata_kuliah, enrollment)
-- [ ] Jalankan migrasi database pertama
-- [ ] Install Auth.js
-- [ ] Buat API route login (`/api/auth/[...nextauth]`)
-- [ ] Sambungkan halaman login frontend ke Auth.js
-- [ ] Test login dengan akun dummy dari database
+- [x] Buat akun Supabase
+- [x] Install dan konfigurasi Prisma
+- [x] Tulis schema database (users, mahasiswa, dosen, mata_kuliah, enrollment)
+- [x] Jalankan migrasi database pertama
+- [x] Install Auth.js
+- [x] Buat API route login (`/api/auth/[...nextauth]`)
+- [x] Sambungkan halaman login frontend ke Auth.js
+- [x] Test login dengan akun dummy dari database
 
 ### Fase 2 — Fitur Inti
-- [ ] Tambah tabel tugas, proyek, deliverable, kelompok ke schema
-- [ ] Buat API route CRUD tugas
-- [ ] Buat API route CRUD proyek
-- [ ] Buat API route dashboard
-- [ ] Sambungkan frontend mahasiswa ke API
-- [ ] Sambungkan frontend dosen ke API
-- [ ] Implementasi log aktivitas
+- [x] Tambah tabel tugas, proyek, deliverable, kelompok ke schema
+- [x] Buat API route CRUD tugas
+- [x] Buat API route CRUD proyek
+- [x] Buat API route dashboard
+- [x] Sambungkan frontend mahasiswa ke API (Modul Tugas)
+- [x] Sambungkan frontend mahasiswa ke API (Modul Proyek)
+- [x] Sambungkan frontend dosen ke API (Modul Tugas)
+- [x] Sambungkan frontend dosen ke API (Modul Proyek)
+- [x] Implementasi log aktivitas
 
 ### Fase 3 — Notifikasi
 - [ ] Buat akun Resend (email gratis)

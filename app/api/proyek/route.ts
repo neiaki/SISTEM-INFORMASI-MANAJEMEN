@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { logActivity } from "@/lib/logger";
 
 export async function GET(req: Request) {
   try {
@@ -91,9 +92,9 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { idMk, namaProyek, deskripsi, tanggalMulai, deadlineAkhir } = body;
+    const { idMk, namaProyek, deskripsi, tanggalMulai, deadlineAkhir, groupId } = body;
 
-    if (!idMk || !namaProyek || !tanggalMulai || !deadlineAkhir) {
+    if (!idMk || !namaProyek || !deadlineAkhir) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -102,11 +103,22 @@ export async function POST(req: Request) {
         idMk,
         namaProyek,
         deskripsi,
-        tanggalMulai: new Date(tanggalMulai),
+        tanggalMulai: tanggalMulai ? new Date(tanggalMulai) : new Date(),
         deadlineAkhir: new Date(deadlineAkhir),
         progresProyek: 0,
+        ...(groupId ? { kelompoks: { connect: [{ id: groupId }] } } : {})
       },
     });
+
+    const enrollments = await prisma.enrollment.findMany({ where: { idMk } });
+    for (const en of enrollments) {
+      await logActivity({
+        idReferensi: newProject.id,
+        idMahasiswa: en.idMahasiswa,
+        catatan: `Proyek baru ditambahkan: ${namaProyek}`,
+        persenProgres: 0
+      });
+    }
 
     return NextResponse.json({ message: "Project created successfully", project: newProject }, { status: 201 });
   } catch (error) {

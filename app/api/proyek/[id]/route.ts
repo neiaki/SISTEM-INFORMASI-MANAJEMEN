@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { logActivity } from "@/lib/logger";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -58,6 +59,16 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       where: { id },
       data: body,
     });
+
+    const enrollments = await prisma.enrollment.findMany({ where: { idMk: updatedProject.idMk } });
+    for (const en of enrollments) {
+      await logActivity({
+        idReferensi: updatedProject.id,
+        idMahasiswa: en.idMahasiswa,
+        catatan: `Proyek diperbarui: ${updatedProject.namaProyek}`,
+        persenProgres: updatedProject.progresProyek || 0
+      });
+    }
 
     return NextResponse.json({ message: "Project updated successfully", project: updatedProject });
   } catch (error) {

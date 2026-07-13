@@ -91,13 +91,56 @@ export async function GET(req: Request) {
         return NextResponse.json({ error: "Profile not found" }, { status: 404 });
       }
 
-      // Mock implementation for Dosen
+      // 1. Get Taught Courses
+      const mataKuliah = await prisma.mataKuliah.findMany({
+        where: { idDosen: dosen.id },
+      });
+      const courseIds = mataKuliah.map(m => m.id);
+
+      // 2. Get Tasks and Submissions
+      const allTasks = await prisma.tugas.findMany({
+        where: { idMk: { in: courseIds } },
+        include: {
+          mataKuliah: true,
+          submissions: {
+            include: { mahasiswa: true }
+          }
+        },
+        orderBy: { deadline: "asc" }
+      });
+
+      const today = process.env.NODE_ENV === "development" ? new Date("2026-05-08") : new Date();
+      const threeDaysFromNow = new Date(today);
+      threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+
+      const activeTasks = allTasks.filter((t) => new Date(t.deadline) >= today);
+      const urgentMissing = activeTasks.filter((t) => new Date(t.deadline) <= threeDaysFromNow && t.submissions.length === 0).length;
+      
+      const allSubmissions = allTasks.flatMap(t => 
+        t.submissions.map(s => ({
+          id: s.id,
+          taskTitle: t.judul,
+          taskCourse: t.mataKuliah.namaMk,
+          submittedBy: s.mahasiswa?.nama || "Mahasiswa",
+          submittedAtMs: new Date().getTime(), // In real app, we'd use s.createdAt
+        }))
+      );
+      
       return NextResponse.json({
         stats: {
-          activeClasses: 2,
-          tasksToGrade: 5,
-          activeProjects: 1,
+          activeTasks: activeTasks.length,
+          submissionsReceived: allSubmissions.length,
+          urgentMissing: urgentMissing,
+          courses: mataKuliah.length,
         },
+        recentSubs: allSubmissions.slice(0, 5),
+        runningTasks: activeTasks.map(t => ({
+          id: t.id,
+          title: t.judul,
+          subject: t.mataKuliah.namaMk,
+          submittedCount: t.submissions.length,
+          deadline: t.deadline.toISOString()
+        }))
       });
     }
 

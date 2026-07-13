@@ -63,13 +63,13 @@ async function main() {
   // 2. Mahasiswa Users & Profiles
   // List students matching students-data.ts & sim-data.ts
   const studentsSeed = [
-    { nim: "231011450403", nama: "ANDRA RAFI IRGI", email: "andrarafirgi2@gmail.com", activeSem: 6 },
-    { nim: "231011400651", nama: "BAGUS ICHA SAPUTRA", email: "bagusichasp0@gmail.com", activeSem: 6 },
-    { nim: "231011450408", nama: "DESTRAN ZAKIAN", email: "destranzkian4@gmail.com", activeSem: 6 },
-    { nim: "231011450720", nama: "DIMAS", email: "dimasputra95@gmail.com", activeSem: 6 },
-    { nim: "231011450234", nama: "EGA PRASETYO", email: "egaprstyo2@gmail.com", activeSem: 6 },
-    { nim: "231011450890", nama: "FAHRIS RIFQI PRATAMA", email: "fahrizrifqyp@gmail.com", activeSem: 6 },
-    { nim: "231011450444", nama: "FEBIYANTO RIZKI QURBANDI", email: "febiyantorizkiq@gmail.com", activeSem: 6 },
+    { nim: "231011450403", nama: "Andi Pratama", email: "andipratama@example.com", activeSem: 6 },
+    { nim: "231011400651", nama: "Budi Santoso", email: "budisantoso@example.com", activeSem: 6 },
+    { nim: "231011450408", nama: "Candra Wiguna", email: "candrawiguna@example.com", activeSem: 6 },
+    { nim: "231011450720", nama: "Dedi Kusuma", email: "dedikusuma@example.com", activeSem: 6 },
+    { nim: "231011450234", nama: "Eko Setiawan", email: "ekosetiawan@example.com", activeSem: 6 },
+    { nim: "231011450890", nama: "Fajar Nugroho", email: "fajarnugroho@example.com", activeSem: 6 },
+    { nim: "231011450444", nama: "Hendra Saputra", email: "hendrasaputra@example.com", activeSem: 6 },
   ];
 
   const createdMahasiswas = [];
@@ -259,7 +259,7 @@ async function main() {
     data: {
       idProyek: proyekSI.id,
       namaAktivitas: "Use case final",
-      idPenanggungJawab: createdMahasiswas[0].id, // Andra
+      idPenanggungJawab: createdMahasiswas[0].id, // Andi
       status: "Completed",
       deadlineKhusus: new Date("2026-05-25"),
       persentaseBobot: 30,
@@ -270,7 +270,7 @@ async function main() {
     data: {
       idProyek: proyekSI.id,
       namaAktivitas: "Wireframe low-fi",
-      idPenanggungJawab: createdMahasiswas[3].id, // Dimas
+      idPenanggungJawab: createdMahasiswas[3].id, // Dedi
       status: "In Progress",
       deadlineKhusus: new Date("2026-05-28"),
       persentaseBobot: 30,

@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { logActivity } from "@/lib/logger";
 
 export async function GET(req: Request) {
   try {
@@ -110,6 +111,17 @@ export async function POST(req: Request) {
         tipe: tipe || "Tugas",
       },
     });
+
+    // Logging aktivitas for all enrolled mahasiswa
+    const enrollments = await prisma.enrollment.findMany({ where: { idMk } });
+    for (const en of enrollments) {
+      await logActivity({
+        idReferensi: newTask.id,
+        idMahasiswa: en.idMahasiswa,
+        catatan: `Tugas baru ditambahkan: ${judul}`,
+        persenProgres: 0
+      });
+    }
 
     return NextResponse.json({ message: "Task created successfully", task: newTask }, { status: 201 });
   } catch (error) {

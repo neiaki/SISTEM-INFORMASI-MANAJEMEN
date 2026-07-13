@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import useSWR from "swr";
 import { X, Send, MessageSquare, CheckCircle2, Paperclip, Upload, Star, Plus, RotateCcw, Eye } from "lucide-react";
 import { getKelompokList, type Kelompok } from "@/lib/kelompokStore";
 import {
-  getTugasKelompokList, createTugasKelompok, addProjComment, setTugasStatus,
   type TugasKelompok,
 } from "@/lib/proyekStore";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 /* ── Constants ─────────────────────────────── */
 const STATUS_INFO: Record<TugasKelompok["status"], { label: string; cls: string }> = {
@@ -46,14 +48,16 @@ function ReviewModal({ tugas, kelompokList, onClose, onRefresh }: {
   function handleSendComment() {
     const text = commentText.trim();
     if (!text) return;
-    addProjComment(tugas.id, { author: "Dr. Budi Santoso", role: "dosen", text });
+    console.log("Adding comment", tugas.id, text);
+    // addProjComment(tugas.id, { author: "Dr. Budi Santoso", role: "dosen", text });
     onRefresh();
     setCommentText("");
   }
 
   function handleRevisi() {
     if (!catatanRevisi.trim()) return;
-    setTugasStatus(tugas.id, "revisi", { catatanRevisi: catatanRevisi.trim() });
+    console.log("Setting revisi", tugas.id, catatanRevisi);
+    // setTugasStatus(tugas.id, "revisi", { catatanRevisi: catatanRevisi.trim() });
     onRefresh();
     setActionDone("revisi");
   }
@@ -61,7 +65,8 @@ function ReviewModal({ tugas, kelompokList, onClose, onRefresh }: {
   function handleSelesai() {
     const n = parseInt(nilai);
     if (isNaN(n) || n < 0 || n > 100) return;
-    setTugasStatus(tugas.id, "selesai", { nilaiAkhir: n });
+    console.log("Setting selesai", tugas.id, n);
+    // setTugasStatus(tugas.id, "selesai", { nilaiAkhir: n });
     onRefresh();
     setActionDone("selesai");
   }
@@ -397,19 +402,29 @@ function CreateTugasDosenModal({ kelompokList, onClose, onAdd }: {
     </div>
   );
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!title.trim() || !deadline || !group || !selectedCourse) return;
-    createTugasKelompok({
-      title: title.trim(),
-      description: desc.trim(),
-      course: selectedCourse,
-      deadline,
-      groupId: group.id,
-      groupName: group.name,
-      createdBy: "dosen",
-    });
-    onAdd();
-    onClose();
+    
+    const idMk = "unknown-mk";
+
+    try {
+      await fetch("/api/proyek", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idMk,
+          namaProyek: title.trim(),
+          deskripsi: desc.trim(),
+          tanggalMulai: new Date().toISOString(),
+          deadlineAkhir: deadline,
+          groupId: group.id
+        })
+      });
+      onAdd();
+      onClose();
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   return (
@@ -476,22 +491,52 @@ function CreateTugasDosenModal({ kelompokList, onClose, onAdd }: {
 
 /* ── Page ────────────────────────────────────── */
 export default function DosenProyekPage() {
-  const [tugasList, setTugasList]         = useState<TugasKelompok[]>([]);
   const [kelompokList, setKelompokList]   = useState<Kelompok[]>([]);
   const [selectedTugas, setSelectedTugas] = useState<TugasKelompok | null>(null);
   const [showCreate, setShowCreate]       = useState(false);
   const [filterStatus, setFilterStatus]  = useState<TugasKelompok["status"] | "semua">("semua");
 
-  function refresh() {
-    setTugasList(getTugasKelompokList());
-    if (selectedTugas) {
-      const updated = getTugasKelompokList().find(t => t.id === selectedTugas.id);
-      if (updated) setSelectedTugas(updated);
+  const { data, mutate: refreshData } = useSWR("/api/proyek", fetcher);
+
+  const tugasList: TugasKelompok[] = (data?.projects || []).flatMap((p: any) => {
+    if (p.kelompoks && p.kelompoks.length > 0) {
+      return p.kelompoks.map((k: any) => ({
+        id: p.id,
+        title: p.namaProyek,
+        description: p.deskripsi,
+        course: p.mataKuliah?.namaMk || "Unknown",
+        deadline: p.deadlineAkhir,
+        groupId: k.id,
+        groupName: k.namaKelompok || "Group",
+        createdBy: "dosen",
+        status: p.progresProyek === 100 ? "selesai" : "aktif",
+        submissions: p.deliverables || [],
+        comments: [],
+        createdAt: new Date(p.tanggalMulai).toLocaleDateString("id-ID"),
+      }));
+    } else {
+      return [{
+        id: p.id,
+        title: p.namaProyek,
+        description: p.deskripsi,
+        course: p.mataKuliah?.namaMk || "Unknown",
+        deadline: p.deadlineAkhir,
+        groupId: "",
+        groupName: "Belum Ditugaskan",
+        createdBy: "dosen",
+        status: p.progresProyek === 100 ? "selesai" : "aktif",
+        submissions: p.deliverables || [],
+        comments: [],
+        createdAt: new Date(p.tanggalMulai).toLocaleDateString("id-ID"),
+      }];
     }
+  });
+
+  function refresh() {
+    refreshData();
   }
 
   useEffect(() => {
-    setTugasList(getTugasKelompokList());
     setKelompokList(getKelompokList());
   }, []);
 

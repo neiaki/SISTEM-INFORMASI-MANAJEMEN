@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import useSWR from "swr";
 import { X, Upload, Paperclip, Send, MessageSquare, CheckCircle2, Clock, AlertCircle, Star, Plus, Layers } from "lucide-react";
 import { useSearch } from "@/lib/search-context";
 import { getKelompokList, type Kelompok } from "@/lib/kelompokStore";
 import {
-  getTugasKelompokList, createTugasKelompok, addProjSubmission, addProjComment,
   type TugasKelompok,
 } from "@/lib/proyekStore";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 /* ── Constants ─────────────────────────────── */
 const STATUS_INFO: Record<TugasKelompok["status"], { label: string; cls: string; dot: string }> = {
@@ -110,13 +112,7 @@ function TugasDetailModal({ tugas, kelompokList, onClose, onRefresh }: {
 
   function handleFileSubmit() {
     if (!selectedFile) return;
-    addProjSubmission(tugas.id, {
-      fileName: selectedFile.name,
-      fileSize: `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`,
-      submittedBy: "Febiyanto Rizki Qurbandi",
-      note: submitNote,
-      type: "file",
-    });
+    console.log("Adding submission file", tugas.id, selectedFile.name, submitNote);
     onRefresh();
     setSubmitDone(true);
     setSelectedFile(null);
@@ -128,14 +124,7 @@ function TugasDetailModal({ tugas, kelompokList, onClose, onRefresh }: {
     const url = linkUrl.trim();
     if (!url) return;
     try { new URL(url); } catch { return; }
-    addProjSubmission(tugas.id, {
-      fileName: url.length > 50 ? url.slice(0, 50) + "…" : url,
-      fileSize: "—",
-      submittedBy: "Febiyanto Rizki Qurbandi",
-      note: linkNote,
-      type: "link",
-      url,
-    });
+    console.log("Adding submission link", tugas.id, url, linkNote);
     onRefresh();
     setLinkDone(true);
     setLinkUrl("");
@@ -145,7 +134,7 @@ function TugasDetailModal({ tugas, kelompokList, onClose, onRefresh }: {
   function handleSendComment() {
     const text = commentText.trim();
     if (!text) return;
-    addProjComment(tugas.id, { author: "Febiyanto Rizki Qurbandi", role: "mahasiswa", text });
+    console.log("Adding comment", tugas.id, text);
     onRefresh();
     setCommentText("");
   }
@@ -467,19 +456,29 @@ function CreateTugasModal({ kelompokList, onClose, onAdd }: {
     </div>
   );
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!title.trim() || !deadline || !group || !selectedCourse) return;
-    createTugasKelompok({
-      title: title.trim(),
-      description: desc.trim(),
-      course: selectedCourse,
-      deadline,
-      groupId: group.id,
-      groupName: group.name,
-      createdBy: "mahasiswa",
-    });
-    onAdd();
-    onClose();
+    
+    const idMk = "unknown-mk";
+
+    try {
+      await fetch("/api/proyek", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idMk,
+          namaProyek: title.trim(),
+          deskripsi: desc.trim(),
+          tanggalMulai: new Date().toISOString(),
+          deadlineAkhir: deadline,
+          groupId: group.id
+        })
+      });
+      onAdd();
+      onClose();
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   return (
@@ -560,22 +559,52 @@ function CreateTugasModal({ kelompokList, onClose, onAdd }: {
 /* ── Page ────────────────────────────────────── */
 export default function ProyekPage() {
   const topbarQ = useSearch();
-  const [tugasList, setTugasList]         = useState<TugasKelompok[]>([]);
   const [kelompokList, setKelompokList]   = useState<Kelompok[]>([]);
   const [selectedTugas, setSelectedTugas] = useState<TugasKelompok | null>(null);
   const [showCreate, setShowCreate]       = useState(false);
   const [filterStatus, setFilterStatus]  = useState<TugasKelompok["status"] | "semua">("semua");
 
-  function refresh() {
-    setTugasList(getTugasKelompokList());
-    if (selectedTugas) {
-      const updated = getTugasKelompokList().find(t => t.id === selectedTugas.id);
-      if (updated) setSelectedTugas(updated);
+  const { data, mutate: refreshData } = useSWR("/api/proyek", fetcher);
+
+  const tugasList: TugasKelompok[] = (data?.projects || []).flatMap((p: any) => {
+    if (p.kelompoks && p.kelompoks.length > 0) {
+      return p.kelompoks.map((k: any) => ({
+        id: p.id,
+        title: p.namaProyek,
+        description: p.deskripsi,
+        course: p.mataKuliah?.namaMk || "Unknown",
+        deadline: p.deadlineAkhir,
+        groupId: k.id,
+        groupName: k.namaKelompok || "Group",
+        createdBy: "mahasiswa", // Set as required for display, not strictly accurate but works for now
+        status: p.progresProyek === 100 ? "selesai" : "aktif",
+        submissions: p.deliverables || [],
+        comments: [],
+        createdAt: new Date(p.tanggalMulai).toLocaleDateString("id-ID"),
+      }));
+    } else {
+      return [{
+        id: p.id,
+        title: p.namaProyek,
+        description: p.deskripsi,
+        course: p.mataKuliah?.namaMk || "Unknown",
+        deadline: p.deadlineAkhir,
+        groupId: "",
+        groupName: "Belum Ditugaskan",
+        createdBy: "mahasiswa",
+        status: p.progresProyek === 100 ? "selesai" : "aktif",
+        submissions: p.deliverables || [],
+        comments: [],
+        createdAt: new Date(p.tanggalMulai).toLocaleDateString("id-ID"),
+      }];
     }
+  });
+
+  function refresh() {
+    refreshData();
   }
 
   useEffect(() => {
-    setTugasList(getTugasKelompokList());
     setKelompokList(getKelompokList());
   }, []);
 

@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getAllTaskData, seedDummyComments, seedDummySubmissions, type Submission } from "@/lib/taskStore";
+import useSWR from "swr";
 
-type RecentSub = Submission & { taskTitle: string; taskCourse: string };
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+type RecentSub = { id: string; taskTitle: string; taskCourse: string; submittedBy: string; submittedAtMs?: number; };
 
 function relTime(ms?: number): string {
   if (!ms) return "";
@@ -35,25 +37,14 @@ function avatarColor(name: string) {
 }
 
 export default function DosenDashboard() {
-  const [recentSubs, setRecentSubs] = useState<RecentSub[]>([]);
+  const { data, error, isLoading } = useSWR("/api/dashboard", fetcher);
 
-  useEffect(() => {
-    seedDummyComments();
-    seedDummySubmissions();
-    const store = getAllTaskData();
-    const all: RecentSub[] = [];
-    for (const [, entry] of Object.entries(store)) {
-      for (const sub of entry.submissions) {
-        if (sub.submittedBy) {
-          all.push({ ...sub, taskTitle: entry.taskTitle, taskCourse: entry.taskCourse });
-        }
-      }
-    }
-    all.sort((a, b) => (b.submittedAtMs ?? 0) - (a.submittedAtMs ?? 0));
-    setRecentSubs(all.slice(0, 4));
-  }, []);
+  if (isLoading) return <div className="p-5 animate-pulse text-ink">Memuat dashboard...</div>;
+  if (error || !data) return <div className="text-red-500 p-5">Gagal memuat dashboard</div>;
 
-  const newCount = recentSubs.filter(s => {
+  const { stats, recentSubs, runningTasks } = data;
+
+  const newCount = recentSubs.filter((s: any) => {
     const diff = Date.now() - (s.submittedAtMs ?? 0);
     return diff < 24 * 3600_000;
   }).length;
@@ -81,33 +72,29 @@ export default function DosenDashboard() {
         {/* Card 1 */}
         <div className="bg-paper border-[1.5px] border-border rounded-xl p-5 relative overflow-hidden hover:-translate-y-[3px] hover:shadow-[0_8px_24px_rgba(26,26,20,0.08)] transition-all">
           <div className="w-9.5 h-9.5 rounded-lg bg-forest/10 text-forest flex items-center justify-center text-lg mb-3.5">📋</div>
-          <div className="font-serif text-[34px] leading-none text-ink">24</div>
+          <div className="font-serif text-[34px] leading-none text-ink">{stats.activeTasks}</div>
           <div className="text-[12px] text-muted mt-1">Total Tugas Aktif</div>
-          <div className="text-[11.5px] mt-2.5 text-forest font-medium">↑ 4 tugas baru bulan ini</div>
         </div>
 
         {/* Card 2 */}
         <div className="bg-paper border-[1.5px] border-border rounded-xl p-5 relative overflow-hidden hover:-translate-y-[3px] hover:shadow-[0_8px_24px_rgba(26,26,20,0.08)] transition-all">
           <div className="w-9.5 h-9.5 rounded-lg bg-gold/10 text-gold flex items-center justify-center text-lg mb-3.5">📥</div>
-          <div className="font-serif text-[34px] leading-none text-ink">187</div>
+          <div className="font-serif text-[34px] leading-none text-ink">{stats.submissionsReceived}</div>
           <div className="text-[12px] text-muted mt-1">Pengumpulan Diterima</div>
-          <div className="text-[11.5px] mt-2.5 text-forest font-medium">dari 240 total mahasiswa</div>
         </div>
 
         {/* Card 3 */}
         <div className="bg-paper border-[1.5px] border-border rounded-xl p-5 relative overflow-hidden hover:-translate-y-[3px] hover:shadow-[0_8px_24px_rgba(26,26,20,0.08)] transition-all">
           <div className="w-9.5 h-9.5 rounded-lg bg-rose/10 text-rose flex items-center justify-center text-lg mb-3.5">⏰</div>
-          <div className="font-serif text-[34px] leading-none text-ink">12</div>
-          <div className="text-[12px] text-muted mt-1">Belum Dikumpulkan</div>
-          <div className="text-[11.5px] mt-2.5 text-rose font-medium">deadline ≤ 3 hari</div>
+          <div className="font-serif text-[34px] leading-none text-ink">{stats.urgentMissing}</div>
+          <div className="text-[12px] text-muted mt-1">Tugas Mendesak Kosong</div>
         </div>
 
         {/* Card 4 */}
         <div className="bg-paper border-[1.5px] border-border rounded-xl p-5 relative overflow-hidden hover:-translate-y-[3px] hover:shadow-[0_8px_24px_rgba(26,26,20,0.08)] transition-all">
           <div className="w-9.5 h-9.5 rounded-lg bg-teal/10 text-teal flex items-center justify-center text-lg mb-3.5">🎓</div>
-          <div className="font-serif text-[34px] leading-none text-ink">4</div>
+          <div className="font-serif text-[34px] leading-none text-ink">{stats.courses}</div>
           <div className="text-[12px] text-muted mt-1">Mata Kuliah Diampu</div>
-          <div className="text-[11.5px] mt-2.5 text-forest font-medium">240 mahasiswa total</div>
         </div>
       </div>
 
@@ -135,39 +122,22 @@ export default function DosenDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="hover:bg-forest/5 group border-b border-border">
-                    <td className="py-3 px-3.5 text-ink-2 font-medium">Laporan Praktikum Sorting</td>
-                    <td className="py-3 px-3.5"><span className="inline-block text-[11px] font-semibold py-1 px-2.5 rounded-full bg-rose/10 text-rose">Pemrog. Lanjut</span></td>
-                    <td className="py-3 px-3.5">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-[12px] text-ink-2">45/48</span>
-                        <div className="w-16 h-1.5 bg-cream-2 rounded-full overflow-hidden"><div className="h-full bg-forest w-[93%]" /></div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-3.5"><span className="inline-block text-[10.5px] font-semibold py-1 px-2.5 rounded-full whitespace-nowrap bg-rose/10 text-rose">08 Apr (Besok)</span></td>
-                  </tr>
-                  <tr className="hover:bg-forest/5 group border-b border-border">
-                    <td className="py-3 px-3.5 text-ink-2 font-medium">ERD Sistem Perpustakaan</td>
-                    <td className="py-3 px-3.5"><span className="inline-block text-[11px] font-semibold py-1 px-2.5 rounded-full bg-teal/10 text-teal">Basis Data</span></td>
-                    <td className="py-3 px-3.5">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-[12px] text-ink-2">12/15</span>
-                        <div className="w-16 h-1.5 bg-cream-2 rounded-full overflow-hidden"><div className="h-full bg-gold w-[80%]" /></div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-3.5"><span className="inline-block text-[10.5px] font-semibold py-1 px-2.5 rounded-full whitespace-nowrap bg-gold/15 text-gold">09 Apr</span></td>
-                  </tr>
-                  <tr className="hover:bg-forest/5 group border-b border-border">
-                    <td className="py-3 px-3.5 text-ink-2 font-medium">Resume Sistem Operasi Bab 4</td>
-                    <td className="py-3 px-3.5"><span className="inline-block text-[11px] font-semibold py-1 px-2.5 rounded-full bg-gold/15 text-gold">Sistem Operasi</span></td>
-                    <td className="py-3 px-3.5">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-[12px] text-ink-2">20/60</span>
-                        <div className="w-16 h-1.5 bg-cream-2 rounded-full overflow-hidden"><div className="h-full bg-teal w-[33%]" /></div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-3.5"><span className="inline-block text-[10.5px] font-semibold py-1 px-2.5 rounded-full whitespace-nowrap bg-teal/10 text-teal">11 Apr</span></td>
-                  </tr>
+                  {runningTasks.length === 0 ? (
+                    <tr><td colSpan={4} className="py-3 px-3.5 text-center text-muted text-[12px]">Tidak ada tugas berjalan</td></tr>
+                  ) : (
+                    runningTasks.map((t: any) => (
+                      <tr key={t.id} className="hover:bg-forest/5 group border-b border-border">
+                        <td className="py-3 px-3.5 text-ink-2 font-medium">{t.title}</td>
+                        <td className="py-3 px-3.5"><span className="inline-block text-[11px] font-semibold py-1 px-2.5 rounded-full bg-forest/10 text-forest">{t.subject}</span></td>
+                        <td className="py-3 px-3.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-[12px] text-ink-2">{t.submittedCount} terkumpul</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3.5"><span className="inline-block text-[10.5px] font-semibold py-1 px-2.5 rounded-full whitespace-nowrap bg-rose/10 text-rose">{new Date(t.deadline).toLocaleDateString("id-ID")}</span></td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -288,7 +258,7 @@ export default function DosenDashboard() {
               <p className="text-[12px] text-muted text-center py-4">Belum ada pengumpulan.</p>
             ) : (
               <div className="space-y-3">
-                {recentSubs.map((sub, i) => (
+                {recentSubs.map((sub: any, i: number) => (
                   <div
                     key={sub.id}
                     className={`flex items-center gap-3 ${i < recentSubs.length - 1 ? "pb-2.5 border-b border-border" : ""}`}

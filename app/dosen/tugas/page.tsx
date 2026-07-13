@@ -181,21 +181,90 @@ export default function DosenTugasPage() {
   async function handleEditSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!editTask) return;
-    setToast({ message: "Edit API belum diimplementasikan", type: "error" });
-    setEditTask(null);
+    setIsSubmitting(true);
+    
+    let idMk = editTask.idMk;
+    if (editForm.course !== editTask.course) {
+      const matchingCourse = rawTasks.find((t: any) => t.mataKuliah?.namaMk === editForm.course);
+      if (matchingCourse) idMk = matchingCourse.idMk;
+    }
+
+    try {
+      const res = await fetch(`/api/tugas/${editTask.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idMk,
+          judul: editForm.title,
+          deskripsi: editForm.description,
+          deadline: new Date(editForm.deadline).toISOString(),
+          jenis: editForm.type,
+        })
+      });
+
+      if (res.ok) {
+        mutate("/api/tugas");
+        setEditTask(null);
+        setToast({ message: "Tugas berhasil diperbarui!", type: "success" });
+      } else {
+        setToast({ message: "Gagal memperbarui tugas.", type: "error" });
+      }
+    } catch (err) {
+      setToast({ message: "Terjadi kesalahan", type: "error" });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   async function handleDelete(id: string) {
-    setToast({ message: "Delete API belum diimplementasikan", type: "error" });
-    setConfirmDelete(null);
+    try {
+      const res = await fetch(`/api/tugas/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        mutate("/api/tugas");
+        setConfirmDelete(null);
+        setToast({ message: "Tugas berhasil dihapus!", type: "success" });
+      } else {
+        setToast({ message: "Gagal menghapus tugas.", type: "error" });
+      }
+    } catch (err) {
+      setToast({ message: "Terjadi kesalahan", type: "error" });
+    }
   }
 
   async function handleClose(id: string) {
-    setToast({ message: "Close API belum diimplementasikan", type: "error" });
+    try {
+      const res = await fetch(`/api/tugas/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ statusGlobal: "Selesai" })
+      });
+      if (res.ok) {
+        mutate("/api/tugas");
+        setToast({ message: "Tugas berhasil ditutup!", type: "success" });
+      } else {
+        setToast({ message: "Gagal menutup tugas.", type: "error" });
+      }
+    } catch (err) {
+      setToast({ message: "Terjadi kesalahan", type: "error" });
+    }
   }
 
   async function handleReopen(id: string) {
-    setToast({ message: "Reopen API belum diimplementasikan", type: "error" });
+    try {
+      const res = await fetch(`/api/tugas/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ statusGlobal: "Sedang Dikerjakan" })
+      });
+      if (res.ok) {
+        mutate("/api/tugas");
+        setToast({ message: "Tugas berhasil dibuka kembali!", type: "success" });
+      } else {
+        setToast({ message: "Gagal membuka tugas.", type: "error" });
+      }
+    } catch (err) {
+      setToast({ message: "Terjadi kesalahan", type: "error" });
+    }
   }
 
   function openDuplicate(task: Task) {
@@ -206,8 +275,41 @@ export default function DosenTugasPage() {
   async function handleDuplicate(e: React.FormEvent) {
     e.preventDefault();
     if (!dupTask || !dupForm.title || !dupForm.course || !dupForm.deadline) return;
-    setToast({ message: "Duplicate API belum diimplementasikan", type: "error" });
-    setDupTask(null);
+    setIsSubmitting(true);
+    
+    let idMk = dupTask.idMk;
+    if (dupForm.course !== dupTask.course) {
+      const matchingCourse = rawTasks.find((t: any) => t.mataKuliah?.namaMk === dupForm.course);
+      if (matchingCourse) idMk = matchingCourse.idMk;
+    }
+
+    try {
+      const res = await fetch("/api/tugas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idMk,
+          judul: dupForm.title,
+          deskripsi: dupTask.note,
+          deadline: new Date(dupForm.deadline).toISOString(),
+          jenis: dupTask.type,
+          bobotNilai: 100,
+          tipe: "Tugas"
+        })
+      });
+
+      if (res.ok) {
+        mutate("/api/tugas");
+        setDupTask(null);
+        setToast({ message: "Tugas berhasil diduplikat!", type: "success" });
+      } else {
+        setToast({ message: "Gagal menduplikat tugas.", type: "error" });
+      }
+    } catch (err) {
+      setToast({ message: "Terjadi kesalahan", type: "error" });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function handleGoToRekap(id: string) {
