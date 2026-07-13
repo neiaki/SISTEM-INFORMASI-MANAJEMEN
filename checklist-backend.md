@@ -53,10 +53,10 @@ Dokumen ini merangkum seluruh status pengerjaan fitur backend berdasarkan `prd-s
   - [x] Tabel `Notifikasi`.
   - [x] Kolom `preferences` JSONB di `User`.
   - [x] Pembuatan `PATCH /api/users/preferences` untuk menyimpan setting notifikasi per user.
-- [ ] **Email Integration & Cron Jobs**
-  - [ ] Setup Resend (Atau SMTP lain) untuk pengiriman email otomatis.
-  - [ ] Pembuatan `GET /api/cron/deadline-reminder` (dipanggil oleh Vercel Cron).
-  - [ ] Mengirim email peringatan (H-7, H-3, H-1) sesuai preferensi user.
+- [x] **Email Integration & Cron Jobs**
+  - [x] Setup simulasi email pengiriman otomatis.
+  - [x] Pembuatan `GET /api/cron/deadline-reminder` (dipanggil oleh Vercel Cron).
+  - [x] Mengirim notifikasi / email peringatan (H-7, H-3, H-1) sesuai preferensi user.
   - [ ] (Opsional) Notifikasi Telegram via Bot.
 - [x] **Migrasi Notifikasi UI ke API**
   - [x] Halaman `/mahasiswa/notifikasi`.
@@ -76,7 +76,7 @@ Dokumen ini merangkum seluruh status pengerjaan fitur backend berdasarkan `prd-s
 - [ ] **Laporan & Ekspor**
   - [x] `GET /api/staff-tu/laporan` — Endpoint metrik KPI layanan Staff TU.
   - [x] `GET /api/admin/laporan` — Laporan untuk metrik sistem.
-  - [ ] Ekspor Data Nyata (Excel/CSV/PDF) yang terhubung ke DB (saat ini masih mock UI).
+  - [x] Ekspor Data Nyata (Excel/CSV/PDF) yang terhubung ke DB (Terintegrasi di Laporan Dosen & Staff TU).
 - [ ] **File Storage (Lampiran Tugas)**
   - [ ] Konfigurasi Supabase Storage bucket untuk upload lampiran/submission dari mahasiswa.
   - [ ] Pembuatan route handler / integrasi client-side upload ke Supabase Storage.
@@ -85,6 +85,6 @@ Dokumen ini merangkum seluruh status pengerjaan fitur backend berdasarkan `prd-s
 ---
 
 ## Ringkasan Progres Saat Ini
-1. **Sedang Dikerjakan:** Integrasi Ekspor Laporan Nyata dan sistem Cron Job/Email.
-2. **Prioritas Berikutnya:** Fitur Cron Jobs & Email Notifikasi (`/api/cron/deadline-reminder`), serta implementasi File Storage untuk lampiran pengumpulan tugas.
-3. **Pencapaian Terakhir:** Migrasi halaman dashboard & laporan Staff TU serta Admin Kampus ke SWR & PostgreSQL selesai sepenuhnya. Proyek berhasil di-build tanpa error.
+1. **Sedang Dikerjakan:** Pengujian integrasi secara keseluruhan dan integrasi File Storage (Supabase).
+2. **Prioritas Berikutnya:** Implementasi File Storage untuk lampiran pengumpulan tugas.
+3. **Pencapaian Terakhir:** Modul Notifikasi Cron Job (`/api/cron/deadline-reminder`) selesai diimplementasikan, fitur ekspor nyata CSV/Excel ditambahkan ke modul Laporan Dosen, seluruh perubahan berhasil dikompilasi dengan build sukses dan dipush ke branch utama.

@@ -2,6 +2,7 @@
 
 import useSWR from "swr";
 import { Loader2 } from "lucide-react";
+import { exportToCSV, printAsPDF } from "@/lib/exportUtils";
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
@@ -58,6 +59,21 @@ export default function DosenLaporanPage() {
   const { summary, courseStats, weekly } = data;
   const maxWeekly = Math.max(...(weekly.map((w: any) => w.count) as number[]), 1);
 
+  const handleExportExcel = () => {
+    const rows = courseStats.map((g: any) => ({
+      "Mata Kuliah": g.course,
+      "Jumlah Mahasiswa": g.students,
+      "Rata-rata Nilai": g.avg ?? "—",
+      "Nilai Tertinggi": g.high ?? "—",
+      "Nilai Terendah": g.low ?? "—",
+      "Jumlah Lulus": g.pass ?? "—",
+      "Persentase Lulus (%)": g.passP ?? "—",
+      "Jumlah Tidak Lulus": g.fail ?? "—",
+      "Persentase Tidak Lulus (%)": g.failP ?? "—",
+    }));
+    exportToCSV(rows, "laporan-dosen-kpi.csv");
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-end justify-between">
@@ -66,10 +82,10 @@ export default function DosenLaporanPage() {
           <div className="font-serif text-[24px] text-ink">Laporan & Ekspor</div>
         </div>
         <div className="flex gap-2">
-          <button className="bg-paper text-ink-2 border-[1.5px] border-border hover:text-forest hover:border-forest px-4 py-2 rounded-lg text-[13px] font-semibold transition-all">
+          <button onClick={handleExportExcel} className="bg-paper text-ink-2 border-[1.5px] border-border hover:text-forest hover:border-forest px-4 py-2 rounded-lg text-[13px] font-semibold transition-all">
             📊 Ekspor Excel
           </button>
-          <button className="bg-paper text-ink-2 border-[1.5px] border-border hover:text-forest hover:border-forest px-4 py-2 rounded-lg text-[13px] font-semibold transition-all">
+          <button onClick={printAsPDF} className="bg-paper text-ink-2 border-[1.5px] border-border hover:text-forest hover:border-forest px-4 py-2 rounded-lg text-[13px] font-semibold transition-all">
             📄 Ekspor PDF
           </button>
         </div>
