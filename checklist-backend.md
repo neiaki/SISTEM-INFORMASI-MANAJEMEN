@@ -59,10 +59,12 @@ Dokumen ini merangkum seluruh status pengerjaan fitur backend berdasarkan `prd-s
   - [x] Mengirim notifikasi / email peringatan (H-7, H-3, H-1) sesuai preferensi user.
   - [x] (Opsional) Notifikasi Telegram via Bot (Selesai).
 - [x] **Migrasi Notifikasi UI ke API**
-  - [x] Halaman `/mahasiswa/notifikasi`.
-  - [x] Halaman `/dosen/notifikasi`.
-  - [x] Halaman `/admin/notifikasi`.
-  - [x] Halaman `/staff-tu/notifikasi`.
+   - [x] Halaman `/mahasiswa/notifikasi`.
+   - [x] Halaman `/dosen/notifikasi`.
+   - [x] Halaman `/admin/notifikasi`.
+   - [x] Halaman `/staff-tu/notifikasi`.
+- [x] **Email via Resend (Kerangka)** — `lib/email.ts` (fetch ke Resend REST API, tanpa SDK baru) + template HTML deadline (`buildDeadlineEmailHtml`). Terhubung ke cron `deadline-reminder` menggantikan simulasi `console.log`. Graceful bila `RESEND_API_KEY` kosong. Dilengkapi unit test `lib/email.test.ts`.
+- [x] **Scheduler Cron VPS** — `scripts/cron-deadline-reminder.sh` (panggil `GET /api/cron/deadline-reminder` via crontab, butuh `CRON_SECRET`). Menggantikan Vercel Cron yang tidak berjalan di VPS.
 
 ---
 

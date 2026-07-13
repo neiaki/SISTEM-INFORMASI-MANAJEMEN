@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendTelegramMessage, buildDeadlineMessage } from "@/lib/telegram";
+import { sendEmail as sendResendEmail, buildDeadlineEmailHtml } from "@/lib/email";
 import type { JenisNotifikasi, ChannelNotifikasi } from "@prisma/client";
 
 export async function GET(req: Request) {
@@ -32,7 +33,7 @@ export async function GET(req: Request) {
     });
 
     const notificationsCreated: any[] = [];
-    const simulatedEmailsSent: any[] = [];
+    const emailsSent: any[] = [];
     const telegramSent: any[] = [];
 
     for (const task of activeTasks) {
@@ -77,18 +78,34 @@ export async function GET(req: Request) {
         }
 
         if (sendEmail) {
-          console.log(`[Email Simulation] Sent to: ${mahasiswa.email} | Subject: ${judul}`);
-          simulatedEmailsSent.push({ email: mahasiswa.email, subject: judul });
-          await prisma.notifikasi.create({
-            data: {
-              idUser: user.id,
-              judul,
-              pesan,
-              jenis: "DEADLINE" as JenisNotifikasi,
-              channel: "EMAIL" as ChannelNotifikasi,
-            },
+          const emailHtml = buildDeadlineEmailHtml({
+            userName: mahasiswa.nama,
+            taskTitle: task.judul,
+            courseName: task.mataKuliah.namaMk,
+            deadline,
+            daysLeft: diffDays,
           });
-          notificationsCreated.push({ userId: user.id, taskTitle: task.judul, type: "EMAIL" });
+
+          const sent = await sendResendEmail({
+            to: mahasiswa.email,
+            subject: judul,
+            html: emailHtml,
+            text: pesan,
+          });
+
+          if (sent) {
+            emailsSent.push({ email: mahasiswa.email, subject: judul });
+            await prisma.notifikasi.create({
+              data: {
+                idUser: user.id,
+                judul,
+                pesan,
+                jenis: "DEADLINE" as JenisNotifikasi,
+                channel: "EMAIL" as ChannelNotifikasi,
+              },
+            });
+            notificationsCreated.push({ userId: user.id, taskTitle: task.judul, type: "EMAIL" });
+          }
         }
 
         if (sendTelegram) {
@@ -127,7 +144,7 @@ export async function GET(req: Request) {
       message: "Cron job executed successfully",
       processedTasks: activeTasks.length,
       notificationsCreated: notificationsCreated.length,
-      simulatedEmailsSent,
+      emailsSent,
       telegramSent,
     });
   } catch (error) {
