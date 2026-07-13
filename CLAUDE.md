@@ -38,3 +38,14 @@ npm start
 ## Commit Rule
 
 Never add `Co-Authored-By` or Claude attribution to commit messages.
+
+## Coding Guidelines
+
+**Clean Code & Minim Boilerplate:**
+1. **Single Responsibility (SRP):** Keep components and API handlers focused on a single task. Extract complex logic into helper functions (`lib/`) and large UIs into separate components (`components/`).
+2. **Naming Conventions:** Use `camelCase` for variables/functions and `PascalCase` for React components. Use descriptive names instead of abbreviations.
+3. **Early Returns:** Prefer early returns to avoid deeply nested `if/else` statements.
+4. **Boilerplate Reduction:** 
+   - Encapsulate repetitive API responses into utility functions.
+   - Extract repeated state management (like data fetching with SWR) into custom hooks (e.g. `useTugas()`).
+   - Create reusable UI components for common elements (Buttons, Cards, Inputs) to avoid duplicating long Tailwind class strings.

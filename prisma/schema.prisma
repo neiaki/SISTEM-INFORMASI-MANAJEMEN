@@ -9,17 +9,18 @@ datasource db {
 }
 
 model User {
-  id           String       @id @default(uuid())
-  username     String       @unique
-  passwordHash String       @map("password_hash")
+  id           String        @id @default(uuid())
+  username     String        @unique
+  passwordHash String        @map("password_hash")
   role         Role
-  lastLogin    DateTime?    @map("last_login")
-  createdAt    DateTime     @default(now()) @map("created_at")
-  updatedAt    DateTime     @updatedAt @map("updated_at")
+  lastLogin    DateTime?     @map("last_login")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
   adminCampus  AdminCampus?
   dosen        Dosen?
   mahasiswa    Mahasiswa?
   staffTU      StaffTU?
+  notifikasi   Notifikasi[]
 
   @@map("users")
 }
@@ -256,9 +257,40 @@ model Comment {
   @@map("comment")
 }
 
+model Notifikasi {
+  id         String              @id @default(uuid())
+  idUser     String              @map("id_user")
+  judul      String
+  pesan      String
+  jenis      JenisNotifikasi
+  waktuKirim DateTime            @default(now()) @map("waktu_kirim")
+  statusBaca Boolean             @default(false) @map("status_baca")
+  channel    ChannelNotifikasi   @default(IN_APP)
+  createdAt  DateTime            @default(now()) @map("created_at")
+  updatedAt  DateTime            @updatedAt @map("updated_at")
+  user       User                @relation(fields: [idUser], references: [id], onDelete: Cascade)
+
+  @@index([idUser, statusBaca])
+  @@map("notifikasi")
+}
+
 enum Role {
   MAHASISWA
   DOSEN
   ADMIN
   STAFF_TU
+}
+
+enum JenisNotifikasi {
+  DEADLINE
+  PROGRES
+  INFO
+  SISTEM
+  BROADCAST
+}
+
+enum ChannelNotifikasi {
+  IN_APP
+  EMAIL
+  TELEGRAM
 }

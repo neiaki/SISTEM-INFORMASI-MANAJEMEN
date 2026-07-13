@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/logger";
+import { notifyEnrolledStudents } from "@/lib/notifikasi";
 
 export async function GET(req: Request) {
   try {
@@ -119,6 +120,14 @@ export async function POST(req: Request) {
         persenProgres: 0
       });
     }
+
+    // Auto-generate notification
+    await notifyEnrolledStudents(
+      idMk,
+      `Proyek Baru: ${namaProyek}`,
+      `Proyek baru telah ditambahkan. Deadline akhir: ${new Date(deadlineAkhir).toLocaleDateString("id-ID")}`,
+      "INFO"
+    );
 
     return NextResponse.json({ message: "Project created successfully", project: newProject }, { status: 201 });
   } catch (error) {

@@ -1,16 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { createSeedData } from "@/data/sim-data";
+import { useState, useMemo } from "react";
+import useSWR from "swr";
+import type { Tugas, Proyek, MataKuliah } from "@prisma/client";
 
-const data = createSeedData().mahasiswa;
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const MONTHS = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 const DOWS = ["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
 
-// Per-course color mapping
-const COURSE_COLORS: Record<string, string> = {};
-const COURSE_DOT_CLASSES: Record<string, string> = {};
+// Per-course color mapping will be generated dynamically
 const PALETTE = [
   { dot: "bg-mhs-rose",   legend: "bg-mhs-rose"   },
   { dot: "bg-mhs-amber",  legend: "bg-mhs-amber"  },
@@ -19,16 +18,18 @@ const PALETTE = [
   { dot: "bg-mhs-green",  legend: "bg-mhs-green"  },
   { dot: "bg-[#60a5fa]",  legend: "bg-[#60a5fa]"  },
 ];
-const allCourses = Array.from(new Set(data.tasks.map(t => t.course)));
-allCourses.forEach((course, idx) => {
-  const c = PALETTE[idx % PALETTE.length];
-  COURSE_COLORS[course] = c.legend;
-  COURSE_DOT_CLASSES[course] = c.dot;
-});
 
-function getDeadlineDays(year: number, month: number): Record<number, (typeof data.tasks)> {
-  const days: Record<number, (typeof data.tasks)> = {};
-  data.tasks.forEach(task => {
+type CalendarEvent = {
+  id: string;
+  title: string;
+  course: string;
+  type: string;
+  deadline: string;
+};
+
+function getDeadlineDays(year: number, month: number, events: CalendarEvent[]): Record<number, CalendarEvent[]> {
+  const days: Record<number, CalendarEvent[]> = {};
+  events.forEach(task => {
     const d = new Date(task.deadline);
     if (d.getFullYear() === year && d.getMonth() === month) {
       const day = d.getDate();
@@ -45,14 +46,44 @@ export default function KalenderPage() {
   const [month, setMonth] = useState(today.getMonth());
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
+  const { data: tugasData } = useSWR('/api/tugas', fetcher);
+  const { data: proyekData } = useSWR('/api/proyek', fetcher);
+
+  const events: CalendarEvent[] = useMemo(() => {
+    const tasks = (tugasData?.tasks || []).map((t: Tugas & { mataKuliah: MataKuliah }) => ({
+      id: `tugas-${t.id}`,
+      title: t.judul,
+      course: t.mataKuliah?.namaMk || "Unknown",
+      type: t.tipe || "Tugas",
+      deadline: t.deadline
+    }));
+    const projects = (proyekData?.projects || []).map((p: Proyek & { mataKuliah: MataKuliah }) => ({
+      id: `proyek-${p.id}`,
+      title: p.namaProyek,
+      course: p.mataKuliah?.namaMk || "Unknown",
+      type: "Proyek",
+      deadline: p.deadlineAkhir
+    }));
+    return [...tasks, ...projects];
+  }, [tugasData, proyekData]);
+
+  const { allCourses, COURSE_DOT_CLASSES } = useMemo(() => {
+    const courses = Array.from(new Set(events.map(e => e.course)));
+    const dotClasses: Record<string, string> = {};
+    courses.forEach((course, idx) => {
+      dotClasses[course] = PALETTE[idx % PALETTE.length].dot;
+    });
+    return { allCourses: courses, COURSE_DOT_CLASSES: dotClasses };
+  }, [events]);
+
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const prevMonthDays = new Date(year, month, 0).getDate();
-  const deadlines = getDeadlineDays(year, month);
+  const deadlines = getDeadlineDays(year, month, events);
 
   const selectedTasks = selectedDay ? (deadlines[selectedDay] ?? []) : [];
 
-  const monthDeadlines = data.tasks.filter(t => {
+  const monthDeadlines = events.filter(t => {
     const d = new Date(t.deadline);
     return d.getFullYear() === year && d.getMonth() === month;
   }).sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
@@ -158,7 +189,7 @@ export default function KalenderPage() {
                       <div className="text-[13px] font-medium text-mhs-text truncate">{task.title}</div>
                       <div className="text-[11px] text-mhs-muted mt-0.5">{task.course} · {task.type}</div>
                     </div>
-                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${task.type === "kelompok" ? "bg-mhs-purple/10 text-mhs-purple" : "bg-mhs-teal/10 text-mhs-teal"}`}>
+                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${task.type.toLowerCase() === "kelompok" || task.type.toLowerCase() === "proyek" ? "bg-mhs-purple/10 text-mhs-purple" : "bg-mhs-teal/10 text-mhs-teal"}`}>
                       {task.type}
                     </span>
                   </div>

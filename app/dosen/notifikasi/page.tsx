@@ -1,10 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import useSWR from "swr";
 import { X } from "lucide-react";
 import { createSeedData } from "@/data/sim-data";
 import { useNotifStore } from "@/lib/notifStore";
 import { Toast, type ToastType } from "@/components/ui/toast";
+import type { Notifikasi } from "@prisma/client";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const data = createSeedData().dosen;
 
@@ -18,11 +22,13 @@ type Broadcast = {
   time: string;
 };
 
-const KIND_CONFIG = {
-  review:  { icon: "⚠️", bg: "bg-rose/10",    color: "text-rose",   label: "Review",      labelCls: "bg-rose/10 text-rose" },
-  progres: { icon: "📅", bg: "bg-gold/10",    color: "text-gold",   label: "Progres",     labelCls: "bg-gold/15 text-gold" },
-  deadline:{ icon: "🔥", bg: "bg-rose/10",    color: "text-rose",   label: "Deadline",    labelCls: "bg-rose/10 text-rose" },
-  info:    { icon: "✅", bg: "bg-forest/10",  color: "text-forest", label: "Info",        labelCls: "bg-forest/10 text-forest" },
+const KIND_CONFIG: Record<string, any> = {
+  REVIEW:  { icon: "⚠️", bg: "bg-rose/10",    color: "text-rose",   label: "Review",      labelCls: "bg-rose/10 text-rose",   category: "sistem" },
+  PROGRES: { icon: "📅", bg: "bg-gold/10",    color: "text-gold",   label: "Progres",     labelCls: "bg-gold/15 text-gold",   category: "sistem" },
+  DEADLINE:{ icon: "🔥", bg: "bg-rose/10",    color: "text-rose",   label: "Deadline",    labelCls: "bg-rose/10 text-rose",   category: "sistem" },
+  INFO:    { icon: "✅", bg: "bg-forest/10",  color: "text-forest", label: "Info",        labelCls: "bg-forest/10 text-forest", category: "sistem" },
+  BROADCAST:{ icon: "📢", bg: "bg-forest/10", color: "text-forest", label: "Broadcast",   labelCls: "bg-forest/15 text-forest", category: "broadcast" },
+  SISTEM:   { icon: "⚙️", bg: "bg-forest/10", color: "text-forest", label: "Sistem",      labelCls: "bg-forest/15 text-forest", category: "sistem" },
 };
 
 const STATIC_NOTIFS = [
@@ -41,10 +47,9 @@ const TEMPLATES = [
 ];
 
 export default function DosenNotifikasiPage() {
-  const { readIds, markRead, togglePref, getPrefs } = useNotifStore("dosen");
+  const { togglePref, getPrefs } = useNotifStore("dosen");
   const prefs = getPrefs(data.preferences);
 
-  const [broadcasts, setBroadcasts]   = useState<Broadcast[]>([]);
   const [activeTab, setActiveTab]     = useState("semua");
   const [modalOpen, setModalOpen]     = useState(false);
   const [form, setForm]               = useState({ title: "", message: "", target: "semua" });
@@ -57,56 +62,46 @@ export default function DosenNotifikasiPage() {
     return () => document.removeEventListener("keydown", h);
   }, [modalOpen]);
 
-  const seedNotifs = [
-    ...STATIC_NOTIFS.map((n, i) => ({ ...n, key: `dosen-notif-${i}` })),
-    ...data.notifications.map((n, i) => {
-      const cfg = KIND_CONFIG[n.kind as keyof typeof KIND_CONFIG] ?? KIND_CONFIG.info;
-      return { ...cfg, category: "sistem" as const, title: n.title, message: n.message, time: n.time, key: `dosen-notif-${STATIC_NOTIFS.length + i}` };
-    }),
-  ];
+  const { data: apiData, mutate } = useSWR('/api/notifikasi', fetcher);
+  const notifications: Notifikasi[] = apiData?.notifikasi || [];
 
-  const broadcastNotifs = broadcasts.map(b => ({
-    key: b.key,
-    icon: "📢",
-    bg: "bg-forest/10",
-    color: "text-forest",
-    label: "Broadcast",
-    labelCls: "bg-forest/15 text-forest",
-    category: "broadcast" as const,
-    title: b.title,
-    message: `${b.message}${b.target !== "semua" ? ` · ${b.target}` : " · Semua mahasiswa"}`,
-    time: b.time,
-  }));
-
-  const allNotifs = [...broadcastNotifs, ...seedNotifs];
-
-  const filtered = allNotifs.filter(n => {
-    if (activeTab === "belum-dibaca") return !readIds.includes(n.key);
-    if (activeTab === "broadcast")   return n.category === "broadcast";
-    if (activeTab === "sistem")      return n.category === "sistem";
+  const filtered = notifications.filter(notif => {
+    const cfg = KIND_CONFIG[notif.jenis] ?? KIND_CONFIG.INFO;
+    if (activeTab === "belum-dibaca") return !notif.statusBaca;
+    if (activeTab === "broadcast")   return cfg.category === "broadcast";
+    if (activeTab === "sistem")      return cfg.category === "sistem";
     return true;
   });
 
-  const unread      = allNotifs.filter(n => !readIds.includes(n.key)).length;
-  const unreadBcast = broadcastNotifs.filter(n => !readIds.includes(n.key)).length;
+  const unread      = notifications.filter(n => !n.statusBaca).length;
+  const broadcastNotifs = notifications.filter(n => (KIND_CONFIG[n.jenis] ?? KIND_CONFIG.INFO).category === "broadcast");
+  const seedNotifs = notifications.filter(n => (KIND_CONFIG[n.jenis] ?? KIND_CONFIG.INFO).category === "sistem");
 
-  function handleMarkAllRead() {
-    allNotifs.forEach(n => { if (!readIds.includes(n.key)) markRead(n.key); });
+  async function handleMarkAllRead() {
+    await fetch('/api/notifikasi/mark-all-read', { method: 'POST' });
+    mutate();
     setToast({ message: "Semua notifikasi telah ditandai dibaca.", type: "success" });
   }
 
-  function handleSendBroadcast() {
+  async function handleMarkRead(id: string) {
+    await fetch(`/api/notifikasi/${id}`, { method: 'PATCH' });
+    mutate();
+  }
+
+  async function handleSendBroadcast() {
     if (!form.title.trim() || !form.message.trim()) return;
-    const now  = new Date();
-    const time = `${now.getHours().toString().padStart(2,"0")}:${now.getMinutes().toString().padStart(2,"0")}`;
-    const b: Broadcast = {
-      key: `broadcast-${Date.now()}`,
-      title: form.title,
-      message: form.message,
-      target: form.target,
-      time,
-    };
-    setBroadcasts(prev => [b, ...prev]);
+
+    await fetch('/api/notifikasi/broadcast', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: form.title,
+        message: form.message,
+        target: form.target,
+      }),
+    });
+
+    mutate();
     setForm({ title: "", message: "", target: "semua" });
     setModalOpen(false);
     setToast({ message: "Pengumuman berhasil dikirim!", type: "success" });
@@ -117,7 +112,7 @@ export default function DosenNotifikasiPage() {
   }
 
   const tabs = [
-    { id: "semua",        label: "Semua",        count: allNotifs.length },
+    { id: "semua",        label: "Semua",        count: notifications.length },
     { id: "belum-dibaca", label: "Belum Dibaca",  count: unread           },
     { id: "broadcast",    label: "Broadcast",     count: broadcastNotifs.length },
     { id: "sistem",       label: "Sistem",         count: seedNotifs.length    },
@@ -175,26 +170,28 @@ export default function DosenNotifikasiPage() {
         {filtered.length === 0 ? (
           <div className="py-12 text-center text-muted text-[13px]">Tidak ada notifikasi di kategori ini.</div>
         ) : filtered.map((notif, i) => {
-          const isRead = readIds.includes(notif.key);
+          const cfg = KIND_CONFIG[notif.jenis] ?? KIND_CONFIG.INFO;
+          const isRead = notif.statusBaca;
           const isLast = i === filtered.length - 1;
+          const timeLabel = new Date(notif.waktuKirim).toLocaleString('id-ID', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' });
           return (
             <div
-              key={notif.key}
+              key={notif.id}
               className={`flex gap-3.5 p-4 items-start ${!isLast ? "border-b border-border/60" : ""} ${isRead ? "opacity-60" : ""} transition-opacity`}
             >
-              <div className={`w-[38px] h-[38px] rounded-[10px] ${notif.bg} ${notif.color} flex items-center justify-center text-[18px] shrink-0`}>
-                {notif.icon}
+              <div className={`w-[38px] h-[38px] rounded-[10px] ${cfg.bg} ${cfg.color} flex items-center justify-center text-[18px] shrink-0`}>
+                {cfg.icon}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start gap-2 mb-0.5">
-                  <div className="text-[13.5px] font-semibold text-ink flex-1">{notif.title}</div>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${notif.labelCls}`}>{notif.label}</span>
+                  <div className="text-[13.5px] font-semibold text-ink flex-1">{notif.judul}</div>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${cfg.labelCls}`}>{cfg.label}</span>
                 </div>
-                <div className="text-[12px] text-muted mt-0.5 leading-relaxed">{notif.message}</div>
+                <div className="text-[12px] text-muted mt-0.5 leading-relaxed">{notif.pesan}</div>
                 <div className="flex items-center gap-3 mt-1.5">
-                  <span className="text-[11px] text-muted">{notif.time}</span>
+                  <span className="text-[11px] text-muted">{timeLabel}</span>
                   {!isRead && (
-                    <button onClick={() => markRead(notif.key)} className="text-[11px] text-forest hover:underline">
+                    <button onClick={() => handleMarkRead(notif.id)} className="text-[11px] text-forest hover:underline">
                       Tandai dibaca
                     </button>
                   )}

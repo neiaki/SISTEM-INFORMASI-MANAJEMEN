@@ -16,7 +16,15 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const task = await prisma.tugas.findUnique({
       where: { id },
       include: {
-        mataKuliah: true,
+        mataKuliah: {
+          include: {
+            enrollments: {
+              include: {
+                mahasiswa: true
+              }
+            }
+          }
+        },
         deliverables: true,
         comments: {
           include: {

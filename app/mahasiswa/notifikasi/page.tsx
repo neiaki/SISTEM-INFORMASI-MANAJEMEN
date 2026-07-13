@@ -1,17 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import useSWR from "swr";
 import { createSeedData } from "@/data/sim-data";
 import { useNotifStore } from "@/lib/notifStore";
 import { Toast, type ToastType } from "@/components/ui/toast";
+import type { JenisNotifikasi, Notifikasi } from "@prisma/client";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const data = createSeedData().mahasiswa;
 
-const KIND_CONFIG = {
-  deadline: { icon: "🔥", bg: "bg-mhs-rose/15",   color: "text-mhs-rose",   label: "Deadline", labelCls: "bg-mhs-rose/15 text-mhs-rose",   category: "Tugas"    },
-  progres:  { icon: "📅", bg: "bg-mhs-amber/15",  color: "text-mhs-amber",  label: "Progres",  labelCls: "bg-mhs-amber/15 text-mhs-amber",  category: "Sistem"   },
-  review:   { icon: "⚠️", bg: "bg-mhs-purple/15", color: "text-mhs-purple", label: "Review",   labelCls: "bg-mhs-purple/15 text-mhs-purple", category: "Tugas"    },
-  info:     { icon: "✅", bg: "bg-mhs-green/15",  color: "text-mhs-green",  label: "Info",     labelCls: "bg-mhs-green/15 text-mhs-green",   category: "Sistem"   },
+const KIND_CONFIG: Record<string, any> = {
+  DEADLINE: { icon: "🔥", bg: "bg-mhs-rose/15",   color: "text-mhs-rose",   label: "Deadline", labelCls: "bg-mhs-rose/15 text-mhs-rose",   category: "Tugas"    },
+  PROGRES:  { icon: "📅", bg: "bg-mhs-amber/15",  color: "text-mhs-amber",  label: "Progres",  labelCls: "bg-mhs-amber/15 text-mhs-amber",  category: "Sistem"   },
+  BROADCAST: { icon: "📢", bg: "bg-mhs-purple/15", color: "text-mhs-purple", label: "Broadcast",   labelCls: "bg-mhs-purple/15 text-mhs-purple", category: "Sistem"    },
+  INFO:     { icon: "✅", bg: "bg-mhs-green/15",  color: "text-mhs-green",  label: "Info",     labelCls: "bg-mhs-green/15 text-mhs-green",   category: "Sistem"   },
+  SISTEM:   { icon: "⚙️", bg: "bg-mhs-teal/15",   color: "text-mhs-teal",   label: "Sistem",   labelCls: "bg-mhs-teal/15 text-mhs-teal",     category: "Sistem"   },
 };
 
 const CHANNEL_ICON: Record<string, string> = {
@@ -25,17 +30,20 @@ const FILTER_TABS = ["Semua", "Belum Dibaca", "Tugas", "Sistem"] as const;
 type FilterTab = typeof FILTER_TABS[number];
 
 export default function NotifikasiPage() {
-  const { readIds, markRead, markAllRead, togglePref, getPrefs } = useNotifStore("mahasiswa");
+  const { togglePref, getPrefs } = useNotifStore("mahasiswa");
   const [activeFilter, setActiveFilter] = useState<FilterTab>("Semua");
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const prefs = getPrefs(data.preferences);
 
-  const total = data.notifications.length;
-  const unread = data.notifications.filter((_, i) => !readIds.includes(`mahasiswa-notif-${i}`)).length;
+  const { data: apiData, mutate } = useSWR('/api/notifikasi', fetcher);
+  const notifications: Notifikasi[] = apiData?.notifikasi || [];
 
-  const filtered = data.notifications.filter((notif, i) => {
-    const isRead = readIds.includes(`mahasiswa-notif-${i}`);
-    const cfg = KIND_CONFIG[notif.kind as keyof typeof KIND_CONFIG] ?? KIND_CONFIG.info;
+  const total = notifications.length;
+  const unread = notifications.filter((n) => !n.statusBaca).length;
+
+  const filtered = notifications.filter((notif) => {
+    const isRead = notif.statusBaca;
+    const cfg = KIND_CONFIG[notif.jenis] ?? KIND_CONFIG.INFO;
     if (activeFilter === "Belum Dibaca") return !isRead;
     if (activeFilter === "Tugas")       return cfg.category === "Tugas";
     if (activeFilter === "Sistem")      return cfg.category === "Sistem";
@@ -45,13 +53,21 @@ export default function NotifikasiPage() {
   const tabCount = (tab: FilterTab) => {
     if (tab === "Semua")       return total;
     if (tab === "Belum Dibaca") return unread;
-    if (tab === "Tugas")       return data.notifications.filter(n => (KIND_CONFIG[n.kind as keyof typeof KIND_CONFIG] ?? KIND_CONFIG.info).category === "Tugas").length;
-    if (tab === "Sistem")      return data.notifications.filter(n => (KIND_CONFIG[n.kind as keyof typeof KIND_CONFIG] ?? KIND_CONFIG.info).category === "Sistem").length;
+    if (tab === "Tugas")       return notifications.filter(n => (KIND_CONFIG[n.jenis] ?? KIND_CONFIG.INFO).category === "Tugas").length;
+    if (tab === "Sistem")      return notifications.filter(n => (KIND_CONFIG[n.jenis] ?? KIND_CONFIG.INFO).category === "Sistem").length;
     return 0;
   };
 
-  // Get original index for marking read
-  const getOrigIdx = (notif: typeof data.notifications[0]) => data.notifications.indexOf(notif);
+  const handleMarkRead = async (id: string) => {
+    await fetch(`/api/notifikasi/${id}`, { method: 'PATCH' });
+    mutate(); // re-fetch
+  };
+
+  const handleMarkAllRead = async () => {
+    await fetch('/api/notifikasi/mark-all-read', { method: 'POST' });
+    setToast({ message: "Semua notifikasi ditandai dibaca", type: "success" });
+    mutate();
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -69,7 +85,7 @@ export default function NotifikasiPage() {
           )}
           {unread > 0 && (
             <button
-              onClick={() => { markAllRead("mahasiswa", total); setToast({ message: "Semua notifikasi ditandai dibaca", type: "success" }); }}
+              onClick={handleMarkAllRead}
               className="text-[12px] bg-mhs-amber/10 text-mhs-amber font-semibold px-3 py-1.5 rounded-lg border border-mhs-amber/20 hover:bg-mhs-amber/20 transition-colors"
             >
               ✓ Tandai Semua Dibaca
@@ -106,13 +122,13 @@ export default function NotifikasiPage() {
           </div>
         )}
         {filtered.map((notif, fi) => {
-          const origIdx = getOrigIdx(notif);
-          const cfg = KIND_CONFIG[notif.kind as keyof typeof KIND_CONFIG] ?? KIND_CONFIG.info;
-          const isRead = readIds.includes(`mahasiswa-notif-${origIdx}`);
+          const cfg = KIND_CONFIG[notif.jenis] ?? KIND_CONFIG.INFO;
+          const isRead = notif.statusBaca;
           const isLast = fi === filtered.length - 1;
+          const timeLabel = new Date(notif.waktuKirim).toLocaleString('id-ID', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' });
           return (
             <div
-              key={origIdx}
+              key={notif.id}
               className={`flex gap-3.5 p-4 items-start ${!isLast ? "border-b border-mhs-border" : ""} ${isRead ? "opacity-60" : ""} transition-opacity`}
             >
               {/* Unread dot (amber) */}
@@ -126,21 +142,21 @@ export default function NotifikasiPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start gap-2 mb-0.5">
-                  <div className="text-[13.5px] font-semibold text-mhs-text flex-1">{notif.title}</div>
+                  <div className="text-[13.5px] font-semibold text-mhs-text flex-1">{notif.judul}</div>
                   <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${cfg.labelCls}`}>
                     {cfg.label}
                   </span>
                 </div>
-                <div className="text-[12px] text-mhs-muted mt-0.5 leading-relaxed">{notif.message}</div>
+                <div className="text-[12px] text-mhs-muted mt-0.5 leading-relaxed">{notif.pesan}</div>
                 <div className="flex items-center gap-3 mt-2">
                   <span className="text-[11px] text-mhs-muted">
-                    {CHANNEL_ICON[notif.channel] ?? "📢"} {notif.channel}
+                    {CHANNEL_ICON[notif.channel] ?? "📢"} {notif.channel.replace("_", "-")}
                   </span>
                   <span className="w-1 h-1 rounded-full bg-mhs-muted/40" />
-                  <span className="text-[11px] text-mhs-muted">{notif.time}</span>
+                  <span className="text-[11px] text-mhs-muted">{timeLabel}</span>
                   {!isRead && (
                     <button
-                      onClick={() => markRead(`mahasiswa-notif-${origIdx}`)}
+                      onClick={() => handleMarkRead(notif.id)}
                       className="text-[11px] text-mhs-amber hover:underline ml-auto"
                     >
                       Tandai dibaca
