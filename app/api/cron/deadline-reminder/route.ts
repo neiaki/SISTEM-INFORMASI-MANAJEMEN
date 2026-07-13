@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendTelegramMessage, buildDeadlineMessage } from "@/lib/telegram";
 import type { JenisNotifikasi, ChannelNotifikasi } from "@prisma/client";
 
 export async function GET(req: Request) {
@@ -15,21 +16,13 @@ export async function GET(req: Request) {
 
     const now = new Date();
     const activeTasks = await prisma.tugas.findMany({
-      where: {
-        deadline: {
-          gte: now,
-        },
-      },
+      where: { deadline: { gte: now } },
       include: {
         mataKuliah: {
           include: {
             enrollments: {
               include: {
-                mahasiswa: {
-                  include: {
-                    user: true,
-                  },
-                },
+                mahasiswa: { include: { user: true } },
               },
             },
           },
@@ -40,45 +33,35 @@ export async function GET(req: Request) {
 
     const notificationsCreated: any[] = [];
     const simulatedEmailsSent: any[] = [];
+    const telegramSent: any[] = [];
 
     for (const task of activeTasks) {
       const deadline = new Date(task.deadline);
       const diffMs = deadline.getTime() - now.getTime();
-      const diffHours = diffMs / (1000 * 60 * 60);
-      const diffDays = Math.ceil(diffHours / 24);
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
       let reminderLabel = "";
-      if (diffDays === 1) {
-        reminderLabel = "H-1";
-      } else if (diffDays === 3) {
-        reminderLabel = "H-3";
-      } else if (diffDays === 7) {
-        reminderLabel = "H-7";
-      }
+      if (diffDays === 1) reminderLabel = "H-1";
+      else if (diffDays === 3) reminderLabel = "H-3";
+      else if (diffDays === 7) reminderLabel = "H-7";
 
-      // If it doesn't match our H-1, H-3, or H-7 window, skip
       if (!reminderLabel) continue;
 
-      const enrollments = task.mataKuliah.enrollments;
-      const submittedStudentIds = new Set(
-        task.submissions.map((s) => s.idMahasiswa)
-      );
+      const submittedStudentIds = new Set(task.submissions.map((s) => s.idMahasiswa));
 
-      for (const enrollment of enrollments) {
+      for (const enrollment of task.mataKuliah.enrollments) {
         const mahasiswa = enrollment.mahasiswa;
-        // Skip if student already submitted this task
         if (submittedStudentIds.has(mahasiswa.id)) continue;
 
         const user = mahasiswa.user;
         const prefs = (user.preferences as any) || {};
 
-        // In-app notifications are generally always created
         const createInApp = prefs.inapp_tugas !== false;
-        // Email notifications are enabled if email_deadline is true (default true)
         const sendEmail = prefs.email_deadline !== false;
+        const sendTelegram = prefs.telegram_sync === true && prefs.telegram_chat_id;
 
         const judul = `Pengingat Batas Waktu (${reminderLabel}): ${task.judul}`;
-        const pesan = `Tugas "${task.judul}" untuk mata kuliah ${task.mataKuliah.namaMk} akan segera berakhir dalam ${diffDays} hari (${new Date(task.deadline).toLocaleDateString()}). Silakan segera kumpulkan.`;
+        const pesan = `Tugas "${task.judul}" untuk mata kuliah ${task.mataKuliah.namaMk} akan segera berakhir dalam ${diffDays} hari (${deadline.toLocaleDateString("id-ID")}). Silakan segera kumpulkan.`;
 
         if (createInApp) {
           await prisma.notifikasi.create({
@@ -94,10 +77,8 @@ export async function GET(req: Request) {
         }
 
         if (sendEmail) {
-          // Simulate email sending since Resend is not configured
           console.log(`[Email Simulation] Sent to: ${mahasiswa.email} | Subject: ${judul}`);
           simulatedEmailsSent.push({ email: mahasiswa.email, subject: judul });
-
           await prisma.notifikasi.create({
             data: {
               idUser: user.id,
@@ -109,6 +90,35 @@ export async function GET(req: Request) {
           });
           notificationsCreated.push({ userId: user.id, taskTitle: task.judul, type: "EMAIL" });
         }
+
+        if (sendTelegram) {
+          const telegramText = buildDeadlineMessage({
+            userName: mahasiswa.nama,
+            taskTitle: task.judul,
+            courseName: task.mataKuliah.namaMk,
+            deadline,
+            daysLeft: diffDays,
+          });
+
+          const sent = await sendTelegramMessage({
+            chatId: prefs.telegram_chat_id,
+            text: telegramText,
+          });
+
+          if (sent) {
+            telegramSent.push({ userId: user.id, taskTitle: task.judul });
+            await prisma.notifikasi.create({
+              data: {
+                idUser: user.id,
+                judul,
+                pesan,
+                jenis: "DEADLINE" as JenisNotifikasi,
+                channel: "TELEGRAM" as ChannelNotifikasi,
+              },
+            });
+            notificationsCreated.push({ userId: user.id, taskTitle: task.judul, type: "TELEGRAM" });
+          }
+        }
       }
     }
 
@@ -118,6 +128,7 @@ export async function GET(req: Request) {
       processedTasks: activeTasks.length,
       notificationsCreated: notificationsCreated.length,
       simulatedEmailsSent,
+      telegramSent,
     });
   } catch (error) {
     console.error("Cron Job Error:", error);

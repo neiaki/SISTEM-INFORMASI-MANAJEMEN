@@ -10,11 +10,22 @@ npm start
 
 ## Important Notes
 
-- **No lint/test tooling configured** — `package.json` has no lint or test scripts
-- **Frontend-only prototype** — no backend, no database; all data is mock + localStorage
+- **No lint/test tooling** — `package.json` only has `dev`, `build`, `start`. No `lint`/`test` scripts.
+- **Backend migration in progress** — selain frontend mock (`lib/*Store.ts` + localStorage), sudah ada Next.js Route Handlers di `app/api/**` + Prisma + Auth.js v5 (`lib/auth.ts`). Keduanya masih coexist; belum sepenuhnya cut-over.
 - **Tailwind v4** — CSS-first config in `app/globals.css` (`@theme inline`), no `tailwind.config.js`
 - **React Compiler** enabled via `next.config.ts` (`experimental.reactCompiler: true`)
-- **Path alias**: `@/*` maps to project root (configured in `tsconfig.json`)
+- **Path alias**: `@/*` maps to project root (`./*` in `tsconfig.json`)
+
+## Database / Prisma Gotchas
+
+- `lib/prisma.ts` **hardcode** datasource URL `postgresql://postgres@localhost:5432/db_sim_tugas?schema=public` — ini meng-override `DATABASE_URL` dari `.env`. Berarti target asli adalah **Postgres lokal** bernama `db_sim_tugas`, bukan Supabase (meski `.env.example` menyarankan Supabase). Ubah file ini bila mau ganti DB.
+- DB lokal harus sudah ada sebelum `prisma` jalan. Perintah:
+  ```bash
+  npx prisma generate          # generate client
+  npx prisma migrate dev       # terapkan skema ke DB lokal
+  npx prisma db seed           # seed (jalankan ts-node prisma/seed.ts)
+  ```
+- `NEXT_PUBLIC_DEMO_MODE` ada di `.env` tapi saat ini hanya dipakai di `app/auth/login/page.tsx`, bukan global bypass. Jangan asumsikan mock otomatis aktif.
 
 ## Architecture
 
