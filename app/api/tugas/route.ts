@@ -1,0 +1,119 @@
+import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+export async function GET(req: Request) {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const idMk = searchParams.get("idMk");
+
+    const role = (session.user as any).role;
+    const userId = (session.user as any).id;
+
+    if (role === "MAHASISWA") {
+      const mahasiswa = await prisma.mahasiswa.findUnique({ where: { userId } });
+      if (!mahasiswa) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+
+      const enrollments = await prisma.enrollment.findMany({
+        where: { idMahasiswa: mahasiswa.id },
+      });
+      let courseIds = enrollments.map((e) => e.idMk);
+      
+      if (idMk) {
+        if (!courseIds.includes(idMk)) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+        courseIds = [idMk];
+      }
+
+      const tasks = await prisma.tugas.findMany({
+        where: { idMk: { in: courseIds } },
+        include: {
+          mataKuliah: true,
+          submissions: { where: { idMahasiswa: mahasiswa.id } },
+        },
+        orderBy: { deadline: "asc" },
+      });
+
+      return NextResponse.json({ tasks });
+    }
+
+    if (role === "DOSEN") {
+      const dosen = await prisma.dosen.findUnique({ where: { userId } });
+      if (!dosen) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+
+      const courses = await prisma.mataKuliah.findMany({
+        where: { idDosen: dosen.id },
+      });
+      let courseIds = courses.map((c) => c.id);
+
+      if (idMk) {
+        if (!courseIds.includes(idMk)) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+        courseIds = [idMk];
+      }
+
+      const tasks = await prisma.tugas.findMany({
+        where: { idMk: { in: courseIds } },
+        include: {
+          mataKuliah: true,
+          _count: { select: { submissions: true } },
+        },
+        orderBy: { deadline: "desc" },
+      });
+
+      return NextResponse.json({ tasks });
+    }
+
+    return NextResponse.json({ tasks: [] });
+  } catch (error) {
+    console.error("GET /api/tugas Error:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const role = (session.user as any).role;
+    if (role !== "DOSEN" && role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const { idMk, judul, deskripsi, deadline, bobotNilai, jenis, tipe } = body;
+
+    if (!idMk || !judul || !deadline) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    const newTask = await prisma.tugas.create({
+      data: {
+        idMk,
+        judul,
+        deskripsi,
+        tanggalDiberikan: new Date(),
+        deadline: new Date(deadline),
+        bobotNilai: bobotNilai || 100,
+        jenis: jenis || "Individu",
+        statusGlobal: "Sedang Dikerjakan",
+        tipe: tipe || "Tugas",
+      },
+    });
+
+    return NextResponse.json({ message: "Task created successfully", task: newTask }, { status: 201 });
+  } catch (error) {
+    console.error("POST /api/tugas Error:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}

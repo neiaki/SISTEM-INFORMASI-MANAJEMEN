@@ -3,13 +3,13 @@
 import { useState, useEffect } from "react";
 import { useSearch } from "@/lib/search-context";
 import { MessageSquare, Paperclip } from "lucide-react";
-import { createSeedData } from "@/data/sim-data";
+import useSWR from "swr";
 import { getAllTaskData, type TaskEntry } from "@/lib/taskStore";
 import { TaskDetailPanel, type MhsTask, mkColor, deadlineInfo, formatDate } from "@/components/task-detail-panel";
 import { EmptyState } from "@/components/empty-state";
 import { SkeletonCard } from "@/components/ui/skeleton";
 
-const allData = createSeedData().mahasiswa;
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 function effectiveStatus(task: MhsTask, localData?: TaskEntry): string {
   if (localData?.completed) return "selesai";
@@ -234,21 +234,51 @@ export default function TugasPage() {
   const [search, setSearch]       = useState("");
   const [selectedTask, setSelectedTask] = useState<MhsTask | null>(null);
   const [storeData, setStoreData] = useState<Record<string, TaskEntry>>({});
-  const [loading, setLoading] = useState(true);
 
-  const tasks = allData.tasks.filter(t => t.type === "individu");
+  const { data, error, isLoading } = useSWR("/api/tugas", fetcher);
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount (for backward compatibility if needed)
   useEffect(() => {
     setStoreData(getAllTaskData());
-    setLoading(false);
   }, []);
 
   function refreshStore() {
     setStoreData(getAllTaskData());
   }
 
-  const filtered = tasks.filter(t => {
+  // Map API data to MhsTask
+  const rawTasks = data?.tasks || [];
+  const tasks: MhsTask[] = rawTasks
+    .filter((t: any) => t.jenis?.toLowerCase() === "individu")
+    .map((t: any) => {
+      const isCompleted = t.submissions && t.submissions.length > 0;
+      
+      const daysLeft = Math.ceil((new Date(t.deadline).getTime() - Date.now()) / 86400000);
+      let priority = "sedang";
+      if (daysLeft < 3) priority = "kritis";
+      else if (daysLeft < 7) priority = "tinggi";
+      else if (daysLeft > 14) priority = "rendah";
+
+      let status = "belum mulai";
+      if (isCompleted) status = "selesai";
+      else if (t.statusGlobal) status = t.statusGlobal.toLowerCase();
+
+      return {
+        id: t.id,
+        title: t.judul,
+        course: t.mataKuliah?.namaMk || "Unknown",
+        type: t.jenis.toLowerCase(),
+        status,
+        deadline: t.deadline,
+        priority,
+        progress: isCompleted ? 100 : 0,
+        note: t.deskripsi || "",
+        submissions: t.submissions || [],
+        comments: [],
+      };
+    });
+
+  const filtered = tasks.filter((t: MhsTask) => {
     const matchFilter =
       filter === "semua"    ? true :
       filter === "aktif"    ? effectiveStatus(t, storeData[t.id]) !== "selesai" :
@@ -330,7 +360,7 @@ export default function TugasPage() {
       </div>
 
       {/* BOARD / LIST */}
-      {loading ? (
+      {(isLoading || error) ? (
         <div className="grid grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>

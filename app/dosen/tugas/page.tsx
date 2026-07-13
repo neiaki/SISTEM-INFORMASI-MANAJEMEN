@@ -3,13 +3,31 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
-import { createSeedData } from "@/data/sim-data";
 import { useSearch } from "@/lib/search-context";
 import { Toast, type ToastType } from "@/components/ui/toast";
+import useSWR, { mutate } from "swr";
 
-const seedData = createSeedData().dosen;
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-type Task = (typeof seedData.tasks)[0] & { note?: string; createdAt?: string; closed?: boolean; closedAt?: string; tolerance?: number };
+type Task = {
+  id: string;
+  idMk?: string;
+  course: string;
+  title: string;
+  type: string;
+  deadline: string;
+  status: string;
+  priority: string;
+  progress: number;
+  note?: string;
+  closed?: boolean;
+  closedAt?: string;
+  tolerance?: number;
+  createdAt?: string;
+  submissions?: any[];
+  comments?: any[];
+  _count?: { submissions: number };
+};
 
 const MK_COLORS = [
   "bg-forest/10 text-forest",
@@ -63,7 +81,6 @@ export default function DosenTugasPage() {
   const router = useRouter();
   const [filter, setFilter]         = useState("semua");
   const [courseFilter, setCourseFilter] = useState("");
-  const [allTasks, setAllTasks]   = useState<Task[]>(seedData.tasks);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createForm, setCreateForm]     = useState(EMPTY_FORM);
   const [editTask, setEditTask]         = useState<Task | null>(null);
@@ -72,6 +89,29 @@ export default function DosenTugasPage() {
   const [dupTask, setDupTask]           = useState<Task | null>(null);
   const [dupForm, setDupForm]           = useState({ title: "", course: "", deadline: "" });
   const [toast, setToast]               = useState<{ message: string; type: ToastType } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { data, error, isLoading } = useSWR("/api/tugas", fetcher);
+
+  // Map API data to Task type
+  const rawTasks = data?.tasks || [];
+  const allTasks: Task[] = rawTasks.map((t: any) => {
+    return {
+      id: t.id,
+      idMk: t.idMk,
+      title: t.judul,
+      course: t.mataKuliah?.namaMk || "Unknown",
+      type: t.jenis?.toLowerCase() || "individu",
+      status: t.statusGlobal?.toLowerCase() || "berjalan",
+      deadline: t.deadline,
+      priority: "sedang",
+      progress: 0,
+      note: t.deskripsi || "",
+      createdAt: t.createdAt,
+      closed: t.statusGlobal === "selesai",
+      _count: t._count,
+    };
+  });
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -85,52 +125,45 @@ export default function DosenTugasPage() {
     return () => document.removeEventListener("keydown", onKey);
   }, [dupTask, editTask, isCreateOpen, confirmDelete]);
 
-  useEffect(() => {
-    const saved: Task[] = JSON.parse(localStorage.getItem("dosen_new_tasks") || "[]");
-    const overrides: Record<string, { closed?: boolean; closedAt?: string }> =
-      JSON.parse(localStorage.getItem("dosen_task_overrides") || "{}");
-    const seedWithOverrides = (seedData.tasks as Task[]).map(t =>
-      overrides[t.id] ? { ...t, ...overrides[t.id] } : t
-    );
-    setAllTasks([...saved, ...seedWithOverrides]);
-  }, []);
-
-  function syncLocalStorage(tasks: Task[]) {
-    const newOnes = tasks.filter(t => t.id.startsWith("new-"));
-    localStorage.setItem("dosen_new_tasks", JSON.stringify(newOnes));
-    const overrides: Record<string, { closed?: boolean; closedAt?: string }> = {};
-    for (const t of tasks) {
-      if (t.closed !== undefined || t.closedAt !== undefined) {
-        overrides[t.id] = { closed: t.closed, closedAt: t.closedAt };
-      }
-    }
-    localStorage.setItem("dosen_task_overrides", JSON.stringify(overrides));
-  }
-
-  function handleCreate(e: React.FormEvent<HTMLFormElement>) {
+  async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!createForm.title || !createForm.course || !createForm.deadline) return;
-    const newTask: Task = {
-      id: `new-${Date.now()}`,
-      title: createForm.title,
-      course: createForm.course,
-      type: createForm.type,
-      deadline: createForm.deadline,
-      status: "belum mulai",
-      priority: "sedang",
-      progress: 0,
-      note: createForm.description,
-      tolerance: parseInt(createForm.tolerance) || 0,
-      createdAt: new Date().toISOString(),
-      submissions: [],
-      comments: [],
-    };
-    const updated = [newTask, ...allTasks];
-    setAllTasks(updated);
-    syncLocalStorage(updated);
-    setCreateForm(EMPTY_FORM);
-    setIsCreateOpen(false);
-    setToast({ message: "Tugas baru berhasil dibuat!", type: "success" });
+    setIsSubmitting(true);
+    
+    // Find course ID from courses
+    // Hardcode for now, but usually it should be the ID from a dropdown
+    let idMk = "unknown";
+    if (rawTasks.length > 0) {
+      const matchingCourse = rawTasks.find((t: any) => t.mataKuliah?.namaMk === createForm.course);
+      if (matchingCourse) idMk = matchingCourse.idMk;
+    }
+    
+    try {
+      const res = await fetch("/api/tugas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idMk, // In a real app we'd fetch course list. For now we try to find it.
+          judul: createForm.title,
+          deskripsi: createForm.description,
+          deadline: createForm.deadline,
+          jenis: createForm.type,
+        })
+      });
+
+      if (res.ok) {
+        mutate("/api/tugas"); // Re-fetch tasks
+        setCreateForm(EMPTY_FORM);
+        setIsCreateOpen(false);
+        setToast({ message: "Tugas baru berhasil dibuat!", type: "success" });
+      } else {
+        setToast({ message: "Gagal membuat tugas. ID MK tidak valid.", type: "error" });
+      }
+    } catch (err) {
+      setToast({ message: "Terjadi kesalahan", type: "error" });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function openEdit(task: Task) {
@@ -145,36 +178,24 @@ export default function DosenTugasPage() {
     });
   }
 
-  function handleEditSave(e: React.FormEvent<HTMLFormElement>) {
+  async function handleEditSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!editTask) return;
-    const updated = allTasks.map(t =>
-      t.id === editTask.id
-        ? { ...t, title: editForm.title, course: editForm.course, type: editForm.type, deadline: editForm.deadline, note: editForm.description }
-        : t
-    );
-    setAllTasks(updated);
-    syncLocalStorage(updated);
+    setToast({ message: "Edit API belum diimplementasikan", type: "error" });
     setEditTask(null);
   }
 
-  function handleDelete(id: string) {
-    const updated = allTasks.filter(t => t.id !== id);
-    setAllTasks(updated);
-    syncLocalStorage(updated);
+  async function handleDelete(id: string) {
+    setToast({ message: "Delete API belum diimplementasikan", type: "error" });
     setConfirmDelete(null);
   }
 
-  function handleClose(id: string) {
-    const updated = allTasks.map(t => t.id === id ? { ...t, closed: true, closedAt: new Date().toISOString() } : t);
-    setAllTasks(updated);
-    syncLocalStorage(updated);
+  async function handleClose(id: string) {
+    setToast({ message: "Close API belum diimplementasikan", type: "error" });
   }
 
-  function handleReopen(id: string) {
-    const updated = allTasks.map(t => t.id === id ? { ...t, closed: false, status: "sedang dikerjakan", closedAt: undefined } : t);
-    setAllTasks(updated);
-    syncLocalStorage(updated);
+  async function handleReopen(id: string) {
+    setToast({ message: "Reopen API belum diimplementasikan", type: "error" });
   }
 
   function openDuplicate(task: Task) {
@@ -182,28 +203,11 @@ export default function DosenTugasPage() {
     setDupForm({ title: `Copy of ${task.title}`, course: task.course, deadline: "" });
   }
 
-  function handleDuplicate(e: React.FormEvent) {
+  async function handleDuplicate(e: React.FormEvent) {
     e.preventDefault();
     if (!dupTask || !dupForm.title || !dupForm.course || !dupForm.deadline) return;
-    const newTask: Task = {
-      ...dupTask,
-      id: `new-${Date.now()}`,
-      title: dupForm.title,
-      course: dupForm.course,
-      deadline: dupForm.deadline,
-      status: "belum mulai",
-      progress: 0,
-      closed: false,
-      closedAt: undefined,
-      createdAt: new Date().toISOString(),
-      submissions: [],
-      comments: [],
-    };
-    const updated = [newTask, ...allTasks];
-    setAllTasks(updated);
-    syncLocalStorage(updated);
+    setToast({ message: "Duplicate API belum diimplementasikan", type: "error" });
     setDupTask(null);
-    setToast({ message: "Tugas berhasil diduplikat!", type: "success" });
   }
 
   function handleGoToRekap(id: string) {
@@ -211,9 +215,7 @@ export default function DosenTugasPage() {
     router.push("/dosen/rekap");
   }
 
-  const data = { ...seedData, tasks: allTasks };
-
-  const filtered = data.tasks.filter(t => {
+  const filtered = allTasks.filter(t => {
     const st = getTaskStatus(t);
     const matchFilter =
       filter === "aktif"   ? st !== "selesai" :
@@ -223,7 +225,7 @@ export default function DosenTugasPage() {
     return matchFilter && matchCourse && matchQ;
   });
 
-  const courseTasks = courseFilter ? data.tasks.filter(t => t.course === courseFilter) : data.tasks;
+  const courseTasks = courseFilter ? allTasks.filter(t => t.course === courseFilter) : allTasks;
   const tabs = [
     { id: "semua",   label: `Semua (${courseTasks.length})` },
     { id: "aktif",   label: `Aktif (${courseTasks.filter(t => getTaskStatus(t) !== "selesai").length})` },
@@ -412,7 +414,7 @@ export default function DosenTugasPage() {
             className="bg-paper border-[1.5px] border-border text-ink-2 px-3 py-2 rounded-lg text-[13px] outline-none focus:border-forest transition-colors"
           >
             <option value="">Semua Mata Kuliah</option>
-            {[...new Set(data.tasks.map(t => t.course))].map(c => <option key={c} value={c}>{c}</option>)}
+            {[...new Set(allTasks.map(t => t.course))].map(c => <option key={c} value={c}>{c}</option>)}
           </select>
           <button
             onClick={() => setIsCreateOpen(true)}
