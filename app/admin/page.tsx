@@ -1,16 +1,9 @@
 "use client";
 
-import { createSeedData } from "@/data/sim-data";
 import Link from "next/link";
+import useSWR from "swr";
 
-const data = createSeedData().admin;
-
-const STAT_CARDS = [
-  { icon: "👥", label: "Total Pengguna Aktif", value: "1.284", sub: "↑ 16 akun dosen baru", color: "bg-adm-accent/10 text-adm-accent" },
-  { icon: "📋", label: "Tugas Operasional", value: String(data.tasks.length), sub: `${data.tasks.filter(t => t.status === "selesai").length} selesai bulan ini`, color: "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400" },
-  { icon: "🔗", label: "Integrasi Aktif", value: String(data.integrations.filter(i => i.status === "Stabil").length), sub: "dari " + data.integrations.length + " integrasi terdaftar", color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" },
-  { icon: "⚠️", label: "Alert Sistem", value: String(data.notifications.length), sub: "perlu ditindaklanjuti", color: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" },
-];
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 const STATUS_COLORS: Record<string, string> = {
   "selesai": "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
@@ -27,6 +20,21 @@ const INTEG_COLORS: Record<string, string> = {
 };
 
 export default function AdminDashboard() {
+  const { data: apiData } = useSWR('/api/admin/dashboard', fetcher);
+
+  if (!apiData) {
+    return <div className="flex h-[400px] items-center justify-center text-adm-muted">Memuat data dashboard...</div>;
+  }
+
+  const { stats, tasks = [], integrations = [], operations = [], notifications = [] } = apiData;
+
+  const STAT_CARDS = [
+    { icon: "👥", label: "Total Pengguna Aktif", value: String(stats.totalUsers || 0), sub: `↑ ${stats.recentUsersCount || 0} akun baru minggu ini`, color: "bg-adm-accent/10 text-adm-accent" },
+    { icon: "📋", label: "Tugas Operasional", value: String(tasks.length), sub: `${tasks.filter((t: any) => t.status === "selesai").length} selesai`, color: "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400" },
+    { icon: "🔗", label: "Integrasi Aktif", value: String(stats.activeIntegrationsCount || 0), sub: `dari ${stats.totalIntegrationsCount || 0} terintegrasi`, color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" },
+    { icon: "⚠️", label: "Alert Sistem", value: String(stats.alertCount || 0), sub: "perlu pemantauan", color: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" },
+  ];
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -35,7 +43,7 @@ export default function AdminDashboard() {
         <div className="font-serif text-[24px] text-adm-text">
           Dashboard <span className="text-adm-accent">Admin Kampus</span>
         </div>
-        <div className="text-[13px] text-adm-muted mt-1">{data.dashboardLead}</div>
+        <div className="text-[13px] text-adm-muted mt-1">Pemantauan sistem, integrasi SIAKAD/LMS, serta audit log operasional.</div>
       </div>
 
       {/* Stat cards */}
@@ -60,7 +68,9 @@ export default function AdminDashboard() {
             <Link href="/admin/tugas" className="text-[12px] text-adm-accent hover:underline">Lihat semua</Link>
           </div>
           <div className="divide-y divide-adm-border">
-            {data.tasks.slice(0, 4).map(task => (
+            {tasks.length === 0 ? (
+              <div className="p-5 text-center text-[13px] text-adm-muted">Tidak ada backlog tugas.</div>
+            ) : tasks.slice(0, 4).map((task: any) => (
               <div key={task.id} className="px-5 py-3.5 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-medium text-adm-text truncate">{task.title}</div>
@@ -80,7 +90,7 @@ export default function AdminDashboard() {
             <h3 className="text-[14px] font-semibold text-adm-text">🔗 Status Integrasi Sistem</h3>
           </div>
           <div className="divide-y divide-adm-border">
-            {data.integrations.map((integ, i) => (
+            {integrations.map((integ: any, i: number) => (
               <div key={i} className="px-5 py-3.5 flex items-center gap-3">
                 <div className={`w-2 h-2 rounded-full shrink-0 ${integ.status === "Stabil" ? "bg-emerald-500" : integ.status === "Parsial" ? "bg-amber-500" : integ.status === "Perlu observasi" ? "bg-rose-500" : "bg-slate-400"}`} />
                 <div className="flex-1 min-w-0">
@@ -103,15 +113,17 @@ export default function AdminDashboard() {
           <Link href="/admin/notifikasi" className="text-[12px] text-adm-accent hover:underline">Lihat semua</Link>
         </div>
         <div className="divide-y divide-adm-border">
-          {data.notifications.map((notif, i) => (
+          {notifications.length === 0 ? (
+            <div className="p-5 text-center text-[13px] text-adm-muted">Tidak ada notifikasi sistem.</div>
+          ) : notifications.map((notif: any, i: number) => (
             <div key={i} className="px-5 py-3.5 flex items-start gap-3">
               <div className="w-8 h-8 rounded-lg bg-adm-accent/10 flex items-center justify-center text-[15px] shrink-0 mt-0.5">
-                {notif.kind === "sistem" ? "⚙️" : notif.kind === "integrasi" ? "🔗" : "✅"}
+                {notif.jenis === "SISTEM" ? "⚙️" : notif.jenis === "INTEGRASI" ? "🔗" : "✅"}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-semibold text-adm-text">{notif.title}</div>
-                <div className="text-[11px] text-adm-muted mt-0.5">{notif.message}</div>
-                <div className="text-[10px] text-adm-muted mt-1">{notif.time}</div>
+                <div className="text-[13px] font-semibold text-adm-text">{notif.judul}</div>
+                <div className="text-[11px] text-adm-muted mt-0.5">{notif.pesan}</div>
+                <div className="text-[10px] text-adm-muted mt-1">{new Date(notif.waktuKirim).toLocaleString()}</div>
               </div>
             </div>
           ))}
@@ -120,7 +132,7 @@ export default function AdminDashboard() {
 
       {/* Operations */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {data.operations.map((op, i) => (
+        {operations.map((op: any, i: number) => (
           <div key={i} className="bg-adm-surface border border-adm-border rounded-xl p-5">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-2 h-2 rounded-full bg-emerald-500" />

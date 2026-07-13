@@ -2,14 +2,10 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { createSeedData } from "@/data/sim-data";
-import { useNotifStore } from "@/lib/notifStore";
 import { Toast, type ToastType } from "@/components/ui/toast";
 import type { JenisNotifikasi, Notifikasi } from "@prisma/client";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
-
-const data = createSeedData().mahasiswa;
 
 const KIND_CONFIG: Record<string, any> = {
   DEADLINE: { icon: "🔥", bg: "bg-mhs-rose/15",   color: "text-mhs-rose",   label: "Deadline", labelCls: "bg-mhs-rose/15 text-mhs-rose",   category: "Tugas"    },
@@ -29,14 +25,27 @@ const CHANNEL_ICON: Record<string, string> = {
 const FILTER_TABS = ["Semua", "Belum Dibaca", "Tugas", "Sistem"] as const;
 type FilterTab = typeof FILTER_TABS[number];
 
+const PREF_DEFAULTS = [
+  { key: "email_deadline", label: "Email Reminder Deadline", detail: "Kirim email peringatan 24 jam sebelum tugas berakhir", enabled: true },
+  { key: "inapp_tugas", label: "Notifikasi Tugas Baru", detail: "Munculkan badge merah saat ada tugas/proyek baru", enabled: true },
+  { key: "email_nilai", label: "Email Info Nilai", detail: "Kirim email saat nilai tugas baru saja dipublikasikan", enabled: false },
+  { key: "telegram_sync", label: "Sinkronisasi Telegram", detail: "Teruskan notifikasi mendesak ke bot Telegram", enabled: false },
+];
+
 export default function NotifikasiPage() {
-  const { togglePref, getPrefs } = useNotifStore("mahasiswa");
   const [activeFilter, setActiveFilter] = useState<FilterTab>("Semua");
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
-  const prefs = getPrefs(data.preferences);
 
   const { data: apiData, mutate } = useSWR('/api/notifikasi', fetcher);
+  const { data: prefData, mutate: mutatePref } = useSWR('/api/users/preferences', fetcher);
+  
   const notifications: Notifikasi[] = apiData?.notifikasi || [];
+  const dbPrefs = prefData?.preferences || {};
+
+  const prefs = PREF_DEFAULTS.map(p => ({
+    ...p,
+    enabled: dbPrefs[p.key] ?? p.enabled
+  }));
 
   const total = notifications.length;
   const unread = notifications.filter((n) => !n.statusBaca).length;
@@ -60,13 +69,33 @@ export default function NotifikasiPage() {
 
   const handleMarkRead = async (id: string) => {
     await fetch(`/api/notifikasi/${id}`, { method: 'PATCH' });
-    mutate(); // re-fetch
+    mutate();
   };
 
   const handleMarkAllRead = async () => {
     await fetch('/api/notifikasi/mark-all-read', { method: 'POST' });
     setToast({ message: "Semua notifikasi ditandai dibaca", type: "success" });
     mutate();
+  };
+
+  const handleTogglePref = async (key: string) => {
+    const currentVal = dbPrefs[key] ?? PREF_DEFAULTS.find(p => p.key === key)?.enabled;
+    const newPrefs = { ...dbPrefs, [key]: !currentVal };
+    
+    // Optimistic update
+    mutatePref({ preferences: newPrefs }, false);
+    
+    try {
+      await fetch('/api/users/preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPrefs)
+      });
+      setToast({ message: "Preferensi disimpan", type: "success" });
+    } catch {
+      setToast({ message: "Gagal menyimpan preferensi", type: "error" });
+      mutatePref(); // Revert
+    }
   };
 
   return (
@@ -80,7 +109,7 @@ export default function NotifikasiPage() {
         <div className="flex items-center gap-3">
           {unread > 0 && (
             <span className="text-[12px] bg-mhs-rose/10 text-mhs-rose font-semibold px-3 py-1 rounded-full border border-mhs-rose/20">
-              {unread} belum dibaca
+               {unread} belum dibaca
             </span>
           )}
           {unread > 0 && (
@@ -176,7 +205,7 @@ export default function NotifikasiPage() {
           {prefs.map(pref => (
             <div key={pref.key} className="bg-mhs-card border border-mhs-border rounded-[14px] p-4 flex items-start gap-3">
               <button
-                onClick={() => togglePref("mahasiswa", pref.key)}
+                onClick={() => handleTogglePref(pref.key)}
                 className={`w-9 h-5 rounded-full relative flex items-center transition-colors shrink-0 mt-0.5 border ${
                   pref.enabled ? "bg-mhs-teal border-mhs-teal" : "bg-mhs-border border-mhs-border"
                 }`}
@@ -196,16 +225,26 @@ export default function NotifikasiPage() {
       <div>
         <div className="text-[14px] font-semibold text-mhs-text mb-3">🔗 Status Integrasi</div>
         <div className="flex flex-col gap-2.5 max-w-2xl">
-          {data.integrations.map((integ, i) => (
-            <div key={i} className="bg-mhs-card border border-mhs-border rounded-[14px] p-4 flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-mhs-green shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-medium text-mhs-text">{integ.name}</div>
-                <div className="text-[11px] text-mhs-muted mt-0.5">{integ.note}</div>
-              </div>
-              <span className="text-[11px] text-mhs-muted shrink-0 text-right max-w-[160px]">{integ.status}</span>
+          <div className="bg-mhs-card border border-mhs-border rounded-[14px] p-4 flex items-center gap-3">
+            <div className={`w-2 h-2 rounded-full shrink-0 ${dbPrefs.email_deadline || dbPrefs.email_nilai ? 'bg-mhs-green' : 'bg-mhs-muted'}`} />
+            <div className="flex-1 min-w-0">
+              <div className="text-[13px] font-medium text-mhs-text">Email Gateway (Resend)</div>
+              <div className="text-[11px] text-mhs-muted mt-0.5">Terkoneksi ke alamat email student</div>
             </div>
-          ))}
+            <span className="text-[11px] text-mhs-muted shrink-0 text-right max-w-[160px]">
+              {dbPrefs.email_deadline || dbPrefs.email_nilai ? 'Aktif' : 'Nonaktif'}
+            </span>
+          </div>
+          <div className="bg-mhs-card border border-mhs-border rounded-[14px] p-4 flex items-center gap-3">
+            <div className={`w-2 h-2 rounded-full shrink-0 ${dbPrefs.telegram_sync ? 'bg-mhs-amber' : 'bg-mhs-muted'}`} />
+            <div className="flex-1 min-w-0">
+              <div className="text-[13px] font-medium text-mhs-text">Telegram Bot</div>
+              <div className="text-[11px] text-mhs-muted mt-0.5">Menerima peringatan realtime via chat</div>
+            </div>
+            <span className="text-[11px] text-mhs-muted shrink-0 text-right max-w-[160px]">
+              {dbPrefs.telegram_sync ? 'Menunggu Konfirmasi' : 'Belum di-setup'}
+            </span>
+          </div>
         </div>
       </div>
     </div>

@@ -1,16 +1,11 @@
 "use client";
 
-import { createSeedData } from "@/data/sim-data";
 import Link from "next/link";
+import { useState, useRef } from "react";
+import useSWR from "swr";
+import { Toast, type ToastType } from "@/components/ui/toast";
 
-const data = createSeedData().staff_tu;
-
-const STAT_CARDS = [
-  { icon: "📂", label: "Backlog Aktif", value: String(data.tasks.filter(t => t.status !== "selesai").length), sub: `${data.tasks.filter(t => t.status === "selesai").length} selesai`, color: "bg-stu-accent/10 text-stu-accent" },
-  { icon: "🎓", label: "Kelas Dikelola", value: "12", sub: "Semester Genap 2025/2026", color: "bg-teal-100 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400" },
-  { icon: "🔄", label: "Reset Akun Pending", value: "24", sub: "menunggu diproses batch", color: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" },
-  { icon: "✅", label: "Data Valid", value: "98%", sub: "dari total record semester", color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" },
-];
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 const STATUS_COLORS: Record<string, string> = {
   "selesai":           "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
@@ -20,14 +15,67 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function StaffTUDashboard() {
+  const [file, setFile] = useState<File | null>(null);
+  const [role, setRole] = useState<string>("MAHASISWA");
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: apiData, mutate } = useSWR('/api/staff-tu/dashboard', fetcher);
+
+  const handleImport = async () => {
+    if (!file) return;
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("role", role);
+
+    try {
+      const res = await fetch("/api/admin/import-users", {
+        method: "POST",
+        body: formData,
+      });
+      const result = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(result.error || "Gagal mengimport data");
+      }
+
+      setToast({ message: result.message, type: "success" });
+      setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      mutate(); // refresh dashboard stats
+    } catch (err: any) {
+      setToast({ message: err.message, type: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!apiData) {
+    return <div className="flex h-[400px] items-center justify-center text-stu-muted">Memuat data...</div>;
+  }
+
+  const { stats, tasks = [], notifications = [] } = apiData;
+
+  const STAT_CARDS = [
+    { icon: "📂", label: "Backlog Aktif", value: String(stats.backlogAktif || 0), sub: "tugas operasional pending", color: "bg-stu-accent/10 text-stu-accent" },
+    { icon: "🎓", label: "Mahasiswa Terdaftar", value: String(stats.totalMahasiswa || 0), sub: "Total akun mahasiswa aktif", color: "bg-teal-100 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400" },
+    { icon: "👨‍🏫", label: "Dosen Pengampu", value: String(stats.totalDosen || 0), sub: "Total dosen aktif", color: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" },
+    { icon: "🏫", label: "Total Kelas", value: String(stats.totalKelas || 0), sub: "Mata Kuliah semester berjalan", color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" },
+  ];
+
   return (
     <div className="flex flex-col gap-6">
+      {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
+      
       <div>
         <div className="text-[11px] text-stu-muted uppercase tracking-[0.1em] mb-0.5">Selamat Datang</div>
         <div className="font-serif text-[24px] text-stu-text">
           Dashboard <span className="text-stu-accent">Staff TU</span>
         </div>
-        <div className="text-[13px] text-stu-muted mt-1">{data.dashboardLead}</div>
+        <div className="text-[13px] text-stu-muted mt-1">Fokus pada data pengguna, antrean operasional, dan status akademik.</div>
       </div>
 
       {/* Stat cards */}
@@ -45,14 +93,69 @@ export default function StaffTUDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Import CSV Card */}
+        <div className="bg-stu-surface border border-stu-border rounded-[14px] overflow-hidden flex flex-col">
+          <div className="px-5 py-4 border-b border-stu-border">
+            <h3 className="text-[14px] font-semibold text-stu-text">📤 Import Pengguna (CSV)</h3>
+            <div className="text-[12px] text-stu-muted mt-0.5">Daftarkan pengguna baru secara massal.</div>
+          </div>
+          <div className="p-5 flex flex-col gap-4 flex-1">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[12px] font-medium text-stu-text">Tipe Pengguna</label>
+              <select 
+                value={role} 
+                onChange={(e) => setRole(e.target.value)}
+                className="w-full bg-stu-card border border-stu-border rounded-lg px-3 py-2 text-[13px] outline-none focus:border-stu-accent text-stu-text"
+              >
+                <option value="MAHASISWA">Mahasiswa</option>
+                <option value="DOSEN">Dosen</option>
+                <option value="STAFF_TU">Staff TU</option>
+              </select>
+            </div>
+            
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[12px] font-medium text-stu-text">File CSV</label>
+              <input 
+                type="file" 
+                accept=".csv"
+                ref={fileInputRef}
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                className="w-full bg-stu-card border border-stu-border rounded-lg px-3 py-1.5 text-[13px] outline-none focus:border-stu-accent text-stu-text file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-[12px] file:font-semibold file:bg-stu-accent/10 file:text-stu-accent hover:file:bg-stu-accent/20 cursor-pointer"
+              />
+            </div>
+
+            <div className="flex gap-2 text-[11px] mt-auto">
+              <a href="/templates/template-import-mahasiswa.csv" className="text-stu-accent hover:underline flex items-center gap-1">
+                <span>📄</span> Template Mhs
+              </a>
+              <a href="/templates/template-import-dosen.csv" className="text-stu-accent hover:underline flex items-center gap-1 ml-2">
+                <span>📄</span> Template Dosen
+              </a>
+              <a href="/templates/template-import-staff.csv" className="text-stu-accent hover:underline flex items-center gap-1 ml-2">
+                <span>📄</span> Template Staff
+              </a>
+            </div>
+
+            <button 
+              onClick={handleImport}
+              disabled={!file || loading}
+              className="mt-2 w-full bg-stu-accent text-white py-2 rounded-lg text-[13px] font-semibold hover:bg-stu-accent/90 disabled:opacity-50 transition-colors"
+            >
+              {loading ? "Mengimport..." : "Mulai Import"}
+            </button>
+          </div>
+        </div>
+
         {/* Backlog */}
-        <div className="bg-stu-surface border border-stu-border rounded-[14px] overflow-hidden">
+        <div className="bg-stu-surface border border-stu-border rounded-[14px] overflow-hidden flex flex-col">
           <div className="px-5 py-4 border-b border-stu-border flex items-center justify-between">
             <h3 className="text-[14px] font-semibold text-stu-text">📋 Backlog Terbaru</h3>
             <Link href="/staff-tu/tugas" className="text-[12px] text-stu-accent hover:underline">Lihat semua</Link>
           </div>
-          <div className="divide-y divide-stu-border">
-            {data.tasks.slice(0, 4).map(task => (
+          <div className="divide-y divide-stu-border flex-1">
+            {tasks.length === 0 ? (
+              <div className="p-5 text-center text-[13px] text-stu-muted">Tidak ada backlog.</div>
+            ) : tasks.slice(0, 4).map((task: any) => (
               <div key={task.id} className="px-5 py-3.5 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-medium text-stu-text truncate">{task.title}</div>
@@ -61,27 +164,6 @@ export default function StaffTUDashboard() {
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${STATUS_COLORS[task.status] ?? ""}`}>
                   {task.status}
                 </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Quick actions */}
-        <div className="bg-stu-surface border border-stu-border rounded-[14px] overflow-hidden">
-          <div className="px-5 py-4 border-b border-stu-border">
-            <h3 className="text-[14px] font-semibold text-stu-text">⚡ Aksi Cepat</h3>
-            <div className="text-[12px] text-stu-muted mt-0.5">{data.supportFocus}</div>
-          </div>
-          <div className="p-5 flex flex-col gap-3">
-            {data.quickActions.map((action, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 bg-stu-card border border-stu-border rounded-xl">
-                <div className="w-8 h-8 rounded-lg bg-stu-accent/10 flex items-center justify-center text-stu-accent text-[15px]">
-                  {i === 0 ? "🏫" : i === 1 ? "📋" : "🔔"}
-                </div>
-                <div className="flex-1">
-                  <div className="text-[13px] font-semibold text-stu-text">{action.label}</div>
-                  <div className="text-[11px] text-stu-muted">{action.message}</div>
-                </div>
               </div>
             ))}
           </div>
@@ -95,15 +177,17 @@ export default function StaffTUDashboard() {
           <Link href="/staff-tu/notifikasi" className="text-[12px] text-stu-accent hover:underline">Lihat semua</Link>
         </div>
         <div className="divide-y divide-stu-border">
-          {data.notifications.slice(0, 3).map((notif, i) => (
+          {notifications.length === 0 ? (
+            <div className="p-5 text-center text-[13px] text-stu-muted">Tidak ada notifikasi sistem.</div>
+          ) : notifications.slice(0, 3).map((notif: any, i: number) => (
             <div key={i} className="px-5 py-3.5 flex items-start gap-3">
               <div className="w-8 h-8 rounded-lg bg-stu-accent/10 flex items-center justify-center text-[14px] shrink-0">
-                {notif.kind === "deadline" ? "🔥" : notif.kind === "info" ? "✅" : "📋"}
+                {notif.jenis === "DEADLINE" ? "🔥" : notif.jenis === "INFO" ? "✅" : "📋"}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-semibold text-stu-text">{notif.title}</div>
-                <div className="text-[11px] text-stu-muted mt-0.5">{notif.message}</div>
-                <div className="text-[10px] text-stu-muted mt-1">{notif.time}</div>
+                <div className="text-[13px] font-semibold text-stu-text">{notif.judul}</div>
+                <div className="text-[11px] text-stu-muted mt-0.5">{notif.pesan}</div>
+                <div className="text-[10px] text-stu-muted mt-1">{new Date(notif.waktuKirim).toLocaleString()}</div>
               </div>
             </div>
           ))}

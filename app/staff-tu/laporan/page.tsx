@@ -1,13 +1,21 @@
 "use client";
 
-import { createSeedData } from "@/data/sim-data";
+import useSWR from "swr";
 import { exportToCSV, printAsPDF } from "@/lib/exportUtils";
 
-const data = createSeedData().staff_tu;
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function StaffTULaporanPage() {
+  const { data: apiData } = useSWR('/api/staff-tu/laporan', fetcher);
+
+  if (!apiData) {
+    return <div className="flex h-[400px] items-center justify-center text-stu-muted">Memuat data laporan...</div>;
+  }
+
+  const { stats, tasks = [], report } = apiData;
+
   const handleExportCSV = () => {
-    const rows = data.tasks.map(t => ({
+    const rows = tasks.map((t: any) => ({
       "Judul": t.title,
       "Kategori": t.course,
       "Status": t.status,
@@ -18,8 +26,8 @@ export default function StaffTULaporanPage() {
     exportToCSV(rows, "laporan-staff-tu.csv");
   };
 
-  const totalDone = data.tasks.filter(t => t.status === "selesai").length;
-  const totalActive = data.tasks.filter(t => t.status !== "selesai").length;
+  const totalDone = tasks.filter((t: any) => t.status === "selesai").length;
+  const totalActive = tasks.filter((t: any) => t.status !== "selesai").length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -44,8 +52,8 @@ export default function StaffTULaporanPage() {
         {[
           { icon: "✅", label: "Selesai", value: totalDone, color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" },
           { icon: "⏳", label: "Berjalan", value: totalActive, color: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" },
-          { icon: "🎓", label: "Kelas Diproses", value: 12, color: "bg-stu-accent/10 text-stu-accent" },
-          { icon: "🔄", label: "Reset Akun", value: 24, color: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" },
+          { icon: "🎓", label: "Kelas Diproses", value: stats.totalKelas || 0, color: "bg-stu-accent/10 text-stu-accent" },
+          { icon: "🔄", label: "Mahasiswa Aktif", value: stats.totalMahasiswa || 0, color: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" },
         ].map((card, i) => (
           <div key={i} className="bg-stu-surface border border-stu-border rounded-xl p-5">
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg mb-3 ${card.color}`}>{card.icon}</div>
@@ -58,8 +66,8 @@ export default function StaffTULaporanPage() {
       <div className="bg-stu-surface border border-stu-border rounded-[14px] p-5">
         <h3 className="text-[14px] font-semibold text-stu-text mb-5">📊 Aktivitas per Minggu</h3>
         <div className="flex items-end gap-3 h-[100px]">
-          {data.report.weekly.map((w, i) => {
-            const max = Math.max(...data.report.weekly.map(x => x.done));
+          {report.weekly.map((w: any, i: number) => {
+            const max = Math.max(...report.weekly.map((x: any) => x.done));
             const h = max > 0 ? (w.done / max) * 100 : 0;
             return (
               <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
@@ -75,7 +83,7 @@ export default function StaffTULaporanPage() {
       <div className="bg-stu-surface border border-stu-border rounded-[14px] p-5">
         <h3 className="text-[14px] font-semibold text-stu-text mb-4">🎯 Target KPI Layanan</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {data.report.kpis.map((kpi, i) => (
+          {report.kpis.map((kpi: any, i: number) => (
             <div key={i} className="bg-stu-card border border-stu-border rounded-xl p-4">
               <div className="text-[13px] font-semibold text-stu-text mb-1">{kpi.title}</div>
               <div className="text-[12px] text-stu-muted leading-relaxed">{kpi.detail}</div>

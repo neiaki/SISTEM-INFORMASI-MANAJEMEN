@@ -42,11 +42,11 @@ Landing page: `/` | Login: `/auth/login`
 | **Tugas** | Buat, edit, hapus tugas; filter per mata kuliah & status (Semua/Aktif/Selesai); status otomatis |
 | **Kelompok** | Buat kelompok manual atau acak otomatis (RNG fair); edit anggota dan ukuran kelompok |
 | **Mahasiswa** | Data mahasiswa per mata kuliah dengan modal detail per kelas |
-| **Rekap** | Rekapitulasi pengumpulan & komentar; dismiss per item atau tutup semua; reset ke seed data |
+| **Rekap** | Rekapitulasi pengumpulan & komentar; integrasi nilai riil dari database |
 | **Proyek** | Manajemen proyek kelas; review submission, beri revisi/nilai, workflow tracking |
-| **Laporan** | Statistik dan insight per mata kuliah |
+| **Laporan** | Statistik dan insight per mata kuliah dengan agregasi data dinamis |
 | **Log Aktivitas** | Riwayat aktivitas pengelolaan tugas |
-| **Notifikasi** | Kirim reminder ke mahasiswa |
+| **Notifikasi** | Kirim pengumuman (broadcast) ke mahasiswa |
 
 ### Admin
 | Modul | Deskripsi |
@@ -55,6 +55,7 @@ Landing page: `/` | Login: `/auth/login`
 | **Tugas** | Pantau dan kelola semua tugas di seluruh mata kuliah |
 | **Laporan** | Laporan agregat seluruh program studi |
 | **Notifikasi** | Kelola notifikasi sistem |
+| **Import Data** | Import pengguna (Mahasiswa, Dosen, Staff TU) massal menggunakan format CSV |
 
 ### Staff TU
 | Modul | Deskripsi |
@@ -85,81 +86,60 @@ Landing page: `/` | Login: `/auth/login`
 | Styling | Tailwind CSS v4 (CSS-first config di `app/globals.css`) |
 | Komponen | shadcn/ui (Radix UI primitives) |
 | Language | TypeScript |
-| State | `useState` / `localStorage` (no backend) |
-| Icons | Lucide React |
-| Fonts | Clash Display (heading) + Poppins (body) |
+| Database | PostgreSQL + Prisma ORM |
+| Autentikasi | NextAuth.js (Auth.js) v5 |
+| State | SWR untuk data fetching / Zustand / Context |
+| Utilities | PapaParse (CSV Import), dll. |
 
-> Aplikasi berjalan sebagai **frontend-only prototype** — semua data bersifat mock (seed data + localStorage). Tidak ada database atau API nyata.
+> [!NOTE]
+> Meskipun aplikasi ini telah menggunakan database PostgreSQL yang sesungguhnya (melalui Prisma), beberapa bagian UI, data *seed* default, dan logika saat ini masih sangat bersandar pada **data dummy** untuk keperluan demonstrasi prototipe. Data yang di-render di beberapa dashboard mungkin saja bersifat *mock* sampai semua endpoint API telah dimigrasikan sepenuhnya.
 
 ---
 
-## Struktur Direktori
+## Struktur Direktori Utama
 
 ```
 app/
-├── page.tsx            # Landing page (AcadTrack)
-├── auth/
-│   └── login/          # Halaman login (pilih role) + admin login
-├── features/           # Halaman eksplorasi fitur interaktif
-├── demo/               # Portal simulasi demo publik
-├── bantuan/            # Pusat bantuan (FAQ, Video, dll)
-├── panduan/            # Dokumentasi panduan pengguna
-│   └── admin/          # Panduan khusus Admin & Staff TU
-├── legal/              # Halaman Syarat dan Ketentuan & Privasi
+├── api/                # API Routes untuk koneksi backend (Prisma + PostgreSQL)
+├── auth/               # Halaman autentikasi NextAuth.js
 ├── mahasiswa/          # Dashboard & modul mahasiswa
-│   ├── tugas/
-│   ├── proyek/
-│   ├── kelompok/
-│   ├── participant/
-│   ├── kalender/
-│   ├── laporan/
-│   ├── log/
-│   └── notifikasi/
 ├── dosen/              # Dashboard & modul dosen
-│   ├── matakuliah/
-│   ├── tugas/
-│   ├── kelompok/
-│   ├── mahasiswa/
-│   ├── rekap/
-│   ├── proyek/
-│   ├── laporan/
-│   ├── log/
-│   └── notifikasi/
 ├── admin/              # Dashboard & modul admin
-│   ├── tugas/
-│   ├── laporan/
-│   └── notifikasi/
 └── staff-tu/           # Dashboard & modul staff TU
-    ├── tugas/
-    ├── laporan/
-    └── notifikasi/
 
 components/
-├── ui/                 # shadcn/ui primitives
-├── empty-state.tsx
-├── task-detail-panel/
-└── theme-provider.tsx
+├── ui/                 # Komponen UI Reusable
+└── ...
 
 lib/
-├── taskStore.ts        # Store state tugas + seed submissions & comments
-├── kelompokStore.ts    # Store state kelompok
-├── proyekStore.ts      # Store state proyek kelompok + workflow status
-├── notifStore.ts       # Store state notifikasi
-├── activityLog.ts      # Helper log aktivitas
-├── exportUtils.ts      # Utilitas ekspor/download
-├── search-context.tsx  # Context pencarian global
-└── students-data.ts    # Data mock 24 mahasiswa (shared)
+├── auth.ts             # Konfigurasi NextAuth.js
+├── prisma.ts           # Instance Prisma Client
+└── ...
 
-data/
-└── sim-data.ts         # Semua mock data dan konstanta konfigurasi
+prisma/
+└── schema.prisma       # Skema database PostgreSQL
 ```
 
 ---
 
 ## Menjalankan Proyek
 
+**Persiapan Database:**
+Buat file `.env` di *root* dan sesuaikan dengan konfigurasi Anda:
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/db_sim_tugas"
+DIRECT_URL="postgresql://user:password@localhost:5432/db_sim_tugas"
+AUTH_SECRET="your-secret-key"
+```
+
+**Instalasi & Migrasi:**
 ```bash
 npm install
+npx prisma db push
+```
+
+**Menjalankan Server:**
+```bash
 npm run dev      # http://localhost:3000
 npm run build
 npm start
@@ -169,25 +149,20 @@ npm start
 
 ## Role & Akses
 
-Login di `/auth/login` — pilih role untuk masuk ke dashboard yang sesuai:
+Aplikasi sudah terhubung dengan autentikasi `NextAuth`. Terdapat 4 peran utama:
+- **Mahasiswa** (`MAHASISWA`)
+- **Dosen** (`DOSEN`)
+- **Admin Campus** (`ADMIN`)
+- **Staff TU** (`STAFF_TU`)
 
-| Role | Tema Warna | Akses |
-|---|---|---|
-| **Mahasiswa** | Amber / Teal | Tugas, proyek, dan aktivitas pribadi |
-| **Dosen** | Forest / Gold on Cream | Manajemen kelas, tugas, kelompok, dan penilaian |
-| **Admin** | `adm-*` vars | Pantau seluruh sistem dan laporan agregat |
-| **Staff TU** | `stu-*` vars | Administrasi akademik dan laporan TU |
-
-Tidak ada autentikasi nyata; semua state bersifat lokal (`localStorage`).
+Terdapat fitur **Import via CSV** di dashboard Admin untuk mendaftarkan akun baru secara massal.
 
 ---
 
-## Rencana Pengembangan
+## Rencana Pengembangan Selanjutnya
 
-- [ ] Backend & database (Next.js API Routes + PostgreSQL/Prisma)
-- [ ] Autentikasi nyata (NextAuth.js / JWT)
-- [ ] Integrasi SIAKAD untuk impor data mahasiswa & mata kuliah
-- [ ] Notifikasi email dan Telegram bot
+- [ ] Integrasi SIAKAD API secara realtime
+- [ ] Notifikasi email (Resend API) dan Telegram bot
 - [ ] Integrasi LMS kampus
-- [ ] Export rekap ke PDF / Excel
-- [ ] Mobile-responsive layout yang dioptimalkan
+- [ ] Export rekap ke PDF / Excel tingkat lanjut
+- [ ] Mobile-responsive layout tambahan

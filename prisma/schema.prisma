@@ -21,6 +21,7 @@ model User {
   mahasiswa    Mahasiswa?
   staffTU      StaffTU?
   notifikasi   Notifikasi[]
+  preferences  Json?
 
   @@map("users")
 }

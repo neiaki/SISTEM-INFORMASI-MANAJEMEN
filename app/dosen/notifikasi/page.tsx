@@ -3,24 +3,12 @@
 import { useState, useEffect } from "react";
 import useSWR from "swr";
 import { X } from "lucide-react";
-import { createSeedData } from "@/data/sim-data";
-import { useNotifStore } from "@/lib/notifStore";
 import { Toast, type ToastType } from "@/components/ui/toast";
 import type { Notifikasi } from "@prisma/client";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-const data = createSeedData().dosen;
-
 const COURSES = ["Analisis SI", "Keamanan Sistem", "SI Enterprise", "PPL", "Interaksi Manusia & Komputer"];
-
-type Broadcast = {
-  key: string;
-  title: string;
-  message: string;
-  target: string;
-  time: string;
-};
 
 const KIND_CONFIG: Record<string, any> = {
   REVIEW:  { icon: "⚠️", bg: "bg-rose/10",    color: "text-rose",   label: "Review",      labelCls: "bg-rose/10 text-rose",   category: "sistem" },
@@ -31,25 +19,19 @@ const KIND_CONFIG: Record<string, any> = {
   SISTEM:   { icon: "⚙️", bg: "bg-forest/10", color: "text-forest", label: "Sistem",      labelCls: "bg-forest/15 text-forest", category: "sistem" },
 };
 
-const STATIC_NOTIFS = [
-  { icon: "📥", bg: "bg-gold/10", color: "text-gold", label: "Pengumpulan", labelCls: "bg-gold/15 text-gold", category: "sistem",
-    title: "3 tugas baru dikumpulkan mahasiswa", message: "Laporan Praktikum Sorting · Pemrograman Lanjut", time: "Baru saja" },
-  { icon: "⏰", bg: "bg-rose/10", color: "text-rose", label: "Deadline", labelCls: "bg-rose/10 text-rose", category: "sistem",
-    title: 'Deadline "ERD Perpustakaan" besok', message: "18 mahasiswa belum mengumpulkan · Basis Data", time: "2 jam lalu" },
-  { icon: "✅", bg: "bg-forest/10", color: "text-forest", label: "Info", labelCls: "bg-forest/10 text-forest", category: "sistem",
-    title: "Nilai Quiz Algoritma berhasil disimpan", message: "34/36 mahasiswa dinilai · Pemrograman Lanjut", time: "Kemarin" },
-];
-
 const TEMPLATES = [
   { label: "⏰ Pengingat Deadline", title: "Pengingat Deadline Tugas", message: "Reminder: Tugas [nama] akan deadline dalam 2 hari. Segera kumpulkan sebelum batas waktu." },
   { label: "✏️ Revisi Tugas",       title: "Mohon Lakukan Revisi",    message: "Mohon revisi tugas [nama] sesuai feedback yang diberikan. Hubungi dosen jika ada pertanyaan." },
   { label: "📊 Info Nilai",         title: "Nilai Sudah Dipublikasi",  message: "Nilai tugas [nama] sudah dipublikasikan. Silakan cek di halaman rekap pengumpulan." },
 ];
 
-export default function DosenNotifikasiPage() {
-  const { togglePref, getPrefs } = useNotifStore("dosen");
-  const prefs = getPrefs(data.preferences);
+const PREF_DEFAULTS = [
+  { key: "email_kumpul", label: "Email Pengumpulan Telat", detail: "Kirim notifikasi email saat ada mahasiswa mengumpulkan tugas melewati batas waktu", enabled: true },
+  { key: "inapp_rekap", label: "Pengingat Penilaian", detail: "Ingatkan jika ada tugas yang sudah deadline > 3 hari namun belum dinilai", enabled: true },
+  { key: "email_sistem", label: "Info Sistem", detail: "Berita penting terkait maintenance atau pembaruan fitur SIM Tugas", enabled: false },
+];
 
+export default function DosenNotifikasiPage() {
   const [activeTab, setActiveTab]     = useState("semua");
   const [modalOpen, setModalOpen]     = useState(false);
   const [form, setForm]               = useState({ title: "", message: "", target: "semua" });
@@ -63,7 +45,15 @@ export default function DosenNotifikasiPage() {
   }, [modalOpen]);
 
   const { data: apiData, mutate } = useSWR('/api/notifikasi', fetcher);
+  const { data: prefData, mutate: mutatePref } = useSWR('/api/users/preferences', fetcher);
+  
   const notifications: Notifikasi[] = apiData?.notifikasi || [];
+  const dbPrefs = prefData?.preferences || {};
+
+  const prefs = PREF_DEFAULTS.map(p => ({
+    ...p,
+    enabled: dbPrefs[p.key] ?? p.enabled
+  }));
 
   const filtered = notifications.filter(notif => {
     const cfg = KIND_CONFIG[notif.jenis] ?? KIND_CONFIG.INFO;
@@ -110,6 +100,25 @@ export default function DosenNotifikasiPage() {
   function applyTemplate(t: typeof TEMPLATES[0]) {
     setForm(f => ({ ...f, title: t.title, message: t.message }));
   }
+
+  const handleTogglePref = async (key: string) => {
+    const currentVal = dbPrefs[key] ?? PREF_DEFAULTS.find(p => p.key === key)?.enabled;
+    const newPrefs = { ...dbPrefs, [key]: !currentVal };
+    
+    mutatePref({ preferences: newPrefs }, false);
+    
+    try {
+      await fetch('/api/users/preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPrefs)
+      });
+      setToast({ message: "Preferensi disimpan", type: "success" });
+    } catch {
+      setToast({ message: "Gagal menyimpan preferensi", type: "error" });
+      mutatePref();
+    }
+  };
 
   const tabs = [
     { id: "semua",        label: "Semua",        count: notifications.length },
@@ -210,7 +219,7 @@ export default function DosenNotifikasiPage() {
           {prefs.map(pref => (
             <div key={pref.key} className="bg-paper border-[1.5px] border-border rounded-[14px] p-4 flex items-start gap-3 shadow-[0_1px_4px_rgba(26,26,20,0.04)]">
               <button
-                onClick={() => togglePref("dosen", pref.key)}
+                onClick={() => handleTogglePref(pref.key)}
                 className={`w-9 h-5 rounded-full relative flex items-center transition-colors shrink-0 mt-0.5 border ${
                   pref.enabled ? "bg-forest border-forest" : "bg-border border-border"
                 }`}

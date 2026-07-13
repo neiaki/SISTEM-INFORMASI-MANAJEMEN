@@ -221,17 +221,20 @@ Kalau mau mulai sekarang, urutan yang tepat:
 - [x] Sambungkan frontend dosen ke API (Modul Proyek)
 - [x] Implementasi log aktivitas
 
-### Fase 3 — Notifikasi
+### Fase 3 — Notifikasi (Sisa)
+- [x] Implementasi notifikasi in-app
 - [ ] Buat akun Resend (email gratis)
 - [ ] Buat template email notifikasi
 - [ ] Setup Vercel Cron Job harian
-- [ ] Implementasi notifikasi in-app
+- [ ] Hubungkan UI preferensi Notifikasi dengan database (Mahasiswa, Dosen, Admin, Staff TU)
 - [ ] (Opsional) Setup Telegram Bot
 
-### Fase 4 — Laporan & Lanjutan
-- [ ] Konfigurasi Supabase Storage untuk upload file
+### Fase 4 — Laporan, Staff TU, & Admin Lanjutan
+- [ ] Konfigurasi Supabase Storage untuk upload file lampiran
 - [ ] Buat fitur export PDF/Excel
-- [ ] Buat fitur import Excel untuk Staff TU
+- [ ] Migrasi Dashboard & Halaman Staff TU (SWR + API)
+- [ ] Buat fitur import Excel/CSV untuk Staff TU
+- [ ] Migrasi Dashboard & Halaman Admin (SWR + API)
 - [ ] (Opsional) Google Login
 - [ ] (Opsional) SSO kampus
 

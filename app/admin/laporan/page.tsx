@@ -1,15 +1,24 @@
 "use client";
 
-import { createSeedData } from "@/data/sim-data";
+import useSWR from "swr";
 import { exportToCSV, printAsPDF } from "@/lib/exportUtils";
 
-const data = createSeedData().admin;
-const totalDone = data.tasks.filter(t => t.status === "selesai").length;
-const totalActive = data.tasks.filter(t => t.status !== "selesai").length;
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function AdminLaporanPage() {
+  const { data: apiData } = useSWR('/api/admin/laporan', fetcher);
+
+  if (!apiData) {
+    return <div className="flex h-[400px] items-center justify-center text-adm-muted">Memuat data laporan...</div>;
+  }
+
+  const { tasks = [], integrations = [], report } = apiData;
+
+  const totalDone = tasks.filter((t: any) => t.status === "selesai").length;
+  const totalActive = tasks.filter((t: any) => t.status !== "selesai").length;
+
   const handleExportCSV = () => {
-    const rows = data.tasks.map(t => ({
+    const rows = tasks.map((t: any) => ({
       "Judul": t.title,
       "Kategori": t.course,
       "Status": t.status,
@@ -53,12 +62,12 @@ export default function AdminLaporanPage() {
         </div>
         <div className="bg-adm-surface border border-adm-border rounded-xl p-5">
           <div className="w-8 h-8 rounded-lg bg-adm-accent/10 text-adm-accent flex items-center justify-center text-lg mb-3">🔗</div>
-          <div className="font-serif text-[30px] leading-none text-adm-text">{data.integrations.filter(i => i.status === "Stabil").length}</div>
+          <div className="font-serif text-[30px] leading-none text-adm-text">{integrations.filter((i: any) => i.status === "Stabil").length}</div>
           <div className="text-[12px] text-adm-muted mt-1">Integrasi Stabil</div>
         </div>
         <div className="bg-adm-surface border border-adm-border rounded-xl p-5">
           <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg mb-3">📅</div>
-          <div className="font-serif text-[30px] leading-none text-adm-text">{data.report.weekly.reduce((a, w) => a + w.done, 0)}</div>
+          <div className="font-serif text-[30px] leading-none text-adm-text">{report.weekly.reduce((a: number, w: any) => a + w.done, 0)}</div>
           <div className="text-[12px] text-adm-muted mt-1">Total Aktivitas Bulan Ini</div>
         </div>
       </div>
@@ -67,8 +76,8 @@ export default function AdminLaporanPage() {
       <div className="bg-adm-surface border border-adm-border rounded-[14px] p-5">
         <h3 className="text-[14px] font-semibold text-adm-text mb-5">📊 Aktivitas per Minggu</h3>
         <div className="flex items-end gap-3 h-[100px]">
-          {data.report.weekly.map((w, i) => {
-            const max = Math.max(...data.report.weekly.map(x => x.done));
+          {report.weekly.map((w: any, i: number) => {
+            const max = Math.max(...report.weekly.map((x: any) => x.done));
             const h = max > 0 ? (w.done / max) * 100 : 0;
             return (
               <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
@@ -85,7 +94,7 @@ export default function AdminLaporanPage() {
       <div className="bg-adm-surface border border-adm-border rounded-[14px] p-5">
         <h3 className="text-[14px] font-semibold text-adm-text mb-4">🎯 Target KPI Operasional</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {data.report.kpis.map((kpi, i) => (
+          {report.kpis.map((kpi: any, i: number) => (
             <div key={i} className="bg-adm-card border border-adm-border rounded-xl p-4">
               <div className="text-[13px] font-semibold text-adm-text mb-1">{kpi.title}</div>
               <div className="text-[12px] text-adm-muted leading-relaxed">{kpi.detail}</div>
@@ -108,7 +117,7 @@ export default function AdminLaporanPage() {
             </tr>
           </thead>
           <tbody>
-            {data.tasks.map(task => (
+            {tasks.map((task: any) => (
               <tr key={task.id} className="border-t border-adm-border/50 hover:bg-adm-hover transition-colors">
                 <td className="py-3 px-5 text-adm-text font-medium">{task.title}</td>
                 <td className="py-3 px-5 text-adm-muted">{task.course}</td>

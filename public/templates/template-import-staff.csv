@@ -1,0 +1,4 @@
+username,nama,email,unit,password_default
+staff_akademik,Dewi Sartika,dewi@staff.edu,Akademik,password123
+staff_keuangan,Bambang Pamungkas,bambang@staff.edu,Keuangan,password123
+staff_it,Candra Wijaya,candra@staff.edu,IT Support,password123
