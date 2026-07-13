@@ -85,14 +85,27 @@ Dokumen ini merangkum seluruh status pengerjaan fitur backend berdasarkan `prd-s
 ---
 
 ## Ringkasan Progres Saat Ini
-1. **Sedang Dikerjakan:** Integrasi Google OAuth dan persiapan Telegram Bot.
-2. **Prioritas Berikutnya:** Setup `AUTH_GOOGLE_ID`/`AUTH_GOOGLE_SECRET` di `.env.local`, lalu konfigurasi Telegram Bot notifikasi.
+1. **Sedang Dikerjakan:** Integrasi Backend API Kelompok & Persiapan Serah Terima (Handoff).
+2. **Prioritas Berikutnya:** Menghubungkan UI Frontend Manajemen Kelompok (`app/mahasiswa/kelompok/page.tsx` & `app/dosen/kelompok/page.tsx`) agar menggunakan `useSWR` dari rute API `/api/kelompok` yang baru dibuat.
 3. **Pencapaian Terakhir:**
    - ✅ Google OAuth Provider ditambahkan ke `lib/auth.ts` (signIn/jwt/session callbacks lengkap).
    - ✅ Tombol "Masuk dengan Google" & "SSO Terpadu" di halaman login dihubungkan ke `signIn("google")`.
-   - ✅ API `POST /api/tugas/[id]/comment` dibuat untuk komentar langsung ke database.
-   - ✅ `TaskDetailPanel` diperbarui: submissions & comments dibaca dari database (SWR), dengan fallback localStorage.
-   - ✅ File upload & submission (`/api/upload` + `/api/submission`) terintegrasi penuh di panel tugas.
-   - ✅ `.env.example` diperbarui dengan panduan `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, dan `TELEGRAM_BOT_TOKEN`.
-   - ✅ Build production sukses (59/59 halaman).
+   - ✅ API CRUD untuk Manajemen Kelompok selesai (`app/api/kelompok/route.ts` & `[id]/route.ts`).
+   - ✅ Integrasi Notifikasi Telegram Bot berhasil dibuat (`lib/telegram.ts` & dimasukkan ke cron).
+   - ✅ API `POST /api/tugas/[id]/comment` dan `POST /api/submission/[id]` terintegrasi ke komponen `TaskDetailPanel` via SWR.
+   - ✅ File `.env.example` diperbarui untuk menampung ENV variables yang baru (`AUTH_GOOGLE_ID`, `TELEGRAM_BOT_TOKEN`).
 
+---
+
+## 🚀 Perencanaan Langkah Selanjutnya (Handoff Plan)
+
+Untuk Agent Berikutnya, ini adalah daftar prioritas pengembangan yang belum selesai dan harus dilanjutkan:
+
+1. **Integrasi Frontend Manajemen Kelompok (Fokus Utama)**
+   - Saat ini Backend CRUD Kelompok (Tahap 4) sudah selesai (`/api/kelompok`).
+   - **Tugas Utama:** Refactor halaman `app/mahasiswa/kelompok/page.tsx` dan `app/dosen/kelompok/page.tsx` untuk menghapus penggunaan `kelompokStore.ts` (mock data lokal) dan menggantinya dengan fetch SWR asli ke `/api/kelompok`.
+2. **Integrasi Supabase Storage (Tahap 2)**
+   - File upload saat ini mengandalkan path lokal `/public/uploads` di server via `/api/upload/route.ts`.
+   - **Tugas Utama:** Modifikasi endpoint upload agar langsung mengirim file fisik ke bucket Supabase Storage, kemudian menyimpan URL Publik Supabase tersebut ke PostgreSQL.
+3. **Pengaturan Akun & Environment User**
+   - Minta user atau secara manual siapkan nilai untuk variabel-variabel kredensial di file `.env.local` (`AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `TELEGRAM_BOT_TOKEN`) untuk memfungsikan fitur OAuth & Notif.
