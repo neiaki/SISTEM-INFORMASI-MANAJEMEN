@@ -1,0 +1,60 @@
+# Deploy SIM Tugas ke VPS via Docker / Coolify.
+#
+# Cara pakai (VPS lokal dengan Docker):
+#   docker compose up -d --build
+#
+# Di Coolify: pilih tipe deploy "Docker Compose" dan upload file ini.
+# Coolify akan menyuntikkan env (termasuk DATABASE_URL dari service Postgres
+# yang dikelola Coolify). Dalam kasus itu, hapus service `postgres` di bawah
+# dan gunakan DATABASE_URL yang disediakan Coolify.
+#
+# SEMUA secret (AUTH_SECRET, POSTGRES_PASSWORD, dll) diisi lewat env Coolify /
+# file .env, TIDAK di-commit ke repo ini.
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+      # Auth.js v5: percaya pada host header karena berada di balik reverse proxy (Coolify)
+      AUTH_TRUST_HOST: "true"
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/db_sim_tugas?schema=public
+      AUTH_SECRET: ${AUTH_SECRET}
+      AUTH_REDIRECT_PROXY_URL: ${APP_URL:-http://localhost:3000}
+      NEXTAUTH_URL: ${APP_URL:-http://localhost:3000}
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      NEXT_PUBLIC_DEMO_MODE: ${NEXT_PUBLIC_DEMO_MODE:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: db_sim_tugas
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

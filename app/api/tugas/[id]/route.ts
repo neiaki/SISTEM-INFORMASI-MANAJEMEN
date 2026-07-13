@@ -2,6 +2,7 @@ import { requireSession, requireRole } from "@/lib/auth-guard";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/logger";
+import { getPagination, buildPaginationMeta } from "@/lib/pagination";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -10,6 +11,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     // Await params here as required in Next 15+ App Router
     const id = (await params).id;
+    const { searchParams } = new URL(req.url);
+    const pageParam = searchParams.get("page");
 
     const task = await prisma.tugas.findUnique({
       where: { id },
@@ -24,12 +27,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
           }
         },
         deliverables: true,
-        comments: {
-          include: {
-            mahasiswa: true,
-            dosen: true,
-          }
-        },
         submissions: {
           include: {
             mahasiswa: true,
@@ -42,7 +39,33 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ task });
+    // Default: embed the full comments list (backward compatible with existing UI).
+    if (!pageParam) {
+      const comments = await prisma.comment.findMany({
+        where: { idTugas: id },
+        include: { mahasiswa: true, dosen: true },
+        orderBy: { createdAt: "asc" }
+      });
+      return NextResponse.json({ task: { ...task, comments } });
+    }
+
+    // Paginated comments when ?page is provided.
+    const pg = getPagination(pageParam, searchParams.get("limit"));
+    const [comments, total] = await Promise.all([
+      prisma.comment.findMany({
+        where: { idTugas: id },
+        include: { mahasiswa: true, dosen: true },
+        orderBy: { createdAt: "asc" },
+        skip: pg.skip,
+        take: pg.take
+      }),
+      prisma.comment.count({ where: { idTugas: id } })
+    ]);
+
+    return NextResponse.json({
+      task: { ...task, comments },
+      pagination: buildPaginationMeta(pg.page, pg.limit, total)
+    });
   } catch (error) {
     console.error("GET /api/tugas/[id] Error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
