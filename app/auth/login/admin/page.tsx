@@ -16,7 +16,7 @@ export default function AdminLoginPage() {
 
   const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (credential && password) {
+    if (credential && password === "123456") {
       router.push(role === "staff_tu" ? "/staff-tu" : "/admin");
     } else {
       setError(true);
@@ -80,7 +80,7 @@ export default function AdminLoginPage() {
 
           {error && (
             <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-lg mb-5 text-center">
-              Kredensial tidak valid. Harap periksa kembali.
+              Kredensial tidak valid. Gunakan password '123456' untuk demo.
             </div>
           )}
 

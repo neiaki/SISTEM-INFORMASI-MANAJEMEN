@@ -29,7 +29,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           include: {
             mahasiswa: true,
             dosen: true,
-            adminKampus: true,
+            adminCampus: true,
             staffTU: true,
           },
         });
@@ -57,9 +57,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         } else if (user.role === "DOSEN" && user.dosen) {
           name = user.dosen.nama;
           email = user.dosen.email;
-        } else if (user.role === "ADMIN" && user.adminKampus) {
-          name = user.adminKampus.nama;
-          email = user.adminKampus.email;
+        } else if (user.role === "ADMIN" && user.adminCampus) {
+          name = user.adminCampus.nama;
+          email = user.adminCampus.email;
         } else if (user.role === "STAFF_TU" && user.staffTU) {
           name = user.staffTU.nama;
           email = user.staffTU.email;
@@ -84,8 +84,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
+        (session.user as any).id = token.id as string;
+        (session.user as any).role = token.role as string;
       }
       return session;
     },

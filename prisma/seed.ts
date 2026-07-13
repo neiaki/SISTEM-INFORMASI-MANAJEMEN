@@ -22,7 +22,7 @@ async function main() {
   await prisma.user.deleteMany({});
 
   console.log("Creating users & credentials...");
-  const hashedPassword = await bcrypt.hash("admin123", 10);
+  const hashedPassword = await bcrypt.hash("123456", 10);
 
   // 1. Dosen User & Profile
   const userDosen = await prisma.user.create({

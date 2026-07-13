@@ -122,11 +122,7 @@ function LoginForm() {
     const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE !== "false";
     if (isDemo) {
       // Logic login bypass untuk demo/mock data
-      if (role === "dosen" && credential === "001" && password === "admin123") {
-        router.push("/dosen");
-        return;
-      }
-      if (credential && password) {
+      if (credential && password === "123456") {
         const routes: Record<string, string> = {
           dosen: "/dosen",
           admin: "/admin",
@@ -213,8 +209,14 @@ function LoginForm() {
           </div>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-lg mb-6 flex items-center justify-center">
-              Kredensial tidak valid. Harap periksa kembali.
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-lg mb-6 flex items-center justify-center text-center">
+              NIM atau Password Salah, Silahkan Periksa Kembali
+            </div>
+          )}
+
+          {validationError && (
+            <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm p-3 rounded-lg mb-6 flex items-center justify-center text-center">
+              {validationError}
             </div>
           )}
 

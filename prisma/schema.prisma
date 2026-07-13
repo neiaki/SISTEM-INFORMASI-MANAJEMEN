@@ -1,72 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
-enum Role {
-  MAHASISWA
-  DOSEN
-  ADMIN
-  STAFF_TU
-}
-
 model User {
   id           String       @id @default(uuid())
-  username     String       @unique // NIM, NIDN, atau username/email kampus
+  username     String       @unique
   passwordHash String       @map("password_hash")
   role         Role
   lastLogin    DateTime?    @map("last_login")
   createdAt    DateTime     @default(now()) @map("created_at")
   updatedAt    DateTime     @updatedAt @map("updated_at")
-
-  mahasiswa    Mahasiswa?
-  dosen        Dosen?
   adminCampus  AdminCampus?
+  dosen        Dosen?
+  mahasiswa    Mahasiswa?
   staffTU      StaffTU?
 
   @@map("users")
 }
 
 model Mahasiswa {
-  id            String       @id @default(uuid())
-  userId        String       @unique @map("id_user")
-  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  nama          String
-  nim           String       @unique @map("NIM")
-  email         String       @unique
-  noHp          String?      @map("no_hp")
-  semesterAktif Int          @map("semester_aktif")
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
-
-  enrollments        Enrollment[]
-  anggotaKelompoks   AnggotaKelompok[]
-  logAktivitas       LogAktivitas[]
-  submissions        Submission[]
-  comments           Comment[]
-  deliverable        Deliverable[]
+  id               String            @id @default(uuid())
+  userId           String            @unique @map("id_user")
+  nama             String
+  nim              String            @unique @map("NIM")
+  email            String            @unique
+  noHp             String?           @map("no_hp")
+  semesterAktif    Int               @map("semester_aktif")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  anggotaKelompoks AnggotaKelompok[]
+  comments         Comment[]
+  deliverable      Deliverable[]
+  enrollments      Enrollment[]
+  logAktivitas     LogAktivitas[]
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  submissions      Submission[]
 
   @@map("mahasiswa")
 }
 
 model Dosen {
-  id        String       @id @default(uuid())
-  userId    String       @unique @map("id_user")
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  nama      String
-  email     String       @unique
-  noHp      String?      @map("no_hp")
-  nidn      String       @unique @map("nidn")
-  createdAt DateTime     @default(now()) @map("created_at")
-  updatedAt DateTime     @updatedAt @map("updated_at")
-
-  mataKuliahs MataKuliah[]
+  id          String       @id @default(uuid())
+  userId      String       @unique @map("id_user")
+  nama        String
+  email       String       @unique
+  noHp        String?      @map("no_hp")
+  nidn        String       @unique @map("nidn")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
   comments    Comment[]
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mataKuliahs MataKuliah[]
 
   @@map("dosen")
 }
@@ -74,11 +64,11 @@ model Dosen {
 model AdminCampus {
   id        String   @id @default(uuid())
   userId    String   @unique @map("id_user")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   nama      String
   email     String   @unique
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("admin_campus")
 }
@@ -86,31 +76,30 @@ model AdminCampus {
 model StaffTU {
   id        String   @id @default(uuid())
   userId    String   @unique @map("id_user")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   nama      String
   email     String   @unique
   unit      String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("staff_tu")
 }
 
 model MataKuliah {
-  id        String       @id @default(uuid())
-  namaMk    String       @map("nama_mk")
-  kodeMk    String       @unique @map("kode_mk")
-  idDosen   String       @map("id_dosen")
-  dosen     Dosen        @relation(fields: [idDosen], references: [id], onDelete: Restrict)
-  semester  Int
-  tahunAjar String       @map("tahun_ajar")
-  createdAt DateTime     @default(now()) @map("created_at")
-  updatedAt DateTime     @updatedAt @map("updated_at")
-
-  enrollments   Enrollment[]
-  tugas         Tugas[]
-  proyek        Proyek[]
-  kelompok      Kelompok[]
+  id          String       @id @default(uuid())
+  namaMk      String       @map("nama_mk")
+  kodeMk      String       @unique @map("kode_mk")
+  idDosen     String       @map("id_dosen")
+  semester    Int
+  tahunAjar   String       @map("tahun_ajar")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  enrollments Enrollment[]
+  kelompok    Kelompok[]
+  dosen       Dosen        @relation(fields: [idDosen], references: [id])
+  proyek      Proyek[]
+  tugas       Tugas[]
 
   @@map("mata_kuliah")
 }
@@ -118,14 +107,14 @@ model MataKuliah {
 model Enrollment {
   id          String     @id @default(uuid())
   idMahasiswa String     @map("id_mahasiswa")
-  mahasiswa   Mahasiswa  @relation(fields: [idMahasiswa], references: [id], onDelete: Cascade)
   idMk        String     @map("id_mk")
-  mataKuliah  MataKuliah @relation(fields: [idMk], references: [id], onDelete: Cascade)
   semester    Int
   tahunAjar   String     @map("tahun_ajar")
-  status      String     // e.g. "Aktif", "Lulus", "Batal"
+  status      String
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
+  mahasiswa   Mahasiswa  @relation(fields: [idMahasiswa], references: [id], onDelete: Cascade)
+  mataKuliah  MataKuliah @relation(fields: [idMk], references: [id], onDelete: Cascade)
 
   @@unique([idMahasiswa, idMk, tahunAjar])
   @@map("enrollment")
@@ -134,57 +123,55 @@ model Enrollment {
 model Tugas {
   id               String        @id @default(uuid())
   idMk             String        @map("id_mk")
-  mataKuliah       MataKuliah    @relation(fields: [idMk], references: [id], onDelete: Cascade)
   judul            String
   deskripsi        String?
   tanggalDiberikan DateTime      @map("tanggal_diberikan")
   deadline         DateTime
   bobotNilai       Int           @map("bobot_nilai")
-  jenis            String        // "Individu" atau "Kelompok"
-  statusGlobal     String        @map("status_global") // "Belum Mulai", "Sedang Dikerjakan", "Selesai"
-  tipe             String?       // "Tugas", "Ujian", "Kuis"
+  jenis            String
+  statusGlobal     String        @map("status_global")
+  tipe             String?
   createdAt        DateTime      @default(now()) @map("created_at")
   updatedAt        DateTime      @updatedAt @map("updated_at")
-
-  submissions      Submission[]
   comments         Comment[]
   deliverables     Deliverable[]
+  submissions      Submission[]
+  mataKuliah       MataKuliah    @relation(fields: [idMk], references: [id], onDelete: Cascade)
 
   @@map("tugas")
 }
 
 model Proyek {
-  id             String        @id @default(uuid())
-  idMk           String        @map("id_mk")
-  mataKuliah     MataKuliah    @relation(fields: [idMk], references: [id], onDelete: Cascade)
-  namaProyek     String        @map("nama_proyek")
-  deskripsi      String?
-  tanggalMulai   DateTime      @map("tanggal_mulai")
-  deadlineAkhir  DateTime      @map("deadline_akhir")
-  progresProyek  Int           @default(0) @map("progres_proyek")
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
-
-  kelompoks      Kelompok[]
-  deliverables   Deliverable[]
+  id            String        @id @default(uuid())
+  idMk          String        @map("id_mk")
+  namaProyek    String        @map("nama_proyek")
+  deskripsi     String?
+  tanggalMulai  DateTime      @map("tanggal_mulai")
+  deadlineAkhir DateTime      @map("deadline_akhir")
+  progresProyek Int           @default(0) @map("progres_proyek")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  deliverables  Deliverable[]
+  kelompoks     Kelompok[]
+  mataKuliah    MataKuliah    @relation(fields: [idMk], references: [id], onDelete: Cascade)
 
   @@map("proyek")
 }
 
 model Deliverable {
-  id                 String     @id @default(uuid())
-  idTugas            String?    @map("id_tugas")
-  tugas              Tugas?     @relation(fields: [idTugas], references: [id], onDelete: Cascade)
-  idProyek           String?    @map("id_proyek")
-  proyek             Proyek?    @relation(fields: [idProyek], references: [id], onDelete: Cascade)
-  namaAktivitas      String     @map("nama_aktivitas")
-  idPenanggungJawab  String?    @map("id_penanggung_jawab")
-  penanggungJawab    Mahasiswa? @relation(fields: [idPenanggungJawab], references: [id], onDelete: SetNull)
-  status             String     // "Pending", "In Progress", "Completed"
-  deadlineKhusus     DateTime?  @map("deadline_khusus")
-  persentaseBobot    Int        @map("persentase_bobot")
-  createdAt          DateTime   @default(now()) @map("created_at")
-  updatedAt          DateTime   @updatedAt @map("updated_at")
+  id                String     @id @default(uuid())
+  idTugas           String?    @map("id_tugas")
+  idProyek          String?    @map("id_proyek")
+  namaAktivitas     String     @map("nama_aktivitas")
+  idPenanggungJawab String?    @map("id_penanggung_jawab")
+  status            String
+  deadlineKhusus    DateTime?  @map("deadline_khusus")
+  persentaseBobot   Int        @map("persentase_bobot")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+  penanggungJawab   Mahasiswa? @relation(fields: [idPenanggungJawab], references: [id])
+  proyek            Proyek?    @relation(fields: [idProyek], references: [id], onDelete: Cascade)
+  tugas             Tugas?     @relation(fields: [idTugas], references: [id], onDelete: Cascade)
 
   @@map("deliverable")
 }
@@ -192,16 +179,15 @@ model Deliverable {
 model Kelompok {
   id           String            @id @default(uuid())
   idMk         String            @map("id_mk")
-  mataKuliah   MataKuliah        @relation(fields: [idMk], references: [id], onDelete: Cascade)
   idProyek     String?           @map("id_proyek")
-  proyek       Proyek?           @relation(fields: [idProyek], references: [id], onDelete: SetNull)
   namaKelompok String            @map("nama_kelompok")
   createdAt    DateTime          @default(now()) @map("created_at")
   updatedAt    DateTime          @updatedAt @map("updated_at")
-
   anggota      AnggotaKelompok[]
-  submissions  Submission[]
   comments     Comment[]
+  mataKuliah   MataKuliah        @relation(fields: [idMk], references: [id], onDelete: Cascade)
+  proyek       Proyek?           @relation(fields: [idProyek], references: [id])
+  submissions  Submission[]
 
   @@map("kelompok")
 }
@@ -209,12 +195,12 @@ model Kelompok {
 model AnggotaKelompok {
   id          String    @id @default(uuid())
   idKelompok  String    @map("id_kelompok")
-  kelompok    Kelompok  @relation(fields: [idKelompok], references: [id], onDelete: Cascade)
   idMahasiswa String    @map("id_mahasiswa")
-  mahasiswa   Mahasiswa @relation(fields: [idMahasiswa], references: [id], onDelete: Cascade)
-  peran       String?   // "Ketua" atau "Anggota"
+  peran       String?
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
+  kelompok    Kelompok  @relation(fields: [idKelompok], references: [id], onDelete: Cascade)
+  mahasiswa   Mahasiswa @relation(fields: [idMahasiswa], references: [id], onDelete: Cascade)
 
   @@unique([idKelompok, idMahasiswa])
   @@map("anggota_kelompok")
@@ -222,33 +208,33 @@ model AnggotaKelompok {
 
 model LogAktivitas {
   id            String    @id @default(uuid())
-  idReferensi   String    @map("id_referensi") // e.g. ID tugas, proyek, atau kelompok
+  idReferensi   String    @map("id_referensi")
   idMahasiswa   String    @map("id_mahasiswa")
-  mahasiswa     Mahasiswa @relation(fields: [idMahasiswa], references: [id], onDelete: Cascade)
   tanggal       DateTime  @default(now())
   catatan       String
   persenProgres Int       @map("persen_progres")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
+  mahasiswa     Mahasiswa @relation(fields: [idMahasiswa], references: [id], onDelete: Cascade)
 
   @@map("log_aktivitas")
 }
 
 model Submission {
-  id          String     @id @default(uuid())
-  idTugas     String?    @map("id_tugas")
-  tugas       Tugas?     @relation(fields: [idTugas], references: [id], onDelete: Cascade)
-  idKelompok  String?    @map("id_kelompok")
-  kelompok    Kelompok?  @relation(fields: [idKelompok], references: [id], onDelete: Cascade)
-  idMahasiswa String     @map("id_mahasiswa")
-  mahasiswa   Mahasiswa  @relation(fields: [idMahasiswa], references: [id], onDelete: Cascade)
-  fileName    String?    @map("file_name")
-  fileSize    String?    @map("file_size")
+  id          String    @id @default(uuid())
+  idTugas     String?   @map("id_tugas")
+  idKelompok  String?   @map("id_kelompok")
+  idMahasiswa String    @map("id_mahasiswa")
+  fileName    String?   @map("file_name")
+  fileSize    String?   @map("file_size")
   note        String?
   url         String?
-  type        String     // "file" atau "link"
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
+  type        String
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  kelompok    Kelompok? @relation(fields: [idKelompok], references: [id], onDelete: Cascade)
+  mahasiswa   Mahasiswa @relation(fields: [idMahasiswa], references: [id], onDelete: Cascade)
+  tugas       Tugas?    @relation(fields: [idTugas], references: [id], onDelete: Cascade)
 
   @@map("submission")
 }
@@ -256,16 +242,23 @@ model Submission {
 model Comment {
   id          String     @id @default(uuid())
   idTugas     String?    @map("id_tugas")
-  tugas       Tugas?     @relation(fields: [idTugas], references: [id], onDelete: Cascade)
   idKelompok  String?    @map("id_kelompok")
-  kelompok    Kelompok?  @relation(fields: [idKelompok], references: [id], onDelete: Cascade)
   idMahasiswa String?    @map("id_mahasiswa")
-  mahasiswa   Mahasiswa? @relation(fields: [idMahasiswa], references: [id], onDelete: Cascade)
   idDosen     String?    @map("id_dosen")
-  dosen       Dosen?     @relation(fields: [idDosen], references: [id], onDelete: Cascade)
   text        String
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
+  dosen       Dosen?     @relation(fields: [idDosen], references: [id], onDelete: Cascade)
+  kelompok    Kelompok?  @relation(fields: [idKelompok], references: [id], onDelete: Cascade)
+  mahasiswa   Mahasiswa? @relation(fields: [idMahasiswa], references: [id], onDelete: Cascade)
+  tugas       Tugas?     @relation(fields: [idTugas], references: [id], onDelete: Cascade)
 
   @@map("comment")
+}
+
+enum Role {
+  MAHASISWA
+  DOSEN
+  ADMIN
+  STAFF_TU
 }
