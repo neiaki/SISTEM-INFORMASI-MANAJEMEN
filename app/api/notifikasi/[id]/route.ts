@@ -1,15 +1,13 @@
-import { auth } from "@/lib/auth";
+import { requireSession } from "@/lib/auth-guard";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireSession();
+    if (session instanceof NextResponse) return session;
 
-    const userId = (session.user as any).id;
+    const userId = session.userId;
     const { id } = await params;
 
     const notifikasi = await prisma.notifikasi.findUnique({
@@ -38,12 +36,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireSession();
+    if (session instanceof NextResponse) return session;
 
-    const userId = (session.user as any).id;
+    const userId = session.userId;
     const { id } = await params;
 
     const notifikasi = await prisma.notifikasi.findUnique({

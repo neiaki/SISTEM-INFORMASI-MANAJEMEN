@@ -1,21 +1,16 @@
-import { auth } from "@/lib/auth";
+import { requireSession, requireRole } from "@/lib/auth-guard";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireSession();
+    if (session instanceof NextResponse) return session;
+    const forbidden = requireRole(session, ["MAHASISWA"]);
+    if (forbidden) return forbidden;
 
-    const role = (session.user as any).role;
-    if (role !== "MAHASISWA") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    const userId = (session.user as any).id;
+    const userId = session.userId;
     const mahasiswa = await prisma.mahasiswa.findUnique({ where: { userId } });
     if (!mahasiswa) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });

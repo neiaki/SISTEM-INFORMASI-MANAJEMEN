@@ -1,25 +1,23 @@
 import { describe, it, expect } from "bun:test";
-import { requireRole, type SessionContext } from "./auth-guard";
-
-function ctx(role: SessionContext["role"]): SessionContext {
-  return { userId: "u1", role };
-}
+import { NextResponse } from "next/server";
+import { requireRole } from "@/lib/auth-guard";
 
 describe("requireRole", () => {
+  const session = { userId: "u1", role: "DOSEN" } as const;
+
   it("returns null when the role is allowed", () => {
-    expect(requireRole(ctx("DOSEN"), ["DOSEN", "ADMIN"])).toBeNull();
-    expect(requireRole(ctx("MAHASISWA"), ["MAHASISWA"])).toBeNull();
-    expect(requireRole(ctx("STAFF_TU"), ["STAFF_TU"])).toBeNull();
+    const res = requireRole(session, ["DOSEN", "ADMIN"]);
+    expect(res).toBeNull();
   });
 
   it("returns a 403 NextResponse when the role is forbidden", () => {
-    const res = requireRole(ctx("MAHASISWA"), ["DOSEN", "ADMIN"]);
-    expect(res).not.toBeNull();
-    expect(res!.status).toBe(403);
+    const res = requireRole(session, ["ADMIN"]);
+    expect(res).toBeInstanceOf(NextResponse);
+    expect(res?.status).toBe(403);
   });
 
   it("allows exactly the listed roles", () => {
-    expect(requireRole(ctx("ADMIN"), ["ADMIN"])).toBeNull();
-    expect(requireRole(ctx("MAHASISWA"), ["ADMIN"])).not.toBeNull();
+    expect(requireRole(session, ["DOSEN"])).toBeNull();
+    expect(requireRole(session, ["MAHASISWA"])).not.toBeNull();
   });
 });

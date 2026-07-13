@@ -1,13 +1,13 @@
-import { auth } from "@/lib/auth";
+import { requireSession, requireRole } from "@/lib/auth-guard";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user || (session.user as any).role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireSession();
+    if (session instanceof NextResponse) return session;
+    const forbidden = requireRole(session, ["ADMIN"]);
+    if (forbidden) return forbidden;
 
     const tasks = [
       { id: "adm-t-1", title: "Validasi Laporan Sinkronisasi SIAKAD", course: "Sistem", status: "menunggu review", priority: "Tinggi", progress: 80, deadline: "2026-05-10" },

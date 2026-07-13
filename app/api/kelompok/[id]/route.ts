@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { requireSession, requireRole } from "@/lib/auth-guard";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -8,10 +8,8 @@ import { prisma } from "@/lib/prisma";
  */
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireSession();
+    if (session instanceof NextResponse) return session;
 
     const { id } = await params;
 
@@ -54,15 +52,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
  */
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireSession();
+    if (session instanceof NextResponse) return session;
 
-    const role = (session.user as any).role;
-    if (role !== "DOSEN" && role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const forbidden = requireRole(session, ["DOSEN", "ADMIN"]);
+    if (forbidden) return forbidden;
 
     const { id } = await params;
     const body = await req.json();
@@ -121,15 +115,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
  */
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireSession();
+    if (session instanceof NextResponse) return session;
 
-    const role = (session.user as any).role;
-    if (role !== "DOSEN" && role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const forbidden = requireRole(session, ["DOSEN", "ADMIN"]);
+    if (forbidden) return forbidden;
 
     const { id } = await params;
 

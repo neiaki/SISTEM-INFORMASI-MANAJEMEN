@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { requireSession, requireRole } from "@/lib/auth-guard";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import Papa from "papaparse";
@@ -11,10 +11,10 @@ const hashPassword = (password: string) => {
 
 export async function POST(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user || (session.user as any).role !== "ADMIN" && (session.user as any).role !== "STAFF_TU") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireSession();
+    if (session instanceof NextResponse) return session;
+    const forbidden = requireRole(session, ["ADMIN", "STAFF_TU"]);
+    if (forbidden) return forbidden;
 
     const formData = await req.formData();
     const file = formData.get("file") as File;

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireSession } from "@/lib/auth-guard";
 import { createClient } from "@supabase/supabase-js";
 
 // Menggunakan variable environment yang umum untuk supabase
@@ -9,10 +9,8 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireSession();
+    if (session instanceof NextResponse) return session;
 
     const formData = await req.formData();
     const file = formData.get("file") as File;
@@ -27,7 +25,7 @@ export async function POST(req: Request) {
     // Generate unique filename to avoid collision
     const timestamp = Date.now();
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const uniqueFileName = `${session.user.id}/${timestamp}_${cleanFileName}`;
+    const uniqueFileName = `${session.userId}/${timestamp}_${cleanFileName}`;
 
     // Upload ke Supabase Storage (bucket: 'attachments')
     const { data, error } = await supabase

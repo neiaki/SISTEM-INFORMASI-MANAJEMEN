@@ -1,13 +1,13 @@
-import { auth } from "@/lib/auth";
+import { requireSession, requireRole } from "@/lib/auth-guard";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user || (session.user as any).role !== "STAFF_TU") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireSession();
+    if (session instanceof NextResponse) return session;
+    const forbidden = requireRole(session, ["STAFF_TU"]);
+    if (forbidden) return forbidden;
 
     const totalMahasiswa = await prisma.mahasiswa.count();
     const totalDosen = await prisma.dosen.count();

@@ -21,7 +21,10 @@ export async function requireSession(): Promise<SessionContext | NextResponse> {
   };
 }
 
-export function requireRole(ctx: SessionContext, roles: UserRole[]): NextResponse | null {
+export function requireRole(
+  ctx: SessionContext,
+  roles: UserRole[],
+): NextResponse | null {
   return roles.includes(ctx.role)
     ? null
     : NextResponse.json({ error: "Forbidden" }, { status: 403 });

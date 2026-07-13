@@ -1,13 +1,11 @@
-import { auth } from "@/lib/auth";
+import { requireSession } from "@/lib/auth-guard";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireSession();
+    if (session instanceof NextResponse) return session;
 
     const taskId = (await params).id;
     const body = await req.json();
@@ -17,8 +15,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const role = (session.user as any).role;
-    const userId = (session.user as any).id;
+    const { role, userId } = session;
 
     let idMahasiswa: string | null = null;
     let idDosen: string | null = null;

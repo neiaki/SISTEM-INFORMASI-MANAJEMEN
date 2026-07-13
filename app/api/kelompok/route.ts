@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { requireSession, requireRole } from "@/lib/auth-guard";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -9,17 +9,14 @@ import { prisma } from "@/lib/prisma";
  */
 export async function GET(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireSession();
+    if (session instanceof NextResponse) return session;
 
     const { searchParams } = new URL(req.url);
     const idMk = searchParams.get("idMk");
     const idProyek = searchParams.get("idProyek");
 
-    const role = (session.user as any).role;
-    const userId = (session.user as any).id;
+    const { role, userId } = session;
 
     let allowedCourseIds: string[] | null = null;
 
@@ -69,12 +66,9 @@ export async function GET(req: Request) {
  */
 export async function POST(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireSession();
+    if (session instanceof NextResponse) return session;
 
-    const role = (session.user as any).role;
     // Semua user (Dosen, Admin, Mahasiswa) bisa membuat kelompok
     // Mahasiswa mungkin membuat kelompok sendiri untuk tugas.
 
