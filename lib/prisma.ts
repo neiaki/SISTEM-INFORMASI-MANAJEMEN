@@ -4,9 +4,14 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-// Di Docker/VPS, sambungan DB dikendalikan oleh DATABASE_URL (disuntikkan
-// Coolify / docker-compose). Fallback ke Postgres lokal agar dev tetap jalan.
+// Prioritas sambungan DB:
+//   1. SIM_DATABASE_URL → override lokal eksplisit. Dipakai untuk menghindari
+//      polusi env shell dari project lain (mis. DATABASE_URL=nekidb) yang
+//      menimpa .env karena Next.js memberi process.env prioritas di atas .env.
+//   2. DATABASE_URL     → injeksi otomatis Coolify / Docker / production.
+//   3. fallback lokal   → Postgres lokal db_sim_tugas agar dev tetap jalan.
 const DATABASE_URL =
+  process.env.SIM_DATABASE_URL ??
   process.env.DATABASE_URL ??
   "postgresql://postgres@localhost:5432/db_sim_tugas?schema=public";
 
