@@ -223,20 +223,20 @@ Kalau mau mulai sekarang, urutan yang tepat:
 
 ### Fase 3 — Notifikasi (Sisa)
 - [x] Implementasi notifikasi in-app
-- [ ] Buat akun Resend (email gratis)
-- [ ] Buat template email notifikasi
-- [ ] Setup Vercel Cron Job harian
-- [ ] Hubungkan UI preferensi Notifikasi dengan database (Mahasiswa, Dosen, Admin, Staff TU)
-- [ ] (Opsional) Setup Telegram Bot
+- [x] Buat akun Resend (email gratis) — kerangka `lib/email.ts` (fetch, tanpa SDK baru), butuh `RESEND_API_KEY`
+- [x] Buat template email notifikasi — `buildDeadlineEmailHtml`, terhubung ke cron
+- [x] Setup Cron Job harian — `GET /api/cron/deadline-reminder` + `scripts/cron-deadline-reminder.sh` (VPS crontab, bukan Vercel)
+- [x] Hubungkan UI preferensi Notifikasi dengan database (Mahasiswa, Dosen, Admin, Staff TU)
+- [x] (Opsional) Setup Telegram Bot — `lib/telegram.ts`
 
 ### Fase 4 — Laporan, Staff TU, & Admin Lanjutan
-- [ ] Konfigurasi Supabase Storage untuk upload file lampiran
-- [ ] Buat fitur export PDF/Excel
+- [x] Konfigurasi Supabase Storage untuk upload file lampiran — `/api/upload`
+- [x] Buat fitur export PDF/Excel — kerangka ekspor CSV (`lib/exporters.ts` + `app/api/laporan/export`); xlsx/pdf menunggu install library (dynamic import siap)
 - [ ] Migrasi Dashboard & Halaman Staff TU (SWR + API)
-- [ ] Buat fitur import Excel/CSV untuk Staff TU
+- [x] Buat fitur import Excel/CSV untuk Staff TU — `POST /api/admin/import-users` + template
 - [ ] Migrasi Dashboard & Halaman Admin (SWR + API)
-- [ ] (Opsional) Google Login
-- [ ] (Opsional) SSO kampus
+- [x] (Opsional) Google Login
+- [ ] (Opsional) SSO kampus — kerangka `lib/sso.ts` + env `SSO_*`; aktivasi butuh IdP + `@boxyhq/saml`/Jackson
 
 ---
 

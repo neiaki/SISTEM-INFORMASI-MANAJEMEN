@@ -68,6 +68,15 @@ Dokumen ini merangkum seluruh status pengerjaan fitur backend berdasarkan `prd-s
 
 ---
 
+## 📤 Ekspor Data & 🔐 SSO Kampus (Fase 4 Lanjutan)
+
+- [x] **Endpoint Ekspor CSV** — `app/api/laporan/export` (auth: ADMIN/STAFF_TU) mengembalikan daftar tugas sebagai CSV via `lib/exporters.ts` (`toCsv` native, tanpa dependency).
+- [x] **Dynamic Import Export (extension point)** — `lib/exporters.ts` `exportData()` menyiapkan `await import("exceljs")` / `await import("pdfkit")` untuk xlsx/pdf; library belum terpasang (butuh konfirmasi install). Pola dynamic import siap pakai agar bundle tidak membengkak. Unit test `lib/exporters.test.ts`.
+- [x] **SSO Kampus — Kerangka** — `lib/sso.ts` (`isSsoConfigured()`, `getSsoConfig()`) env-gated & graceful; env `SSO_*` di `.env.example`. Provider SAML (`next-auth/providers/boxyhq-saml`) **belum di-wire ke `auth.config.ts`** karena butuh Jackson service / `@boxyhq/saml` (belum terpasang) — snippet aktivasi didokumentasikan di `lib/sso.ts`. LDAP butuh package tambahan.
+  - ⏳ **Aktivasi SSO** = butuh: (1) IdP kampus (metadata/cert), (2) install `@boxyhq/saml` atau jalankan Jackson, (3) tempel snippet provider ke `auth.config.ts`.
+
+---
+
 ## 4. Fase 4: Laporan, Ekspor, dan Import Data
 **Tujuan:** Kebutuhan operasional Kampus, pelaporan, dan pengelolaan data massal.
 
